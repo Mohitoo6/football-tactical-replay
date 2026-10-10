@@ -1,0 +1,34 @@
+# Clip definitions, built by `uv run python scripts/build_clips.py`.
+#
+# start_s / end_s are seconds since the start of the period (the same clock as
+# the DFL event data). focus_team attacks left to right in the built clip.
+#
+# Match J03WMX: 1. FC Köln 1-2 FC Bayern München, Bundesliga matchday 34,
+# 27 May 2023. Goal times below come from the DFL event data (SHOT, result=GOAL).
+
+[[clip]]
+id = "coman-opener"
+match_id = "J03WMX"
+title = "Coman's 8th-minute opener for Bayern"
+period = 1
+start_s = 455.0     # shot at 469.8 s (7:49)
+end_s = 475.0
+focus_team = "away"
+
+[[clip]]
+id = "ljubicic-equaliser"
+match_id = "J03WMX"
+title = "Ljubicic's 81st-minute equaliser for Köln"
+period = 2
+start_s = 2090.0    # shot at 2104.6 s (80:04)
+end_s = 2110.0
+focus_team = "home"
+
+[[clip]]
+id = "musiala-winner"
+match_id = "J03WMX"
+title = "Musiala's 89th-minute winner for Bayern"
+period = 2
+start_s = 2577.0    # Sané's saved shot at 2579.4 s, Musiala's goal at 2595.3 s (88:15)
+end_s = 2600.0
+focus_team = "away"

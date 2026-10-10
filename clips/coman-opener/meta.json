@@ -1,0 +1,26 @@
+{
+  "clip_id": "coman-opener",
+  "match_id": "J03WMX",
+  "title": "Coman's 8th-minute opener for Bayern",
+  "period": 1,
+  "start_s": 455.0,
+  "end_s": 475.0,
+  "focus_team": "away",
+  "start_clock": "7:35",
+  "end_clock": "7:55",
+  "start_frame": 21375,
+  "end_frame": 21875,
+  "frame_rate": 25,
+  "teams": {
+    "home": {
+      "name": "1. FC Köln",
+      "formation": "4-2-3-1"
+    },
+    "away": {
+      "name": "FC Bayern München",
+      "formation": "4-2-3-1"
+    }
+  },
+  "coordinates": "metres, origin at pitch centre; focus_team attacks left to right",
+  "source": "Bassek, M., Rein, R., Weber, H. & Memmert, D. An integrated dataset of spatiotemporal and event data in elite soccer. Scientific Data 12, 195 (2025). CC-BY 4.0."
+}
