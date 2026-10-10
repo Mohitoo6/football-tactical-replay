@@ -34,7 +34,7 @@ def main() -> int:
             clip = build_clip(match, spec)
             folder = save_clip(clip, CLIPS_DIR)
             counts = players_per_team(clip.players)
-            problems = find_problems(clip.players, clip.ball)
+            problems = find_problems(clip.players, clip.ball, match.frame_rate)
             failed += bool(problems)
             print(f"  {spec.clip_id}: {clip.meta['start_clock']}-{clip.meta['end_clock']}, "
                   f"{len(clip.ball)} frames, players per team "

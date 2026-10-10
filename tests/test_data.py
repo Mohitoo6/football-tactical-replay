@@ -35,7 +35,7 @@ def make_match() -> Match:
         "ball_z": [0.0, 0.0, 0.0, 0.0],
         "H1_x": [-50.0, -50.0, -50.0, -50.0],
         "H1_y": [0.0, 0.0, 0.0, 0.0],
-        "A9_x": [10.0, 11.0, np.nan, 13.0],
+        "A9_x": [10.0, 10.2, np.nan, 10.6],  # jogging at 5 m/s
         "A9_y": [5.0, 5.0, np.nan, 5.0],
     })
     home = Team("T_H", "Home FC", "home", "4-4-2")
@@ -125,6 +125,9 @@ def test_find_problems_flags_bad_data():
 
     far_away = players.assign(x=players["x"].where(players["player_id"] != "A9", 70.0))
     assert any("outside the pitch" in p for p in find_problems(far_away, ball))
+
+    jump = players.assign(x=players["x"].where(~((players["player_id"] == "A9") & (players["frame"] == 10003)), 30.0))
+    assert any("faster than" in p for p in find_problems(jump, ball))  # 19.8 m in 0.08 s = 248 m/s
 
     gap = ball[ball["frame"] != 10001]
     assert any("not consecutive" in p for p in find_problems(players[players["frame"] != 10001], gap))
