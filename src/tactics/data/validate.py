@@ -10,9 +10,11 @@ HALF_WIDTH_M = 34.0
 # The Phase 0 spike saw up to ~4 m outside the lines over a full match.
 OUTSIDE_MARGIN_M = 5.0
 MAX_PLAYERS_PER_TEAM = 11
+# Top sprinters in football reach ~10 m/s (36 km/h); anything faster is a tracking jump.
+MAX_PLAYER_SPEED_MS = 12.0
 
 
-def find_problems(players: pd.DataFrame, ball: pd.DataFrame) -> list[str]:
+def find_problems(players: pd.DataFrame, ball: pd.DataFrame, frame_rate: float = 25.0) -> list[str]:
     """Return a list of human-readable problems. An empty list means the data looks clean."""
     missing = set(PLAYER_COLUMNS) - set(players.columns) | set(BALL_COLUMNS) - set(ball.columns)
     if missing:
@@ -35,6 +37,10 @@ def find_problems(players: pd.DataFrame, ball: pd.DataFrame) -> list[str]:
     if outside_ball.any():
         problems.append(f"ball in play but more than {OUTSIDE_MARGIN_M} m outside the pitch in {int(outside_ball.sum())} frames")
 
+    too_fast = player_speeds(players, frame_rate) > MAX_PLAYER_SPEED_MS
+    if too_fast.any():
+        problems.append(f"{int(too_fast.sum())} player moves faster than {MAX_PLAYER_SPEED_MS} m/s (tracking jumps)")
+
     if not set(players["frame"]).issubset(set(ball["frame"])):
         problems.append("some player frames have no ball row")
     if ball["frame"].diff().dropna().ne(1).any():
@@ -45,6 +51,15 @@ def find_problems(players: pd.DataFrame, ball: pd.DataFrame) -> list[str]:
 def players_per_team(players: pd.DataFrame) -> pd.DataFrame:
     """Min and max number of players on the pitch per team across all frames."""
     return players.groupby(["frame", "team"]).size().groupby("team").agg(["min", "max"])
+
+
+def player_speeds(players: pd.DataFrame, frame_rate: float) -> pd.Series:
+    """Each player's speed in m/s between consecutive appearances (NaN for the first)."""
+    ordered = players.sort_values(["player_id", "frame"])
+    grouped = ordered.groupby("player_id")
+    metres = (grouped["x"].diff() ** 2 + grouped["y"].diff() ** 2) ** 0.5
+    seconds = grouped["frame"].diff() / frame_rate
+    return (metres / seconds).reindex(players.index)
 
 
 def _outside_pitch(df: pd.DataFrame) -> pd.Series:
