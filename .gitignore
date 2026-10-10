@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Secrets
+.env
+
+# Raw datasets (large, downloaded locally; never committed)
+data/raw/
+
+# Scratch outputs
+outputs/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
