@@ -35,7 +35,8 @@ Entries marked *(pending spike)* still need evidence from a test run.
 ## D2. Preprocess raw data once into small per-clip files
 *2026-10-10*
 
-- **Decision:** `scripts/build_clips.py` parses the raw data offline and writes 15–20 s clips to `clips/<clip_id>.parquet`. The app and tests read only these clip files.
+- **Decision:** `scripts/build_clips.py` parses the raw data offline and writes 15–25 s clips defined in `clips/clips.toml`. Each clip is a folder: `clips/<clip_id>/players.parquet` (one row per player per frame), `ball.parquet` (one row per frame) and `meta.json` (teams, official formations, times, attribution). The app and tests read only these files.
+- **Evidence:** A 20 s clip at 25 fps is about 90–120 KB. Building all three clips takes ~30 s, almost all of it loading the raw match.
 - **Alternatives:** Parse the raw XML inside the app on demand; store the full match as parquet.
 - **Why:** The app starts fast, the free hosting needs no large files, and the raw data never leaves the developer's machine (`data/raw/` is git-ignored).
 - **Limitations:** Only pre-built clips are available in the app. To add a clip, you re-run the script locally.
@@ -43,10 +44,19 @@ Entries marked *(pending spike)* still need evidence from a test run.
 ## D3. Normalised coordinate system
 *2026-10-10 · verified: kloppy's `secondspectrum` coordinates match this system*
 
-- **Decision:** All positions are in metres with the pitch centre at (0, 0). Coordinates are flipped so that the team in possession always attacks left → right.
-- **Alternatives:** Keep each provider's native coordinates; normalise only per half.
-- **Why:** Teams switch ends at half-time. Without a fixed direction, "the line pushed up" would mean opposite things in each half, and the geometry and the LLM summary would both be wrong.
-- **Limitations:** During rapid possession changes, the "attacking direction" has to come from one rule. We will document that rule.
+- **Decision:** All positions are in metres with the pitch centre at (0, 0). Normalisation happens in two steps:
+  1. **Per match** (`load.orient_home_left_to_right`): for each period, if the home goalkeeper's average x is positive, rotate that period by 180°. After this step the home team attacks left → right in both halves.
+  2. **Per clip** (`normalize.orient_for_team`): each clip has a `focus_team`. If that team is away, rotate the whole clip by 180°, so the focus team always attacks left → right.
+- **Alternatives:**
+  - Keep each provider's native coordinates.
+  - Use kloppy's `transform(to_orientation=...)`.
+  - Flip per frame by ball possession. This was rejected because it makes the animation jump every time possession changes.
+- **Why:**
+  - Teams switch ends at half-time. Without a fixed direction, "the line pushed up" would mean opposite things in each half, and the geometry and the LLM summary would both be wrong.
+  - The goalkeeper rule is easy to explain and easy to test, and it needs no knowledge of kloppy's orientation semantics.
+  - We rotate by 180° instead of mirroring x, so a team's left wing stays on its left.
+- **Evidence:** In all three built clips, the focus team's keeper is on the left and the opponent's keeper is at the right goal (x ≈ 42–52). The ball reaches x ≈ 52.5–55 at the exact goal times from the event data. A deliberate bug in the rule makes 2 tests fail.
+- **Limitations:** The rule assumes the starting home goalkeeper stays in his half for most of each period, which held in the data we checked. Within a clip, the direction is fixed for the focus team even when the other team has the ball.
 
 ## D4. One OpenAI-compatible LLM client for all providers
 *2026-10-10*

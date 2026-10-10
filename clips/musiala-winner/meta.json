@@ -1,0 +1,26 @@
+{
+  "clip_id": "musiala-winner",
+  "match_id": "J03WMX",
+  "title": "Musiala's 89th-minute winner for Bayern",
+  "period": 2,
+  "start_s": 2577.0,
+  "end_s": 2600.0,
+  "focus_team": "away",
+  "start_clock": "87:57",
+  "end_clock": "88:20",
+  "start_frame": 164425,
+  "end_frame": 165000,
+  "frame_rate": 25,
+  "teams": {
+    "home": {
+      "name": "1. FC Köln",
+      "formation": "4-2-3-1"
+    },
+    "away": {
+      "name": "FC Bayern München",
+      "formation": "4-2-3-1"
+    }
+  },
+  "coordinates": "metres, origin at pitch centre; focus_team attacks left to right",
+  "source": "Bassek, M., Rein, R., Weber, H. & Memmert, D. An integrated dataset of spatiotemporal and event data in elite soccer. Scientific Data 12, 195 (2025). CC-BY 4.0."
+}
