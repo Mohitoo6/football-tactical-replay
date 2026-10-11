@@ -10,7 +10,7 @@ Each clip has a sheet in this folder with the explanation, the automatic groundi
 | coman-opener | gemini-3.6-flash | 207 | PASS | no | Claims checked by hand against the timeline (Bayern width 47 → 34 m, Köln 2–3 players behind the ball): correctly attributed. |
 | forster-opener | gemini-3.8-flash | 212 | PASS | yes (too long: 238 words (limit 220)) | Coach's view now reads 0 players behind the ball correctly (defence bypassed). First answer was rewritten for length by the repair step. |
 | ljubicic-equaliser | gemini-3.8-flash | 196 | PASS | no | Penalty with no open play before the shot: says there was too little open play to analyse instead of speculating. |
-| musiala-winner | gemini-3.8-flash | 230 | PASS | no | Sound coaching point: a deep, compact block (757 → 388 m²) protects the box but cedes control outside it. |
+| musiala-winner | gemini-3.8-flash | 230 | PASS | no | Sound coaching point: a deep, compact block (757 → 388 m²) denies space near goal but gives away territory around the box. Minor: "designed to" implies intent (rule 6). |
 
 How we got here (each step was found by reading real outputs):
 
