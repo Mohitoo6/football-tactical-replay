@@ -326,3 +326,33 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Overlays cannot be toggled in the app.
   - The videos add ~18 MB to the repo, and re-rendering adds more to git history.
   - Streamlit resolved to 1.59.1 rather than the newest release because of dependency constraints. It works, but this is noted.
+
+## D19. Phase 7 detector: stabilised background subtraction, not a pretrained deep detector
+*2026-10-11 · `scripts/spike_phase7_detect.py`*
+
+- **Data:** SoccerTrack top-view, from [kaggle.com/datasets/atomscott/soccertrack](https://www.kaggle.com/datasets/atomscott/soccertrack) (LGPL-3.0). DJI drone, 4K, 29.97 fps, 30 s segments. Ground truth is a 39×39 px box per player per frame (semi-automatic, from GNSS vests), and pitch keypoints map pixels to metres. We used one segment (`D_20220220_1_0030_0060`), kept in git-ignored `data/raw/soccertrack/`.
+- **Decision:** Detect players by:
+  1. aligning every frame to a reference frame (ECC, rotation + shift)
+  2. taking the per-pixel median of 60 aligned frames as an empty pitch
+  3. keeping player-sized blobs that differ from it inside the pitch (+2 m)
+
+  Positions go to metres through the keypoint homography.
+- **Alternatives:** RF-DETR (pretrained on COCO, Apache 2.0) on overlapping 640 px tiles; fine-tuning a detector on SoccerTrack boxes (needs a GPU).
+- **Evidence** (10 frames, 220 player instances, match radius 1.5 m):
+
+  | | Recall | Precision | Position error | Speed |
+  |---|---|---|---|---|
+  | Background subtraction, no stabilisation | 98.2% | 15.9% | 0.25 m | 0.03 s/frame |
+  | **Background subtraction, stabilised** | **98.6–99.1%** | **74.6–75.4%** | **0.23 m** | **0.03 s/frame** |
+  | RF-DETR base, tiled | 43.2% | 76.0% | 0.27 m | 3.0 s/frame |
+
+  - **The drone drifts:** up to ~50 px and 1.5° within 30 s, about 2 m on the pitch. Without stabilisation, pitch lines shift against the background and produce ~114 false detections per frame. Stabilisation removes almost all of them.
+  - **Remaining "false" detections are mostly real people:** the referee and staff near the touchlines, who are not in the 22-player ground truth.
+  - **RF-DETR misses most players:** COCO people are mostly seen from the side, not straight down.
+- **Why:** The classical method is 100× faster, needs no model download or GPU, and is more accurate in this setting. It is also easy to explain.
+- **Limitations:**
+  - It depends on a hovering camera, a mostly static scene and a long enough clip for the median. A player standing still for most of the clip could fade into the background.
+  - Players in contact merge into one blob.
+  - It does not detect the ball yet.
+  - The keypoint calibration matches frame 0 to within ~0.5 m near the corners.
+  - GNSS and video only agree to ~3 m (median, best offset ~1.2 s) in this segment, with player IDs numbered differently. So we evaluate against the annotation boxes, not GNSS.
