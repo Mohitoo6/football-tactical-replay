@@ -304,3 +304,25 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - The automatic check verifies that each number exists in the facts, not that it is attached to the right team or metric. That, and the soundness of coaching reasoning, need human review.
   - Interpretation quality varies by model (the Groq fallback speculated more).
   - With 20 calls/day, regenerating all clips more than a few times a day exhausts the primary model.
+
+## D18. The app plays pre-rendered videos instead of a Plotly animation
+*2026-10-11 · replaces the app half of D7*
+
+- **Decision:** The Streamlit app plays the MP4 that `render_clip.py --for-app` renders with the same `FramePainter` as the stills. Interactive parts are a chart of the shape metrics over time and the facts JSON. The app never calls an LLM. It shows the cached explanation and re-runs the grounding check live (no API needed).
+- **Alternatives:**
+  - Plotly animation frames (planned in D7). They are interactive (toggle overlays, hover), but mean a second drawing implementation, a new dependency and a risk of choppy playback.
+  - Rendering frames on demand with a slider. Too slow.
+- **Why:**
+  - One drawing code path, so app, README GIF and stills always match.
+  - Smooth 25 fps playback with standard video controls (pause, scrub).
+  - No new dependency.
+  - Free hosting needs nothing but the files in the repo.
+- **Evidence:**
+  - The videos are H.264 yuv420p, 900×684, 576 frames for the 23 s Musiala clip, which browsers play.
+  - The local server reports healthy.
+  - Streamlit's AppTest renders every clip with its explanation and a passing check.
+  - A fresh clone with no `.env` and no raw data passes all 69 tests.
+- **Limitations:**
+  - Overlays cannot be toggled in the app.
+  - The videos add ~18 MB to the repo, and re-rendering adds more to git history.
+  - Streamlit resolved to 1.59.1 rather than the newest release because of dependency constraints. It works, but this is noted.
