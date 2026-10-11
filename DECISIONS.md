@@ -91,13 +91,41 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Evidence (export half):** `scripts/render_clip.py` renders the 23 s Musiala clip to MP4 (576 frames, 25 fps, 23.04 s, 3.4 MB, ~28 s to render) and GIF (288 frames × 80 ms = 23.04 s, 2.2 MB). Both play in real time. The video frame at 17 s matches the Phase 2 still for the same moment. Stills and video share one drawing class (`FramePainter`), so they cannot drift apart.
 - **Limitations:** Plotly can get choppy with many frames and shapes. If so, we revisit this choice. MP4 export needs ffmpeg installed (GIF does not).
 
-## D8. Formation detection from average positions
-*2026-10-10*
+## D8. Formation detection by template matching
+*2026-10-11 · evaluated in `evals/formation_eval.md`*
 
-- **Decision:** Average each player's position over a time window, group players into lines by depth, and output a label such as `4-2-3-1`. Evaluate against the official DFL lineups.
-- **Alternatives:** Template matching against known formations; clustering-based role assignment (more complex).
-- **Why:** It is simple, explainable, and we can measure it against ground truth.
-- **Limitations:** It is reliable only in settled phases of play, and unreliable in transitions and set pieces. Teams also change shape in and out of possession, which an official lineup does not capture.
+- **Decision:**
+  1. Average each regular outfield player's position over a time window, oriented so the team attacks towards +x.
+  2. Rescale that shape and 11 formation templates (4-4-2, 4-3-3, 4-2-3-1, 4-1-4-1, …) to the same 0..1 box.
+  3. Pair players with template dots using the Hungarian algorithm (`scipy.optimize.linear_sum_assignment`).
+  4. Pick the template with the lowest mean squared distance. The pairing also gives each player a line: defence, midfield or attack.
+- **Alternatives:**
+  - Split players into lines at the largest depth gaps. This is simpler but cannot tell 4-2-3-1 from 4-5-1.
+  - Clustering-based role assignment. This is more powerful but much more complex.
+- **Why:**
+  - It uses the whole 2-D shape, not just depth.
+  - It needs no new dependency.
+  - It can be explained in one sentence: "match the team's average shape to the closest standard formation."
+  - It also produces the line assignment we use for the connection lines (D13).
+  - Every template is recovered from its own shuffled, noisy copy (unit test).
+- **Evidence (J03WMX, 5-min windows, ball in play):**
+
+  | Team (official 4-2-3-1) | Variant | Exact | Official in top 2 | Back-line count correct |
+  |---|---|---|---|---|
+  | Köln | out of possession | 58% | 79% | 100% |
+  | Köln | all frames | 40% | 70% | 80% |
+  | Bayern | out of possession | 10% | 20% | 60% |
+  | Bayern | in possession | 0% | 0% | 16% |
+
+- **Interpretation:**
+  - The detector is reliable for a settled defensive block. Köln defended for most of this match.
+  - It is poor for a team in possession. With the ball, Bayern looks like a 3-4-3 in 14 of 19 windows. This is consistent with a full-back pushing up, but the official data cannot confirm it.
+  - Most errors are close neighbours (4-1-4-1 vs 4-2-3-1 differ only in midfield).
+  - The official lineup is a nominal starting label, not the shape a team holds in every phase.
+- **Limitations:**
+  - It has been evaluated on one match only (2 teams). The other 6 open matches would give a better estimate.
+  - Templates assume evenly spaced lines.
+  - In the app we label the result "shape in clip", never as a fact about the team's formation.
 
 ## D9. Collaboration: one shared repo, honest co-credit, split ownership
 *2026-10-10*
@@ -144,3 +172,23 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Decision:** `validate.find_problems` flags any player moving faster than 12 m/s between consecutive frames.
 - **Why:** Top sprinters reach about 10 m/s, so anything faster is a tracking jump. In our clips the fastest player is Leroy Sané at 9.4 m/s, and 99% of moves are under 8 m/s.
 - **Limitations:** It catches teleport-style jumps but not small, plausible-looking errors.
+
+## D13. Shape overlays: outfield hull, formation-line links, per-frame metrics
+*2026-10-11*
+
+- **Decision:** For each team in each frame we draw the convex hull of the outfield players, and lines joining neighbouring team-mates (ordered across the pitch) within each formation line. The metrics shown under the pitch are:
+  - width (y range)
+  - depth (x range)
+  - hull area (m²)
+  - defensive line height (distance from own goal to the deepest outfield player)
+
+  Formation lines are assigned once per clip, from frames with the ball in play.
+- **Alternatives:**
+  - Delaunay "nearest neighbour" meshes. These are too busy to read.
+  - Re-assigning lines every frame. This makes the lines flicker.
+  - Including the goalkeeper. This distorts depth and area by 30+ m.
+- **Why:** It is TV-analysis style (back four, midfield line), it is stable over the clip, and every number comes from pure, tested functions in `geometry/`. The overlay tests check that the drawn hull, links and metrics equal those functions' outputs.
+- **Evidence:** Over the Musiala clip, Köln's block shrinks from 760 to 277 m², and its defensive line drops from 14 m to 5 m from goal by the time of the shot. Meanwhile Bayern's deepest defender moves from 39 m to 65 m from his own goal.
+- **Limitations:**
+  - Metrics are meaningless during dead-ball moments, e.g. a goal celebration ("line 77 m from goal"). Phase 5 summaries must use ball-in-play frames only.
+  - In attacking phases, a formation line can stretch the length of the pitch, which reads as a long diagonal.

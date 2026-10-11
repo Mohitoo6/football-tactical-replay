@@ -9,6 +9,8 @@ import pytest
 from PIL import Image
 
 from tactics.data.clips import Clip, load_clip
+from tactics.geometry.links import line_links
+from tactics.geometry.shape import hull_vertices, outfield, team_shape
 from tactics.viz.animate import animate_clip, save_animation
 from tactics.viz.pitch import BALL_OUT_TEXT, FramePainter, draw_frame, save_frame, team_label
 
@@ -59,6 +61,45 @@ def test_dead_ball_is_hidden_and_labelled(clip):
     (label,) = [t for t in ax.texts if t.get_text() == BALL_OUT_TEXT]
     assert label.get_visible()
     plt.close(ax.figure)
+
+
+def test_overlays_match_geometry_functions(clip):
+    frame = int(clip.ball["frame"].iloc[275])
+    painter = FramePainter(clip)
+    painter.show(frame)
+    players = clip.players[clip.players["frame"] == frame]
+
+    for side in ("home", "away"):
+        team = outfield(players[players["team"] == side])
+        expected_hull = hull_vertices(team[["x", "y"]].to_numpy())
+        drawn_hull = painter._hulls[side].get_xy()[:-1]  # matplotlib repeats the first corner to close it
+        np.testing.assert_allclose(drawn_hull, expected_hull)
+
+        expected_links = line_links(team, painter._formation_lines[side])
+        drawn_links = [tuple(map(tuple, s)) for s in painter._links[side].get_segments()]
+        np.testing.assert_allclose(drawn_links, expected_links)
+
+        metrics = team_shape(team[["x", "y"]].to_numpy(), painter.attacking_right(side))
+        assert f"width {metrics.width_m:.0f} m" in painter._metrics.get_text()
+    plt.close(painter.fig)
+
+
+def test_focus_team_attacks_right(clip):
+    painter = FramePainter(clip, overlays=False)
+    assert painter.attacking_right(clip.meta["focus_team"])
+    assert not painter.attacking_right("home" if clip.meta["focus_team"] == "away" else "away")
+    plt.close(painter.fig)
+
+
+def test_plain_mode_draws_no_overlays(clip):
+    plain, full = FramePainter(clip, overlays=False), FramePainter(clip)
+    for painter in (plain, full):
+        painter.show(int(clip.ball["frame"].iloc[0]))
+
+    assert len(full.ax.patches) == len(plain.ax.patches) + 2  # one hull per team
+    assert len(full.ax.collections) == len(plain.ax.collections) + 2  # one set of links per team
+    assert not any("width" in t.get_text() for t in plain.ax.texts)
+    plt.close("all")
 
 
 def test_draw_frame_rejects_unknown_frame(clip):

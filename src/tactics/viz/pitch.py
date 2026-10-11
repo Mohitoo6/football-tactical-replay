@@ -6,10 +6,16 @@ calls it for every frame, so both always look the same.
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.collections import LineCollection
+from matplotlib.patches import Polygon
 from mplsoccer import Pitch
 
 from tactics.data.clips import Clip, match_clock
+from tactics.geometry.formation import detect_formation
+from tactics.geometry.links import line_links
+from tactics.geometry.shape import hull_vertices, outfield, team_shape
 
 PITCH_LENGTH_M = 105
 PITCH_WIDTH_M = 68
@@ -43,19 +49,29 @@ def team_label(clip: Clip, side: str) -> str:
 
 
 class FramePainter:
-    """Draws a clip on a pitch; call `show(frame)` to display any frame."""
+    """Draws a clip on a pitch; call `show(frame)` to display any frame.
 
-    def __init__(self, clip: Clip, ax: Axes | None = None):
+    With `overlays=True` it also draws each team's shape (convex hull of the
+    outfield players), lines joining team-mates in the same formation line,
+    and the shape metrics under the pitch.
+    """
+
+    def __init__(self, clip: Clip, ax: Axes | None = None, overlays: bool = True):
         self.clip = clip
+        self.overlays = overlays
         pitch = make_pitch()
         if ax is None:
-            _, ax = pitch.draw(figsize=(10, 7))
+            fig, ax = pitch.draw(figsize=(10, 7.6))
+            fig.subplots_adjust(bottom=0.16)  # room for the legend and metrics under the pitch
         else:
             pitch.draw(ax=ax)
         self.ax = ax
         self.fig = ax.figure
         self._players_by_frame = dict(tuple(clip.players.groupby("frame")))
         self._ball = clip.ball.set_index("frame")
+
+        if overlays:
+            self._setup_overlays()
 
         self._dots = {
             side: ax.scatter([], [], s=PLAYER_SIZE, color=TEAM_COLOURS[side], edgecolors="black",
@@ -73,7 +89,47 @@ class FramePainter:
                                  fontsize=10, color="white", fontweight="bold", visible=False)
         self._title = ax.set_title("", fontsize=12)
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=3, frameon=False, fontsize=9)
-        ax.text(0.99, -0.07, DATA_CREDIT, transform=ax.transAxes, ha="right", fontsize=7, color="grey")
+        ax.text(0.99, -0.17 if overlays else -0.07, DATA_CREDIT, transform=ax.transAxes, ha="right",
+                fontsize=7, color="grey")
+
+    def attacking_right(self, side: str) -> bool:
+        """In a clip the focus team attacks left to right, so its opponent attacks right to left."""
+        return side == self.clip.meta["focus_team"]
+
+    def _setup_overlays(self) -> None:
+        # Formation lines are decided once per clip (from frames with the ball in play),
+        # so the connection lines do not flicker from frame to frame.
+        clip = self.clip
+        in_play = clip.players[clip.players["frame"].isin(clip.ball.loc[clip.ball["alive"], "frame"])]
+        self.detected_formation, self._formation_lines = {}, {}
+        self._hulls, self._links = {}, {}
+        for side in ("home", "away"):
+            result, positions = detect_formation(in_play, side, self.attacking_right(side))
+            self.detected_formation[side] = result.formation
+            self._formation_lines[side] = dict(zip(positions["player_id"], positions["line"]))
+            self._hulls[side] = self.ax.add_patch(Polygon(
+                np.zeros((1, 2)), closed=True, facecolor=TEAM_COLOURS[side], edgecolor=TEAM_COLOURS[side],
+                alpha=0.18, linewidth=1.5, zorder=2))
+            self._links[side] = self.ax.add_collection(LineCollection(
+                [], colors=TEAM_COLOURS[side], linewidths=1.8, alpha=0.9, zorder=2.5))
+        self._metrics = self.ax.text(0.5, -0.075, "", transform=self.ax.transAxes, ha="center", va="top",
+                                     fontsize=8.5, linespacing=1.5)
+
+    def _show_overlays(self, players) -> None:
+        texts = []
+        for side in ("home", "away"):
+            team = outfield(players[players["team"] == side])
+            points = team[["x", "y"]].to_numpy()
+            vertices = hull_vertices(points)
+            self._hulls[side].set_xy(vertices if len(vertices) else np.zeros((1, 2)))
+            self._links[side].set_segments(line_links(team, self._formation_lines[side]))
+            if len(points) >= 3:
+                m = team_shape(points, self.attacking_right(side))
+                texts.append(
+                    f"{self.clip.meta['teams'][side]['name']} (shape in clip: {self.detected_formation[side]})  "
+                    f"width {m.width_m:.0f} m · depth {m.depth_m:.0f} m · area {m.hull_area_m2:.0f} m² · "
+                    f"defensive line {m.line_height_m:.0f} m from goal")
+        self._metrics.set_text("\n".join(texts))
 
     def show(self, frame: int) -> None:
         """Move every marker and label to `frame`."""
@@ -88,6 +144,8 @@ class FramePainter:
             number.set_visible(player_id in on_pitch)
         for p in players.itertuples():
             self._numbers[p.player_id].set_position((p.x, p.y))
+        if self.overlays:
+            self._show_overlays(players)
 
         # While the ball is dead the provider freezes its last position, which can be
         # far from the real ball (DECISIONS.md, D11), so we hide it instead.
@@ -101,15 +159,15 @@ class FramePainter:
         self._title.set_text(f"{meta['title']}  |  {clock}\n{focus} attacking →")
 
 
-def draw_frame(clip: Clip, frame: int, ax: Axes | None = None) -> Axes:
+def draw_frame(clip: Clip, frame: int, ax: Axes | None = None, overlays: bool = True) -> Axes:
     """Draw both teams and the ball at `frame`. Returns the axes it drew on."""
-    painter = FramePainter(clip, ax)
+    painter = FramePainter(clip, ax, overlays)
     painter.show(frame)
     return painter.ax
 
 
-def save_frame(clip: Clip, frame: int, path) -> None:
+def save_frame(clip: Clip, frame: int, path, overlays: bool = True) -> None:
     """Draw `frame` and save it as an image file."""
-    ax = draw_frame(clip, frame)
+    ax = draw_frame(clip, frame, overlays=overlays)
     ax.figure.savefig(path, dpi=120, bbox_inches="tight")
     plt.close(ax.figure)

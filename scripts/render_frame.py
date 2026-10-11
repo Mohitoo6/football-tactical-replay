@@ -23,6 +23,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("clip_id")
     parser.add_argument("--time", type=float, help="seconds since the start of the period")
+    parser.add_argument("--plain", action="store_true", help="no shape overlays")
     args = parser.parse_args()
 
     clip = load_clip(ROOT / "clips" / args.clip_id)
@@ -35,7 +36,7 @@ def main() -> None:
     out_dir = ROOT / "outputs"
     out_dir.mkdir(exist_ok=True)
     out = out_dir / f"{args.clip_id}_{frame}.png"
-    save_frame(clip, frame, out)
+    save_frame(clip, frame, out, overlays=not args.plain)
     print(f"saved {out.relative_to(ROOT)}")
 
 

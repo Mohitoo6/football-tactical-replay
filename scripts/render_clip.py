@@ -24,6 +24,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("clip_id")
     parser.add_argument("--no-gif", action="store_true", help="only render the MP4")
+    parser.add_argument("--plain", action="store_true", help="no shape overlays")
     args = parser.parse_args()
 
     clip = load_clip(ROOT / "clips" / args.clip_id)
@@ -35,7 +36,7 @@ def main() -> None:
         jobs.append((out_dir / f"{args.clip_id}.gif", 2, 60))
     for path, step, dpi in jobs:
         start = time.perf_counter()
-        save_animation(clip, path, step=step, dpi=dpi)
+        save_animation(clip, path, step=step, dpi=dpi, overlays=not args.plain)
         size_mb = path.stat().st_size / 1e6
         print(f"saved {path.relative_to(ROOT)} ({size_mb:.1f} MB) in {time.perf_counter() - start:.0f} s")
 

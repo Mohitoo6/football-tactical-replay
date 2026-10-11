@@ -21,7 +21,7 @@ def animate_clip(clip: Clip, step: int = 1, painter: FramePainter | None = None)
     return FuncAnimation(painter.fig, painter.show, frames=frames, interval=interval_ms, blit=False)
 
 
-def save_animation(clip: Clip, path: Path, step: int = 1, dpi: int = 100) -> Path:
+def save_animation(clip: Clip, path: Path, step: int = 1, dpi: int = 100, overlays: bool = True) -> Path:
     """Render the clip to `path`. The format follows the extension: .mp4 (needs ffmpeg) or .gif."""
     path = Path(path)
     fps = clip.meta["frame_rate"] / step
@@ -32,7 +32,7 @@ def save_animation(clip: Clip, path: Path, step: int = 1, dpi: int = 100) -> Pat
     else:
         raise ValueError(f"unsupported format {path.suffix!r}; use .mp4 or .gif")
 
-    painter = FramePainter(clip)
+    painter = FramePainter(clip, overlays=overlays)
     animate_clip(clip, step, painter).save(path, writer=writer, dpi=dpi)
     plt.close(painter.fig)
     return path
