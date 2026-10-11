@@ -376,3 +376,32 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - It needs the whole outline visible, a near top-down view and a known pitch size.
   - It cannot tell the two ends apart: the result is correct up to mirror symmetry. On one of three segments the best mirror differed, so a clip must set its attacking direction.
   - It has only been tested on one ground.
+
+## D21. Tracking, teams and ball from top-view video
+*2026-10-11 · `scripts/video_to_tracks.py`, 3 SoccerTrack segments × 900 frames*
+
+- **Decision:**
+  - **Tracking:** our own point tracker in pitch metres. It predicts each track forward from its velocity, and matches tracks to detections with the Hungarian algorithm on distance + 2 × shirt-colour difference. Offline stitching then joins tracks that break and restart nearby in a similar colour.
+  - **Teams:** 3-cluster k-means on each track's average shirt colour; the two biggest clusters are the teams. Goalkeepers are long tracks whose colour is far from their cluster. A keeper joins the team whose outfield player stands deepest towards that goal in most frames (offside logic).
+  - **Ball:** small white blobs, followed forwards and backwards in time with a 35 m/s speed limit. Frames where the passes disagree, or the ball is hidden, are left empty.
+- **Alternatives:**
+  - supervision's ByteTrack. It is deprecated in supervision 0.28+ and was run as a baseline.
+  - Adding the `trackers` package.
+  - Deep re-identification models (need a GPU and training data).
+- **Evidence:**
+
+  | Segment | Coverage | Identity purity (ours / ByteTrack) | ID switches (ours / ByteTrack) | Team correct | Ball correct, all frames |
+  |---|---|---|---|---|---|
+  | 0:30–1:00 | 98.5% | 95.2% / 88.5% | 26 / 26 | 94.4% | 70.0% |
+  | 5:00–5:30 | 99.6% | 99.6% / 99.5% | 18 / 7 | 99.6% | 40.7% |
+  | 10:00–10:30 | 98.3% | 96.3% / 96.1% | 28 / 15 | 98.9% | 69.9% |
+
+  - **Shirt colour in the cost:** cut ID switches from 33 to 27 and raised purity from 88% to 92% on segment 1. 74% of switches happened with another player within 2 m. Stitching then raised purity to 95% and cut tracks from 183 to 110.
+  - **Team errors:** before the keeper rule, 91% of team errors came from the two goalkeepers (yellow shirts). A simpler "team leaning towards that goal" rule fixed segment 1 but failed when a team pressed high. The offside rule averages 97.6% across segments. We stopped after two attempts.
+  - **Ball:** following both ways reached 70% against a ceiling of 71% (frames where any blob is near the ball). When no blob is near the ball, a player is within 1 m of it 90% of the time: it is at someone's feet, merged with their blob. Positions we do give are correct (within 1 m) 91–99% of the time.
+- **Limitations:**
+  - ByteTrack has fewer ID switches on two segments; ours keeps a player's identity longer (purity).
+  - Same-team players crossing can still swap.
+  - The keeper's team is wrong for one keeper in segment 1. Options: combine several cues, let the user confirm in the app, or give shirt colours as input.
+  - The ball is unknown in 30–60% of frames, mostly when it is at a player's feet. Segment 2 is the weakest (41%).
+  - All three segments are from one match on one ground.

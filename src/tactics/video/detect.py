@@ -16,6 +16,7 @@ Detections are an (n, 2) array of pixel centres (x, y) in the full frame.
 
 import cv2
 import numpy as np
+import pandas as pd
 
 from tactics.video.calibration import PitchCalibration
 
@@ -112,10 +113,25 @@ class BackgroundDetector:
         return cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=2)  # join a player's parts
 
     def detect(self, frame: np.ndarray) -> np.ndarray:
-        count, _, stats, centroids = cv2.connectedComponentsWithStats(self.foreground(frame))
+        """Centres (x, y) of player-sized blobs, in full-resolution pixels."""
+        blobs = self.detect_blobs(frame)
+        return blobs[["x", "y"]].to_numpy()
+
+    def detect_blobs(self, frame: np.ndarray, min_area: int | None = None, max_area: int | None = None) -> pd.DataFrame:
+        """Blobs within an area range (default: player-sized): centre x, y (full-resolution px), size, mean colour."""
+        min_area = self.min_area if min_area is None else min_area
+        max_area = self.max_area if max_area is None else max_area
+        count, labels, stats, centroids = cv2.connectedComponentsWithStats(self.foreground(frame))
         areas = stats[1:, cv2.CC_STAT_AREA]  # row 0 is the background
-        keep = (areas >= self.min_area) & (areas <= self.max_area)
-        return centroids[1:][keep] / self.scale
+        keep = np.flatnonzero((areas >= min_area) & (areas <= max_area)) + 1
+        small = self._resize(frame)
+        colours = [small[labels == label].mean(axis=0) for label in keep]  # the shirt dominates from above
+        return pd.DataFrame({
+            "x": centroids[keep, 0] / self.scale,
+            "y": centroids[keep, 1] / self.scale,
+            "area_px": stats[keep, cv2.CC_STAT_AREA] / self.scale**2,
+            "b": [c[0] for c in colours], "g": [c[1] for c in colours], "r": [c[2] for c in colours],
+        })
 
 
 class RFDetrDetector:

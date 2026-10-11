@@ -137,3 +137,65 @@ def test_auto_calibration_finds_the_outline_not_the_text():
     calibration = auto_calibrate(image)
     centre = calibration.to_pitch(np.array([[60 + 52.5 * 4, 40 + 34 * 4]]))
     np.testing.assert_allclose(np.abs(centre), [[0, 0]], atol=0.5)  # the centre spot maps to (0, 0)
+
+
+# --- tracking, teams and ball (synthetic, no video needed) --------------------
+
+import pandas as pd  # noqa: E402
+
+from tactics.video.ball import follow_ball, follow_ball_both_ways  # noqa: E402
+from tactics.video.track import PointTracker, assign_teams, stitch_tracks, track_points  # noqa: E402
+
+WHITE_SHIRT, BLUE_SHIRT = (230, 230, 230), (200, 120, 60)  # BGR
+
+
+def crossing_players(frames: int = 40) -> pd.DataFrame:
+    """Two players of different teams run past each other, 0.4 m apart at the closest point."""
+    rows = []
+    for f in range(frames):
+        t = f / (frames - 1)
+        rows.append({"frame": f, "x_m": -4 + 8 * t, "y_m": 0.2, "who": "white", **dict(zip("bgr", WHITE_SHIRT))})
+        rows.append({"frame": f, "x_m": 4 - 8 * t, "y_m": -0.2, "who": "blue", **dict(zip("bgr", BLUE_SHIRT))})
+    return pd.DataFrame(rows)
+
+
+def test_colour_keeps_identities_when_opponents_cross():
+    tracks = track_points(crossing_players(), PointTracker(max_distance_m=1.5, colour_weight=2.0))
+    assert tracks.groupby("who")["track_id"].nunique().tolist() == [1, 1]  # one id each, all the way
+    assert tracks["track_id"].nunique() == 2
+
+
+def test_stitching_joins_a_broken_track():
+    one_player = pd.DataFrame({"frame": range(30), "x_m": np.linspace(0, 3, 30), "y_m": 0.0,
+                               "b": 230, "g": 230, "r": 230})
+    broken = one_player.assign(track_id=np.where(one_player["frame"] < 15, 7, 8))
+    assert stitch_tracks(broken)["track_id"].nunique() == 1
+
+
+def test_assign_teams_splits_by_shirt_colour():
+    rows = []
+    for track_id, shirt in enumerate([WHITE_SHIRT] * 5 + [BLUE_SHIRT] * 5 + [(20, 220, 240)]):  # 5 + 5 + a yellow referee
+        for f in range(60):
+            rows.append({"frame": f, "track_id": track_id, **dict(zip("bgr", shirt))})
+    teams = assign_teams(pd.DataFrame(rows))
+    assert teams.iloc[:5].nunique() == 1 and teams.iloc[5:10].nunique() == 1
+    assert teams.iloc[0] != teams.iloc[5] and set(teams.iloc[:10]) == {"A", "B"}
+    assert teams.iloc[10] == "other"
+
+
+def test_ball_follower_ignores_far_noise_and_does_not_invent_hidden_frames():
+    rows = [{"frame": f, "x_m": 0.3 * f, "y_m": 0.0} for f in range(20) if not 8 <= f < 12]  # hidden for 4 frames
+    rows += [{"frame": f, "x_m": 30.0, "y_m": 20.0} for f in range(5, 20)]  # a far-away white spot
+    ball = follow_ball(pd.DataFrame(rows), fps=30.0)
+    assert set(ball["frame"]) == set(range(20)) - set(range(8, 12))  # no positions made up while hidden
+    assert ball["x_m"].max() < 6
+
+
+def test_ball_both_ways_fills_frames_before_a_restart():
+    # Two candidates (ambiguous) in the first 5 frames, then only the ball: forward misses the start.
+    rows = [{"frame": f, "x_m": 0.3 * f, "y_m": 0.0} for f in range(20)]
+    rows += [{"frame": f, "x_m": 10.0 + 0.1 * f, "y_m": 5.0} for f in range(5)]
+    candidates = pd.DataFrame(rows)
+    assert follow_ball(candidates, 30.0)["frame"].min() == 5
+    both = follow_ball_both_ways(candidates, 30.0)
+    assert both["frame"].min() == 0 and both.loc[both["frame"] == 0, "x_m"].iloc[0] == 0.0
