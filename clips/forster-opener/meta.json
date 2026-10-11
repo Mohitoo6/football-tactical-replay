@@ -1,0 +1,26 @@
+{
+  "clip_id": "forster-opener",
+  "match_id": "J03WN1",
+  "title": "Förster's 19th-minute opener for Bochum against 10-man Leverkusen",
+  "period": 1,
+  "start_s": 1068.6,
+  "end_s": 1088.6,
+  "focus_team": "home",
+  "start_clock": "17:48",
+  "end_clock": "18:08",
+  "start_frame": 36715,
+  "end_frame": 37215,
+  "frame_rate": 25,
+  "teams": {
+    "home": {
+      "name": "VfL Bochum 1848",
+      "formation": "4-3-3 Double-6"
+    },
+    "away": {
+      "name": "Bayer 04 Leverkusen",
+      "formation": "4-2-3-1"
+    }
+  },
+  "coordinates": "metres, origin at pitch centre; focus_team attacks left to right",
+  "source": "Bassek, M., Rein, R., Weber, H. & Memmert, D. An integrated dataset of spatiotemporal and event data in elite soccer. Scientific Data 12, 195 (2025). CC-BY 4.0."
+}
