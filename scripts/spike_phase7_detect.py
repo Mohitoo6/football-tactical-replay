@@ -1,7 +1,7 @@
 """Phase 7 spike: which detector finds players best in top-view drone video?
 
-    uv run --group video python scripts/spike_phase7_detect.py            # both approaches
-    uv run --group video python scripts/spike_phase7_detect.py background # only approach B
+    uv run --group video python scripts/spike_phase7_detect.py                       # both approaches, first segment
+    uv run --group video python scripts/spike_phase7_detect.py background 0300_0330  # approach B on another segment
 
 Uses one 30 s SoccerTrack top-view segment in data/raw/soccertrack/ and its
 annotation boxes as ground truth (the box centre is the player's position).
@@ -19,20 +19,22 @@ import numpy as np
 from tactics.video.calibration import PitchCalibration
 from tactics.video.detect import BackgroundDetector, RFDetrDetector, Stabilizer, pitch_mask, read_frames
 from tactics.video.evaluate import combine, match
+from tactics.video.pitch_lines import auto_calibrate
 from tactics.video.soccertrack import load_boxes
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "raw" / "soccertrack"
-SEGMENT = "D_20220220_1_0030_0060"
+DEFAULT_SEGMENT = "0030_0060"
 EVAL_FRAMES = list(range(0, 900, 90))  # 10 frames, 3 s apart (0-based video indices)
 BACKGROUND_FRAMES = list(range(0, 900, 15))  # 60 frames spread over the clip
 MATCH_RADIUS_M = 1.5
 
 
-def main(approaches: list[str]) -> None:
+def main(approaches: list[str], segment: str) -> None:
+    segment = f"D_20220220_1_{segment}"
     calibration = PitchCalibration.from_file(DATA / "drone_keypoints.json")
-    video = DATA / "top_view" / "videos" / f"{SEGMENT}.mp4"
-    truth = load_boxes(DATA / "top_view" / "annotations" / f"{SEGMENT}.csv")
+    video = DATA / "top_view" / "videos" / f"{segment}.mp4"
+    truth = load_boxes(DATA / "top_view" / "annotations" / f"{segment}.csv")
     truth = truth[truth["team"] != "BALL"]
 
     frames = read_frames(video, EVAL_FRAMES)
@@ -46,6 +48,7 @@ def main(approaches: list[str]) -> None:
         background = [Stabilizer.align(f, stabilizer.warp(f)) for f in read_frames(video, BACKGROUND_FRAMES).values()]
         detectors["background"] = BackgroundDetector(background, mask)
         print(f"background model from {len(BACKGROUND_FRAMES)} aligned frames in {time.perf_counter() - start:.1f} s")
+        auto = auto_calibrate(detectors["background"].background, image_scale=detectors["background"].scale)
     if "rfdetr" in approaches:
         detectors["rfdetr"] = RFDetrDetector()
 
@@ -65,12 +68,37 @@ def main(approaches: list[str]) -> None:
             results.append(match(calibration.to_pitch(found) if len(found) else found,
                                  calibration.to_pitch(real), MATCH_RADIUS_M))
             if index == EVAL_FRAMES[6]:  # frame 540: the largest drift
-                save_picture(Stabilizer.align(frame, warps[index]), found, real, ROOT / "outputs" / f"phase7_{name}.png")
+                save_picture(Stabilizer.align(frame, warps[index]), found, real, ROOT / "outputs" / f"phase7_{name}_{segment[-9:]}.png")
+        if name == "background":
+            report_auto_calibration(auto, calibration, detector, frames, warps, truth, mask)
         total = combine(results)
-        print(f"{name:10} recall {total.recall:6.1%}  precision {total.precision:6.1%}  "
+        print(f"{segment[-9:]} {name:10} recall {total.recall:6.1%}  precision {total.precision:6.1%}  "
               f"position error mean {total.errors.mean():.2f} m (p90 {np.percentile(total.errors, 90):.2f} m)  "
               f"{np.mean(seconds):.2f} s/frame  [{total.true_positives} found, {total.false_negatives} missed, "
               f"{total.false_positives} false, {len(frames)} frames]")
+
+
+def report_auto_calibration(auto, reference, detector, frames, warps, truth, mask) -> None:
+    """Raw-footage test: positions from the automatic calibration vs ground truth from the dataset's calibration.
+
+    The outline cannot tell the goals apart, so the auto result is compared under the best mirror.
+    """
+    found_m, truth_m = [], []
+    for index, frame in frames.items():
+        found = detector.detect(Stabilizer.align(frame, warps[index]))
+        found = found[mask[found[:, 1].astype(int).clip(0, mask.shape[0] - 1), found[:, 0].astype(int).clip(0, mask.shape[1] - 1)] > 0]
+        real = Stabilizer.to_reference(truth[truth["frame"] == index + 1][["cx", "cy"]].to_numpy(), warps[index])
+        found_m.append(auto.to_pitch(found))
+        truth_m.append(reference.to_pitch(real))
+    best = None
+    for mirror in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+        total = combine([match(f * mirror, t, MATCH_RADIUS_M) for f, t in zip(found_m, truth_m)])
+        if best is None or total.true_positives > best[1].true_positives:
+            best = (mirror, total)
+    mirror, total = best
+    print(f"           AUTO calibration (no dataset points; mirror {mirror}): recall {total.recall:6.1%}  "
+          f"precision {total.precision:6.1%}  position error mean {total.errors.mean():.2f} m "
+          f"(p90 {np.percentile(total.errors, 90):.2f} m)")
 
 
 def save_picture(frame: np.ndarray, found: np.ndarray, real: np.ndarray, path: Path) -> None:
@@ -85,4 +113,8 @@ def save_picture(frame: np.ndarray, found: np.ndarray, real: np.ndarray, path: P
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or ["background", "rfdetr"])
+    args = sys.argv[1:]
+    segments = [a for a in args if a[:1].isdigit()] or [DEFAULT_SEGMENT]
+    names = [a for a in args if not a[:1].isdigit()] or ["background", "rfdetr"]
+    for seg in segments:
+        main(names, seg)

@@ -357,3 +357,22 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - It does not detect the ball yet.
   - The keypoint calibration matches frame 0 to within ~0.5 m near the corners.
   - GNSS and video only agree to ~3 m (median, best offset ~1.2 s) in this segment, with player IDs numbered differently. So we evaluate against the annotation boxes, not GNSS.
+
+## D20. Automatic pitch calibration from the painted lines
+*2026-10-11*
+
+- **Decision:** For raw footage with no hand-marked points, `video/pitch_lines.py` calibrates from the empty-pitch (median) image:
+  1. green field mask
+  2. white line pixels
+  3. long Hough segments in two directions
+  4. the outermost lines that run at least 60% as far as the longest line in their direction (touchlines and goal lines)
+  5. four corner intersections → homography to a 105 × 68 m pitch
+- **Alternatives:** Hand-mark four corners per video (reliable, but it is a manual step); a trained pitch-keypoint model (needs labelled data and a GPU).
+- **Evidence:**
+  - Against SoccerTrack's 65 hand-made keypoints: mean 0.45 m, median 0.36 m.
+  - End to end on 3 segments, using **no dataset calibration at all**: player recall 98.6–99.1% and mean position error **0.43–0.55 m** (p90 ≤ 0.80 m), compared with 0.11–0.23 m using the dataset's calibration. Ground truth itself comes from the dataset calibration, so part of the gap is its error.
+  - The first version picked the painted text "IMAGINE THE FUTURE" below the touchline as the boundary (1.78 m mean error). The 60% span rule fixed it (unit-tested on a synthetic pitch with text).
+- **Limitations:**
+  - It needs the whole outline visible, a near top-down view and a known pitch size.
+  - It cannot tell the two ends apart: the result is correct up to mirror symmetry. On one of three segments the best mirror differed, so a clip must set its attacking direction.
+  - It has only been tested on one ground.

@@ -107,3 +107,33 @@ def test_load_boxes_reads_the_three_row_header(tmp_path):
     player = boxes[boxes["team"] == "0"].iloc[0]
     assert (player["player_id"], player["cx"], player["cy"]) == ("7", 119.5, 219.5)
     assert set(boxes["team"]) == {"0", "BALL"}
+
+
+def drawn_pitch(scale: float = 4.0, offset=(60, 40)) -> tuple[np.ndarray, np.ndarray]:
+    """A synthetic top-view pitch (105 x 68 m at `scale` px/m) with outline, halfway line, boxes and some text."""
+    width, height = int(105 * scale + 2 * offset[0]), int(68 * scale + 2 * offset[1])
+    image = np.full((height, width, 3), GRASS, dtype=np.uint8)
+    def px(x, y):
+        return (int(round(offset[0] + x * scale)), int(round(offset[1] + y * scale)))
+    white = (255, 255, 255)
+    cv2.rectangle(image, px(0, 0), px(105, 68), white, 2)
+    cv2.line(image, px(52.5, 0), px(52.5, 68), white, 2)
+    cv2.rectangle(image, px(0, 13.84), px(16.5, 54.16), white, 2)
+    cv2.rectangle(image, px(88.5, 13.84), px(105, 54.16), white, 2)
+    cv2.putText(image, "IMAGINE THE FUTURE", px(35, 72.5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, white, 2)  # text below the touchline
+    corners = np.array([px(0, 0), px(105, 0), px(105, 68), px(0, 68)], dtype=float)
+    return image, corners
+
+
+def test_auto_calibration_finds_the_outline_not_the_text():
+    from tactics.video.pitch_lines import auto_calibrate, pitch_corners
+
+    image, true_corners = drawn_pitch()
+    found = pitch_corners(image)
+    # Same four corners (order may differ); each within 2 px.
+    distances = np.linalg.norm(found[:, None] - true_corners[None], axis=2)
+    assert distances.min(axis=1).max() < 2.0
+
+    calibration = auto_calibrate(image)
+    centre = calibration.to_pitch(np.array([[60 + 52.5 * 4, 40 + 34 * 4]]))
+    np.testing.assert_allclose(np.abs(centre), [[0, 0]], atol=0.5)  # the centre spot maps to (0, 0)
