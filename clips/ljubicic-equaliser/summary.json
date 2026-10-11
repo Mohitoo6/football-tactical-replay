@@ -4,7 +4,7 @@
   "from_clock": "79:50",
   "to_clock": "80:10",
   "clip_seconds": 20,
-  "seconds_ball_in_play": 1
+  "seconds_ball_in_play": 0
  },
  "teams": [
   {
@@ -30,29 +30,15 @@
   }
  ],
  "ball_carriers": [],
- "timeline": [
-  {
-   "clock": "80:04",
-   "1. FC Köln": {
-    "width_m": 21,
-    "depth_m": 42,
-    "area_m2": 557,
-    "back_line_m": 62
-   },
-   "FC Bayern München": {
-    "width_m": 21,
-    "depth_m": 35,
-    "area_m2": 325,
-    "back_line_m": 16
-   }
-  }
- ],
+ "timeline": [],
  "notable_changes": [],
  "definitions": {
   "width_m": "distance between the team's widest outfield players across the pitch",
   "depth_m": "distance between the team's deepest and most advanced outfield players",
   "area_m2": "area of the shape around all outfield players (smaller = more compact)",
   "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "players_behind_ball": "outfield players between the ball and their own goal (average over the window); 0 means the ball is closer to their goal than all of them, i.e. the defence has been bypassed",
+  "ball_zone": "where the ball mostly was in the window, seen from the focus team attacking towards the opponent's goal",
   "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
  }
 }

@@ -59,122 +59,128 @@
  "timeline": [
   {
    "clock": "7:35",
+   "ball_zone": "defensive third, centre",
    "1. FC Köln": {
     "width_m": 39,
     "depth_m": 36,
     "area_m2": 1081,
-    "back_line_m": 58
+    "back_line_m": 58,
+    "players_behind_ball": 7
    },
    "FC Bayern München": {
     "width_m": 47,
     "depth_m": 27,
     "area_m2": 949,
-    "back_line_m": 17
+    "back_line_m": 17,
+    "players_behind_ball": 5
    }
   },
   {
    "clock": "7:37",
+   "ball_zone": "middle third, right",
    "1. FC Köln": {
     "width_m": 38,
     "depth_m": 33,
     "area_m2": 954,
-    "back_line_m": 55
+    "back_line_m": 55,
+    "players_behind_ball": 5
    },
    "FC Bayern München": {
     "width_m": 49,
     "depth_m": 27,
     "area_m2": 910,
-    "back_line_m": 22
+    "back_line_m": 22,
+    "players_behind_ball": 6
    }
   },
   {
    "clock": "7:39",
+   "ball_zone": "middle third, right",
    "1. FC Köln": {
     "width_m": 40,
     "depth_m": 30,
     "area_m2": 897,
-    "back_line_m": 50
+    "back_line_m": 50,
+    "players_behind_ball": 3
    },
    "FC Bayern München": {
     "width_m": 49,
     "depth_m": 29,
     "area_m2": 959,
-    "back_line_m": 28
+    "back_line_m": 28,
+    "players_behind_ball": 7
    }
   },
   {
    "clock": "7:41",
+   "ball_zone": "middle third, right",
    "1. FC Köln": {
     "width_m": 36,
     "depth_m": 34,
     "area_m2": 866,
-    "back_line_m": 42
+    "back_line_m": 42,
+    "players_behind_ball": 4
    },
    "FC Bayern München": {
     "width_m": 47,
     "depth_m": 33,
     "area_m2": 1073,
-    "back_line_m": 35
+    "back_line_m": 35,
+    "players_behind_ball": 7
    }
   },
   {
    "clock": "7:43",
+   "ball_zone": "middle third, centre",
    "1. FC Köln": {
     "width_m": 33,
     "depth_m": 39,
     "area_m2": 871,
-    "back_line_m": 32
+    "back_line_m": 32,
+    "players_behind_ball": 4
    },
    "FC Bayern München": {
     "width_m": 41,
     "depth_m": 39,
     "area_m2": 1226,
-    "back_line_m": 42
+    "back_line_m": 42,
+    "players_behind_ball": 6
    }
   },
   {
    "clock": "7:45",
+   "ball_zone": "attacking third, left",
    "1. FC Köln": {
     "width_m": 33,
     "depth_m": 42,
     "area_m2": 863,
-    "back_line_m": 22
+    "back_line_m": 22,
+    "players_behind_ball": 2
    },
    "FC Bayern München": {
     "width_m": 38,
     "depth_m": 43,
     "area_m2": 1252,
-    "back_line_m": 49
+    "back_line_m": 49,
+    "players_behind_ball": 8
    }
   },
   {
    "clock": "7:47",
+   "ball_zone": "attacking third, left",
    "1. FC Köln": {
     "width_m": 33,
     "depth_m": 45,
-    "area_m2": 831,
-    "back_line_m": 13
+    "area_m2": 839,
+    "back_line_m": 13,
+    "players_behind_ball": 3
    },
    "FC Bayern München": {
     "width_m": 34,
     "depth_m": 44,
-    "area_m2": 1101,
-    "back_line_m": 55
-   }
-  },
-  {
-   "clock": "7:49",
-   "1. FC Köln": {
-    "width_m": 30,
-    "depth_m": 46,
-    "area_m2": 754,
-    "back_line_m": 11
-   },
-   "FC Bayern München": {
-    "width_m": 31,
-    "depth_m": 46,
-    "area_m2": 1019,
-    "back_line_m": 57
+    "area_m2": 1108,
+    "back_line_m": 54,
+    "players_behind_ball": 8
    }
   }
  ],
@@ -183,57 +189,65 @@
    "team": "FC Bayern München",
    "metric": "width_m",
    "from": 47,
-   "to": 31,
+   "to": 34,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   },
   {
    "team": "FC Bayern München",
    "metric": "depth_m",
    "from": 27,
-   "to": 46,
+   "to": 44,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
+  },
+  {
+   "team": "FC Bayern München",
+   "metric": "area_m2",
+   "from": 949,
+   "to": 1108,
+   "from_clock": "7:35",
+   "to_clock": "7:47"
   },
   {
    "team": "FC Bayern München",
    "metric": "back_line_m",
    "from": 17,
-   "to": 57,
+   "to": 54,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   },
   {
    "team": "1. FC Köln",
    "metric": "width_m",
    "from": 39,
-   "to": 30,
+   "to": 33,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   },
   {
    "team": "1. FC Köln",
    "metric": "depth_m",
    "from": 36,
-   "to": 46,
+   "to": 45,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   },
   {
    "team": "1. FC Köln",
    "metric": "area_m2",
    "from": 1081,
-   "to": 754,
+   "to": 839,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   },
   {
    "team": "1. FC Köln",
    "metric": "back_line_m",
    "from": 58,
-   "to": 11,
+   "to": 13,
    "from_clock": "7:35",
-   "to_clock": "7:49"
+   "to_clock": "7:47"
   }
  ],
  "definitions": {
@@ -241,6 +255,8 @@
   "depth_m": "distance between the team's deepest and most advanced outfield players",
   "area_m2": "area of the shape around all outfield players (smaller = more compact)",
   "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "players_behind_ball": "outfield players between the ball and their own goal (average over the window); 0 means the ball is closer to their goal than all of them, i.e. the defence has been bypassed",
+  "ball_zone": "where the ball mostly was in the window, seen from the focus team attacking towards the opponent's goal",
   "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
  }
 }

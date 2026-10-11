@@ -1,8 +1,9 @@
 {
-  "cache_key": "f918127fd74f74a68237a8bdc1eea81017e9a731eb8c7d540d3cb57721579b70",
-  "prompt_version": "v1",
+  "cache_key": "08800ae060b22301e7132dee67ca0e089380249463c01a4610efeef2475a78e1",
+  "prompt_version": "v3",
   "provider": "llm",
   "model": "gemini-3.8-flash",
-  "created_utc": "2026-10-11T06:32:11+00:00",
-  "text": "In this clip, FC Bayern München showed a 4-1-4-1 shape, while 1. FC Köln showed a 3-5-2 shape. The ball moved from Leroy Sané to M. Schwäbe, then Jeff Chabot, Joshua Kimmich, Joao Cancelo, Serge Gnabry, and finally J. Musiala, who scored a goal at 88:15. During the move, FC Bayern München pushed their back line—the average distance of the 4 deepest outfield players from their own goal line—forward from 42 meters to 75 meters. Meanwhile, 1. FC Köln retreated closer to their goal, shifting their back line from 25 meters to 10 meters. Their overall area, which measures the surface covered by outfield players to show team compactness, shrunk from 757 square meters down to 301 square meters.\n\nKey numbers:\n• FC Bayern München compressed their team area from 1398 m2 at 87:57 down to 790 m2 at 88:15.\n• FC Bayern München pushed their back line up from 42 m to 75 m between 87:57 and 88:15.\n• 1. FC Köln compressed their depth from 41 m to 25 m as their back line dropped to 10 m."
+  "created_utc": "2026-10-11T07:00:41+00:00",
+  "text": "**What happened**\nThe clip runs from 87:57 to 88:20, with 17 seconds of the ball in play. FC Bayern München showed a 4-1-4-1 shape in this clip, while 1. FC Köln showed a 3-5-2. The ball moved from Leroy Sané to M. Schwäbe, Jeff Chabot, Joshua Kimmich, Joao Cancelo, Serge Gnabry, and finally J. Musiala, who scored a goal at 88:15. During this sequence, Bayern pushed their back line—the average distance of their four deepest outfield players from their own goal line—from 42 metres at 87:57 up to 72 metres at 88:13, while Köln dropped their back line from 25 metres to 10 metres.\n\n**Coach's view**\n* Bayern’s back line advancing to 72 metres helped compress their team depth from 49 metres to 32 metres, which typically pins opponents deep in their defensive third.\n* Köln’s area contracted from 757 m² to 388 m² with a back line at 10 metres; this suggests a very deep, compact defensive block designed to deny space near goal, but it often gives away territory and time on the ball around the penalty area.\n\n**Key numbers**\n* FC Bayern München back line: moved from 42 m to 72 m between 87:57 and 88:13.\n* 1. FC Köln back line: retreated from 25 m to 10 m between 87:57 and 88:13.\n* 1. FC Köln team area: shrank from 757 m² down to 388 m².",
+  "repair": null
 }

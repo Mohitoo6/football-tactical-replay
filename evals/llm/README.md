@@ -3,16 +3,28 @@
 Generated with `uv run python scripts/generate_explanations.py` (prompt v1, 2026-10-11).
 Each clip has a sheet in this folder with the explanation, the automatic grounding report and a checklist for human review.
 
-## Results
+## Results (prompt v3: facts + coach's view)
 
-| Clip | Model | Words | Grounding (automatic) | First-pass review notes (Claude; to be confirmed by a human) |
-|---|---|---|---|---|
-| coman-opener | gemini-3.8-flash | 197 | PASS (25 checked) | Accurate; slightly over the 180-word target. |
-| forster-opener | gemini-3.8-flash | 176 | PASS (30 checked) | Correctly says Leverkusen had 10 players and calls the shape an estimate. |
-| ljubicic-equaliser | gemini-3.8-flash | 187 | PASS (21 checked) | Penalty: says the shape is not available (under 5 s of open play) and that the ball was in play for 1 s of 20 s. |
-| musiala-winner | gemini-3.8-flash | 180 | PASS (24 checked) | Accurate ball-carrier sequence and shape changes. |
+| Clip | Model | Words | Grounding | Repaired | First-pass review (Claude; to be confirmed by a human) |
+|---|---|---|---|---|---|
+| coman-opener | gemini-3.6-flash | 207 | PASS | no | Claims checked by hand against the timeline (Bayern width 47 → 34 m, Köln 2–3 players behind the ball): correctly attributed. |
+| forster-opener | gemini-3.8-flash | 212 | PASS | yes (too long: 238 words (limit 220)) | Coach's view now reads 0 players behind the ball correctly (defence bypassed). First answer was rewritten for length by the repair step. |
+| ljubicic-equaliser | gemini-3.8-flash | 196 | PASS | no | Penalty with no open play before the shot: says there was too little open play to analyse instead of speculating. |
+| musiala-winner | gemini-3.8-flash | 230 | PASS | no | Sound coaching point: a deep, compact block (757 → 388 m²) protects the box but cedes control outside it. |
 
-Recurring issues for human review: word counts sometimes exceed the 180-word limit, and the model occasionally adds causal wording ("forced", "pushed back") that the facts do not state. The grounding check cannot catch these.
+How we got here (each step was found by reading real outputs):
+
+- **v1 (facts only):** all passed, but a penalty clip with 1 s of open play still got a shape label. Fix in the facts: shape is "n/a" under 5 s of open play.
+- **v2 (adds a coach's view):**
+  - Answers ran long (254–324 words). Fix: length and missing sections now count as problems and trigger one rewrite.
+  - A fallback model (gpt-oss-120b) wrote "1 226" with a thin space and "4‑4‑2" with non-breaking hyphens. Fix: the checker normalises typography and reads number words ("nine").
+  - One coaching point read "0 players behind the ball" as "no screen in front of the defence". The facts were the problem: the last window was taken after the shot, when the ball was already in the net. Fix: facts stop 1 s before the goal.
+- **v3:**
+  - Numbers must stay attached to the same team and metric.
+  - With too little open play, the model must say so instead of speculating.
+  - The definition of `players_behind_ball` now says what 0 means.
+
+Known limit: the automatic check confirms each number exists in the facts, **not** that it is attached to the right team or metric. We checked the Coman claims by hand.
 
 ## Why the rules matter: naive prompt vs strict prompt
 

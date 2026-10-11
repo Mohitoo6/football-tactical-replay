@@ -280,3 +280,27 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - "Ball carrier" is proximity, not possession: a defender running past the ball can appear.
   - Change thresholds (5 m, 150 m²) are hand-picked.
   - The model sometimes exceeds the 180-word target or adds causal words ("forced").
+
+## D17. Coach-style explanations with a repair step
+*2026-10-11*
+
+- **Decision:** The answer has three sections:
+  - **What happened**: facts only, same strict rules as before.
+  - **Coach's view**: 2–3 points that may apply *general* football principles (what a deep compact block protects and gives away, what a high back line risks, what players behind the ball means). Each point must be tied to a stated fact and phrased as interpretation.
+  - **Key numbers**.
+
+  Two more facts give the coach something to reason with: players behind the ball and ball zone (third and lane), per 2-second window. If grounding or format checks find problems, the model gets **one** rewrite with the list of problems; the rewrite is kept only if it has fewer problems, and the first answer is stored in the record. Cached answers are reused only if they still pass the checks.
+- **Alternatives:**
+  - Keep facts-only narration. This is safer but less useful.
+  - Let the model use its own knowledge of the teams. Rejected: that is exactly where "Jamal" Musiala and "title race" came from.
+  - Fine-tuning. Not possible on the free tier, and not needed.
+- **Why:** A viewer wants to know *why* a shape mattered, not just the numbers. Separating interpretation from facts keeps the facts checkable while allowing coaching insight.
+- **Evidence (`evals/llm/README.md`):**
+  - All 4 clips pass grounding and format checks on prompt v3. One answer was repaired live (238 → 212 words).
+  - Coaching points were reviewed against the facts: the compact-block point (Musiala) is sound; the bypassed defence (Förster) is read correctly after the definition fix.
+  - The penalty clip says there is too little open play instead of speculating.
+  - Free tier, measured: `gemini-3.8-flash` allows **20 requests/day per model** (429 `GenerateRequestsPerDayPerProjectPerModel-FreeTier`), far below figures quoted by blogs. So the chain is now gemini-3.8-flash → gemini-3.6-flash (separate quota) → Groq → OpenRouter.
+- **Limitations:**
+  - The automatic check verifies that each number exists in the facts, not that it is attached to the right team or metric. That, and the soundness of coaching reasoning, need human review.
+  - Interpretation quality varies by model (the Groq fallback speculated more).
+  - With 20 calls/day, regenerating all clips more than a few times a day exhausts the primary model.
