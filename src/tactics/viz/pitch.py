@@ -43,9 +43,9 @@ def make_pitch() -> Pitch:
 
 
 def team_label(clip: Clip, side: str) -> str:
-    """Legend label for a team, e.g. "1. FC Köln (4-2-3-1)"."""
+    """Legend label for a team, e.g. "1. FC Köln (4-2-3-1)" (no brackets when the official formation is unknown)."""
     info = clip.meta["teams"][side]
-    return f"{info['name']} ({info['formation']})"
+    return f"{info['name']} ({info['formation']})" if info.get("formation") else info["name"]
 
 
 class FramePainter:
@@ -89,7 +89,7 @@ class FramePainter:
                                  fontsize=10, color="white", fontweight="bold", visible=False)
         self._title = ax.set_title("", fontsize=12)
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=3, frameon=False, fontsize=9)
-        ax.text(0.99, -0.17 if overlays else -0.07, DATA_CREDIT, transform=ax.transAxes, ha="right",
+        ax.text(0.99, -0.17 if overlays else -0.07, clip.meta.get("credit", DATA_CREDIT), transform=ax.transAxes, ha="right",
                 fontsize=7, color="grey")
 
     def attacking_right(self, side: str) -> bool:
@@ -152,6 +152,7 @@ class FramePainter:
         ball = self._ball.loc[frame]
         self._ball_dot.set_offsets([[ball["x"], ball["y"]]] if ball["alive"] else [[float("nan")] * 2])
         self._ball_out.set_visible(not ball["alive"])
+        self._ball_out.set_text(self.clip.meta.get("ball_hidden_text", BALL_OUT_TEXT))
 
         meta = self.clip.meta
         focus = meta["teams"][meta["focus_team"]]["name"]

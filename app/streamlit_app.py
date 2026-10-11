@@ -125,7 +125,9 @@ def main() -> None:
             "Limits: the shape estimate is reliable for a settled defensive block, much less for a team in "
             "possession; the checker confirms numbers exist in the facts, not that each is tied to the right team."
         )
-    st.caption(DATA_CREDIT)
+    st.caption(DATA_CREDIT if meta.get("data_kind") != "video" else
+               f"{meta['credit']}. Player and ball positions were computed from the drone video by this project "
+               "(Phase 7), not supplied by a tracking provider.")
 
 
 main()

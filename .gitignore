@@ -8,8 +8,9 @@ __pycache__/
 # Secrets
 .env
 
-# Raw datasets (large, downloaded locally; never committed)
+# Raw datasets and caches derived from them (large, local only; never committed)
 data/raw/
+data/processed/
 
 # Scratch outputs
 outputs/

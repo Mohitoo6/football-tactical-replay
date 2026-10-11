@@ -183,7 +183,7 @@ def test_committed_clip_is_clean(folder):
     assert find_problems(clip.players, clip.ball) == []
     counts = players_per_team(clip.players)
     assert counts["max"].le(11).all() and counts["min"].ge(7).all()  # 7 is the legal minimum
-    assert "CC-BY 4.0" in clip.meta["source"]
+    assert "CC-BY 4.0" in clip.meta["source"] or "LGPL-3.0" in clip.meta["source"]  # every clip credits its data
 
 
 @pytest.mark.parametrize("folder", COMMITTED_CLIPS, ids=lambda p: p.name)
@@ -193,5 +193,6 @@ def test_committed_clip_focus_team_attacks_left_to_right(folder):
     keepers = clip.players[clip.players["position"] == "Goalkeeper"]
     own_keeper_x = keepers.loc[keepers["team"] == focus, "x"].mean()
     other_keeper_x = keepers.loc[keepers["team"] != focus, "x"].mean()
-    assert own_keeper_x < other_keeper_x
-    assert other_keeper_x > 35  # the defending keeper stands near the right-hand goal
+    # Each keeper stays in his own half: the focus team's on the left, the defending team's on the right.
+    # (Not "near the goal": the amateur keeper in the drone clip ranges out to 21 m from the centre line.)
+    assert own_keeper_x < 0 < other_keeper_x
