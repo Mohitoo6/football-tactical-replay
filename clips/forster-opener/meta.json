@@ -21,6 +21,14 @@
       "formation": "4-2-3-1"
     }
   },
+  "goals": [
+    {
+      "time_s": 1083.59,
+      "clock": "18:03",
+      "team": "home",
+      "player": "P. Förster"
+    }
+  ],
   "coordinates": "metres, origin at pitch centre; focus_team attacks left to right",
   "source": "Bassek, M., Rein, R., Weber, H. & Memmert, D. An integrated dataset of spatiotemporal and event data in elite soccer. Scientific Data 12, 195 (2025). CC-BY 4.0."
 }

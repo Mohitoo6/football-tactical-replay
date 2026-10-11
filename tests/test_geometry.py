@@ -10,7 +10,7 @@ from tactics.geometry.formation import (
 )
 from tactics.geometry.links import line_links
 from tactics.geometry.shape import (
-    centroid, defensive_line_height, depth, hull_area, hull_vertices, shape_over_time, stretch_index,
+    back_line_height, centroid, defensive_line_height, depth, hull_area, hull_vertices, shape_over_time, stretch_index,
     team_shape, width,
 )
 
@@ -50,10 +50,19 @@ def test_defensive_line_height_depends_on_direction():
     assert defensive_line_height([[30.0, 0.0], [10.0, 5.0]], attacking_right=False) == 22.5
 
 
+def test_back_line_height_averages_the_deepest_four():
+    # Five defenders; one stands on the goal line (x = -52.5).
+    points = [[-52.5, 0.0], [-40.0, 10.0], [-40.0, -10.0], [-36.0, 20.0], [0.0, 0.0]]
+    assert defensive_line_height(points, attacking_right=True) == 0.0
+    assert back_line_height(points, attacking_right=True) == pytest.approx((0 + 12.5 + 12.5 + 16.5) / 4)
+    mirrored = [[-x, -y] for x, y in points]
+    assert back_line_height(mirrored, attacking_right=False) == pytest.approx(10.375)
+
+
 def test_team_shape_combines_metrics():
     m = team_shape(SQUARE, attacking_right=True)
     assert (m.width_m, m.depth_m, m.hull_area_m2) == (10.0, 10.0, pytest.approx(100.0))
-    assert m.line_height_m == 52.5  # deepest player at x = 0
+    assert m.line_height_m == 57.5  # back line: all 4 corners, mean x = 5 -> 52.5 + 5
     assert (m.centroid_x, m.centroid_y) == (5.0, 5.0)
 
 
@@ -68,7 +77,7 @@ def test_shape_over_time_ignores_goalkeepers():
 
     assert result["frame"].tolist() == [1, 2]
     assert result["depth_m"].tolist() == [10.0, 10.0]  # keeper at -50 would make it 60+
-    assert result["line_height_m"].tolist() == [53.5, 54.5]  # the square moves 1 m forward per frame
+    assert result["line_height_m"].tolist() == [58.5, 59.5]  # the square moves 1 m forward per frame
 
 
 # --- formation.py -----------------------------------------------------------

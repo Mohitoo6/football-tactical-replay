@@ -13,7 +13,7 @@ from matplotlib.patches import Polygon
 from mplsoccer import Pitch
 
 from tactics.data.clips import Clip, match_clock
-from tactics.geometry.formation import detect_formation
+from tactics.geometry.formation import detect_formation, formation_label
 from tactics.geometry.links import line_links
 from tactics.geometry.shape import hull_vertices, outfield, team_shape
 
@@ -105,9 +105,7 @@ class FramePainter:
         self._hulls, self._links = {}, {}
         for side in ("home", "away"):
             result, positions = detect_formation(in_play, side, self.attacking_right(side))
-            # Templates have 10 outfield players, so a label for fewer (red card) would mislead.
-            self.detected_formation[side] = (
-                result.formation if len(positions) == 10 else f"n/a, {len(positions)} outfield players")
+            self.detected_formation[side] = formation_label(result, positions)
             self._formation_lines[side] = dict(zip(positions["player_id"], positions["line"]))
             self._hulls[side] = self.ax.add_patch(Polygon(
                 np.zeros((1, 2)), closed=True, facecolor=TEAM_COLOURS[side], edgecolor=TEAM_COLOURS[side],
@@ -130,7 +128,7 @@ class FramePainter:
                 texts.append(
                     f"{self.clip.meta['teams'][side]['name']} (shape in clip: {self.detected_formation[side]})  "
                     f"width {m.width_m:.0f} m · depth {m.depth_m:.0f} m · area {m.hull_area_m2:.0f} m² · "
-                    f"defensive line {m.line_height_m:.0f} m from goal")
+                    f"back line {m.line_height_m:.0f} m from goal")
         self._metrics.set_text("\n".join(texts))
 
     def show(self, frame: int) -> None:

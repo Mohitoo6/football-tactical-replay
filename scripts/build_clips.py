@@ -13,7 +13,7 @@ from itertools import groupby
 from pathlib import Path
 
 from tactics.data.clips import build_clip, load_clip_specs, save_clip
-from tactics.data.load import load_dfl_match
+from tactics.data.load import find_goals, load_dfl_match
 from tactics.data.validate import find_problems, find_warnings, players_per_team
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,15 +30,17 @@ def main() -> int:
         print(f"loaded {match_id}: {match.home.name} ({match.home.formation}) v "
               f"{match.away.name} ({match.away.formation}) in {time.perf_counter() - start:.0f} s")
 
+        goals = find_goals(RAW_DIR, match)
         for spec in match_specs:
-            clip = build_clip(match, spec)
+            clip = build_clip(match, spec, goals)
             folder = save_clip(clip, CLIPS_DIR)
             counts = players_per_team(clip.players)
             problems = find_problems(clip.players, clip.ball)
             failed += bool(problems)
             print(f"  {spec.clip_id}: {clip.meta['start_clock']}-{clip.meta['end_clock']}, "
                   f"{len(clip.ball)} frames, players per team "
-                  f"{counts.to_dict('index')} -> {folder.relative_to(ROOT)}")
+                  f"{counts.to_dict('index')}, goals {[g['player'] for g in clip.meta['goals']]} "
+                  f"-> {folder.relative_to(ROOT)}")
             for problem in problems:
                 print(f"    PROBLEM: {problem}")
             for warning in find_warnings(clip.players, match.frame_rate):

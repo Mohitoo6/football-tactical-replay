@@ -122,6 +122,13 @@ def average_positions(players: pd.DataFrame, team: str, attacking_right: bool) -
     return avg
 
 
+def formation_label(result: FormationResult, positions: pd.DataFrame) -> str:
+    """Label to show for a detection; templates have 10 outfield players, so fewer (red card) gets "n/a"."""
+    if len(positions) == 10:
+        return result.formation
+    return f"n/a, {len(positions)} outfield players"
+
+
 def detect_formation(players: pd.DataFrame, team: str, attacking_right: bool) -> tuple[FormationResult, pd.DataFrame]:
     """Detect `team`'s formation over all frames in `players`.
 

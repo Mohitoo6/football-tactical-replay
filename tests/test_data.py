@@ -150,7 +150,9 @@ def test_match_clock():
 
 def test_clip_build_save_load_roundtrip(tmp_path):
     spec = ClipSpec("test-clip", "TEST", "A test clip", period=1, start_s=0.0, end_s=0.12, focus_team="away")
-    clip = build_clip(make_match(), spec)
+    goals = pd.DataFrame({"period": [1, 1, 2], "time_s": [0.1, 5.0, 0.1], "team": ["away"] * 3, "player": ["In", "Late", "Other half"]})
+    clip = build_clip(make_match(), spec, goals)
+    assert clip.meta["goals"] == [{"time_s": 0.1, "clock": "0:00", "team": "away", "player": "In"}]
 
     # Away is the focus team, so the clip is rotated: the home keeper ends up on the right.
     assert (clip.players.loc[clip.players["player_id"] == "H1", "x"] == 50.0).all()

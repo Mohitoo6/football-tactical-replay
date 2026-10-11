@@ -70,13 +70,24 @@ def defensive_line_height(points: np.ndarray, attacking_right: bool) -> float:
     return float(HALF_LENGTH_M - x.max())
 
 
+def back_line_height(points: np.ndarray, attacking_right: bool, n: int = 4) -> float:
+    """Average distance from the team's own goal line of its `n` deepest outfield players, in metres.
+
+    More robust than `defensive_line_height`: one defender standing on the goal
+    line no longer drags the whole number to ~0 m.
+    """
+    x = np.asarray(points, dtype=float)[:, 0]
+    distances = x + HALF_LENGTH_M if attacking_right else HALF_LENGTH_M - x
+    return float(np.sort(distances)[:n].mean())
+
+
 @dataclass
 class ShapeMetrics:
     width_m: float
     depth_m: float
     hull_area_m2: float
     stretch_m: float
-    line_height_m: float
+    line_height_m: float  # back line: average of the 4 deepest outfield players
     centroid_x: float
     centroid_y: float
 
@@ -89,7 +100,7 @@ def team_shape(points: np.ndarray, attacking_right: bool) -> ShapeMetrics:
         depth_m=depth(points),
         hull_area_m2=hull_area(points),
         stretch_m=stretch_index(points),
-        line_height_m=defensive_line_height(points, attacking_right),
+        line_height_m=back_line_height(points, attacking_right),
         centroid_x=float(cx),
         centroid_y=float(cy),
     )

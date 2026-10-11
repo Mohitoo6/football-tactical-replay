@@ -47,8 +47,11 @@ def load_clip_specs(path: Path) -> list[ClipSpec]:
     return [ClipSpec(**{"clip_id": c.pop("id"), **c}) for c in data["clip"]]
 
 
-def build_clip(match: Match, spec: ClipSpec) -> Clip:
-    """Cut one clip out of a loaded match and orient it for the focus team."""
+def build_clip(match: Match, spec: ClipSpec, goals: pd.DataFrame | None = None) -> Clip:
+    """Cut one clip out of a loaded match and orient it for the focus team.
+
+    `goals` (from `load.find_goals`) adds the goals that happen inside the clip to its metadata.
+    """
     start = frame_at(match, spec.period, spec.start_s)
     end = frame_at(match, spec.period, spec.end_s)
     players, ball = get_frames(match, start, end)
@@ -64,6 +67,7 @@ def build_clip(match: Match, spec: ClipSpec) -> Clip:
         "teams": {
             team.side: {"name": team.name, "formation": team.formation} for team in (match.home, match.away)
         },
+        "goals": _goals_in_clip(goals, spec),
         "coordinates": "metres, origin at pitch centre; focus_team attacks left to right",
         "source": DFL_ATTRIBUTION,
     }
@@ -85,6 +89,16 @@ def load_clip(folder: Path) -> Clip:
     folder = Path(folder)
     meta = json.loads((folder / "meta.json").read_text())
     return Clip(meta, pd.read_parquet(folder / "players.parquet"), pd.read_parquet(folder / "ball.parquet"))
+
+
+def _goals_in_clip(goals: pd.DataFrame | None, spec: ClipSpec) -> list[dict]:
+    if goals is None:
+        return []
+    inside = goals[(goals["period"] == spec.period) & goals["time_s"].between(spec.start_s, spec.end_s)]
+    return [
+        {"time_s": round(float(g.time_s), 2), "clock": match_clock(spec.period, g.time_s), "team": g.team, "player": g.player}
+        for g in inside.itertuples()
+    ]
 
 
 def match_clock(period: int, time_s: float) -> str:
