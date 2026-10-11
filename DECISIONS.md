@@ -223,3 +223,16 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Limitations:**
   - Only DFL data is supported end-to-end. Another provider (e.g. Metrica) needs its own loader, because formations, goals and file naming are provider-specific.
   - The defensive-line height uses the single deepest outfield player, so one player on the goal line gives "1 m from goal". The Phase 5 summaries should use a more robust measure (e.g. the average of the back line).
+
+## D15. Parallel tracks: AI layer and video-to-tracking
+*2026-10-11*
+
+- **Decision:** Add Phase 7, which turns top-view video into our clean tracking table, owned by Rohit on the branch `video-to-tracking`. In parallel, Mohit builds Phase 5 (AI explanation) and Phase 6 (app) on `main`.
+- **Alternatives:** Video module first, then AI. AI and app first, then video.
+- **Why:**
+  - The clean table (frame, team, player, x, y) separates the two pieces of work. The AI layer only reads geometry outputs, which already exist, so it does not depend on where the coordinates come from.
+  - Running both tracks keeps each person's ownership clear, and the AI part of this AI Engineer project does not wait behind the riskiest component.
+- **Limitations:**
+  - Phase 7 brings back the computer-vision accuracy risk that the original design avoided, so its output must be measured against ground truth before we trust it.
+  - The detector models' licenses (e.g. AGPL for some YOLO versions) matter if the project is ever sold.
+  - Two branches on one shared machine need discipline when switching driver.
