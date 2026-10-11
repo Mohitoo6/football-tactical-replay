@@ -3,8 +3,11 @@ name = "tactics"
 version = "0.1.0"
 description = "Replay football tracking data with live tactical geometry overlays and grounded AI explanations."
 authors = [
-    { name = "Mohitoo6", email = "mohitrks6@gmail.com" }
+    { name = "Mohit (Mohitoo6)" },
+    { name = "Rohit (Rohit-0612)" },
 ]
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "kloppy[pandas]>=3.19.1",
