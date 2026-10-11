@@ -81,6 +81,24 @@ def back_line_height(points: np.ndarray, attacking_right: bool, n: int = 4) -> f
     return float(np.sort(distances)[:n].mean())
 
 
+def players_behind_ball(points: np.ndarray, ball_x: float, attacking_right: bool) -> int:
+    """How many of these players are between the ball and their own goal ("goal-side" of the ball)."""
+    x = np.asarray(points, dtype=float)[:, 0]
+    return int((x < ball_x).sum() if attacking_right else (x > ball_x).sum())
+
+
+def ball_zone(x: float, y: float) -> str:
+    """Where the ball is, seen by the team attacking to the right: e.g. "attacking third, left".
+
+    The pitch is split into thirds along its length and three lanes across it.
+    Facing the opponent's goal (+x), the left lane is at positive y.
+    """
+    third = "defensive" if x < -HALF_LENGTH_M / 3 else "middle" if x <= HALF_LENGTH_M / 3 else "attacking"
+    lane_edge = 68 / 6  # lanes are a third of the 68 m width each
+    lane = "left" if y > lane_edge else "right" if y < -lane_edge else "centre"
+    return f"{third} third, {lane}"
+
+
 @dataclass
 class ShapeMetrics:
     width_m: float

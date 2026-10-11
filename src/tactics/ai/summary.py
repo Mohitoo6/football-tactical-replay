@@ -11,7 +11,7 @@ import pandas as pd
 
 from tactics.data.clips import Clip, match_clock
 from tactics.geometry.formation import detect_formation, formation_label
-from tactics.geometry.shape import shape_over_time
+from tactics.geometry.shape import ball_zone, outfield, players_behind_ball, shape_over_time
 
 WINDOW_S = 2.0
 METRICS = {  # summary key -> shape_over_time column
@@ -25,6 +25,9 @@ DEFINITIONS = {
     "depth_m": "distance between the team's deepest and most advanced outfield players",
     "area_m2": "area of the shape around all outfield players (smaller = more compact)",
     "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+    "players_behind_ball": ("outfield players between the ball and their own goal (average over the window); "
+                            "0 means the ball is closer to their goal than all of them, i.e. the defence has been bypassed"),
+    "ball_zone": "where the ball mostly was in the window, seen from the focus team attacking towards the opponent's goal",
     "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order",
 }
 # A change from the first to the last window counts as notable at or above these sizes.
@@ -32,20 +35,23 @@ NOTABLE_CHANGE = {"width_m": 5, "depth_m": 5, "area_m2": 150, "back_line_m": 5}
 CARRIER_RADIUS_M = 1.5
 CARRIER_MAX_BALL_HEIGHT_M = 1.0
 MIN_CARRIER_FRAMES = 3
+# Seconds before the recorded goal time at which the facts stop (roughly the shot's flight time).
+GOAL_CUTOFF_S = 1.0
 # Below this much open play (e.g. a penalty) a shape estimate would only describe a set-piece line-up.
 MIN_OPEN_PLAY_S = 5
 
 
 def in_play(clip: Clip) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Players and ball rows for frames where the ball is in play, up to the first goal.
+    """Players and ball rows for frames where the ball is in play, up to the moment of the shot.
 
-    After a goal the ball can still be flagged "alive" for a moment while players
-    run off to celebrate, which would distort the last shape metrics.
+    The DFL goal time is when the ball crosses the line. We stop GOAL_CUTOFF_S
+    earlier so the last picture shows the shot, not the ball already in the net
+    (which would give "0 players behind the ball") or the celebrations after it.
     """
     ball = clip.ball[clip.ball["alive"]]
     goals = clip.meta.get("goals", [])
     if goals:
-        ball = ball[ball["time_s"] <= min(g["time_s"] for g in goals)]
+        ball = ball[ball["time_s"] <= min(g["time_s"] for g in goals) - GOAL_CUTOFF_S]
     return clip.players[clip.players["frame"].isin(ball["frame"])], ball
 
 
@@ -65,18 +71,26 @@ def timeline(clip: Clip) -> list[dict]:
     start_s = float(clip.ball["time_s"].iloc[0])
     window_of_frame = ((ball.set_index("frame")["time_s"] - start_s) // WINDOW_S).astype(int)
 
-    per_team = {}
+    ball_by_frame = ball.set_index("frame")
+    zones = ball_by_frame.apply(lambda b: ball_zone(b["x"], b["y"]), axis=1).groupby(window_of_frame)
+    per_team, behind = {}, {}
     for side in ("home", "away"):
         metrics = shape_over_time(players, side, attacking_right(clip, side))
         metrics["window"] = metrics["frame"].map(window_of_frame)
         per_team[side] = metrics.groupby("window")[list(METRICS.values())].mean()
+        team = outfield(players[players["team"] == side])
+        per_frame = team.groupby("frame").apply(lambda g: players_behind_ball(
+            g[["x", "y"]].to_numpy(), ball_by_frame.loc[g.name, "x"], attacking_right(clip, side)))
+        behind[side] = per_frame.groupby(per_frame.index.map(window_of_frame)).mean()
 
     rows = []
     for window in sorted(set(per_team["home"].index) & set(per_team["away"].index)):
-        row = {"clock": match_clock(clip.meta["period"], start_s + window * WINDOW_S)}
+        row = {"clock": match_clock(clip.meta["period"], start_s + window * WINDOW_S),
+               "ball_zone": zones.get_group(window).mode().iloc[0]}
         for side in ("home", "away"):
             values = per_team[side].loc[window]
             row[team_name(clip, side)] = {key: int(round(values[col])) for key, col in METRICS.items()}
+            row[team_name(clip, side)]["players_behind_ball"] = int(round(behind[side].loc[window]))
         rows.append(row)
     return rows
 
@@ -123,14 +137,16 @@ def build_summary(clip: Clip) -> dict:
     open_play_s = len(ball) / meta["frame_rate"]
     teams = []
     for side in (meta["focus_team"], "home" if meta["focus_team"] == "away" else "away"):
-        result, positions = detect_formation(players, side, attacking_right(clip, side))
+        if open_play_s >= MIN_OPEN_PLAY_S:
+            shape = formation_label(*detect_formation(players, side, attacking_right(clip, side)))
+        else:
+            shape = f"n/a, under {MIN_OPEN_PLAY_S} s of open play"
         teams.append({
             "name": team_name(clip, side),
             "role": "focus team (its move is shown)" if side == meta["focus_team"] else "opponent",
             "players_on_pitch": int(clip.players[clip.players["team"] == side].groupby("frame").size().max()),
             "official_formation": meta["teams"][side]["formation"],
-            "shape_in_clip": formation_label(result, positions) if open_play_s >= MIN_OPEN_PLAY_S
-            else f"n/a, under {MIN_OPEN_PLAY_S} s of open play",
+            "shape_in_clip": shape,
         })
 
     rows = timeline(clip)
