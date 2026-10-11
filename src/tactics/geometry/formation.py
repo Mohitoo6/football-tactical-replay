@@ -12,6 +12,7 @@ How it works:
    tells us which line (defence / midfield / attack) each player is in.
 """
 
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -27,6 +28,12 @@ FORMATIONS = [
 # A player must be on the pitch for at least this share of the window to count
 # (so a substitute who came on in the last minute does not distort the shape).
 MIN_SHARE_OF_FRAMES = 0.5
+
+
+def base_formation(label: str | None) -> str | None:
+    """Strip extra words from an official label: "4-3-3 Double-6" -> "4-3-3"."""
+    found = re.search(r"\d(?:-\d)+", label or "")
+    return found.group(0) if found else None
 
 
 def line_sizes(formation: str) -> list[int]:

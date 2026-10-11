@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from tactics.geometry.formation import (
-    FORMATIONS, average_positions, detect_formation, formation_template, line_name, line_sizes,
+    FORMATIONS, average_positions, base_formation, detect_formation, formation_template, line_name, line_sizes,
     match_formation, normalize_shape, template_lines,
 )
 from tactics.geometry.links import line_links
@@ -104,6 +104,12 @@ def test_match_formation_assigns_lines():
 def test_normalize_shape_fills_unit_box():
     normalized = normalize_shape([[10.0, -5.0], [30.0, 5.0], [20.0, 0.0]])
     np.testing.assert_allclose(normalized, [[0, 0], [1, 1], [0.5, 0.5]])
+
+
+def test_base_formation_strips_extra_words():
+    assert base_formation("4-3-3 Double-6") == "4-3-3"
+    assert base_formation("4-2-3-1") == "4-2-3-1"
+    assert base_formation(None) is None and base_formation("unknown") is None
 
 
 def test_line_names():
