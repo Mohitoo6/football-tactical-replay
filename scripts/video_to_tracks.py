@@ -32,12 +32,20 @@ MATCH_RADIUS_M = 1.5
 
 
 def detect_all(video: Path, dataset_calibration: PitchCalibration, truth: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Every frame: blobs (reference px, auto metres, dataset metres, colour) and ground truth in dataset metres."""
+    """Every frame: blobs (reference px, auto metres, dataset metres, colour) and ground truth in dataset metres.
+
+    Detection uses only the video (automatic calibration). `dataset_calibration` is used only to express
+    detections and ground truth in the dataset's metres for scoring.
+    """
     stabilizer = Stabilizer(read_frames(video, [0])[0])
     sample = read_frames(video, list(range(0, 900, 15)))
+    shape = sample[0].shape[:2]
     detector = BackgroundDetector([Stabilizer.align(f, stabilizer.warp(f)) for f in sample.values()],
-                                  pitch_mask(sample[0].shape[:2], dataset_calibration))
+                                  np.full(shape, 255, dtype=np.uint8))
+    # Everything the clip uses comes from the video: the pitch area for detection is taken from our
+    # automatic calibration, not from the dataset's hand-marked keypoints (those are only for scoring).
     auto = auto_calibrate(detector.background, image_scale=detector.scale)
+    detector.mask = detector._resize(pitch_mask(shape, auto))
     stabilizer.last_matrix = np.eye(2, 3, dtype=np.float32)
 
     capture, rows, real_rows, ball_rows, index = cv2.VideoCapture(str(video)), [], [], [], 0

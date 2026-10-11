@@ -431,3 +431,19 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - A keeper who barely moves fades into the median background and is detected in fragments, as seen in segment 0:30–1:00.
   - Segment 0:30–1:00 still assigns one keeper to the wrong team.
   - Tested on one ground and one match. Goals are not detected from video, so "goals" is empty for drone clips.
+
+## D23. Correction: the dataset's calibration had leaked into detection
+*2026-10-11*
+
+- **What was wrong:** Prompted by Mohit's question ("did the drone clip really use no given coordinates?"), we re-checked the code. The *pitch area* used to discard detections off the pitch (`pitch_mask`) was built from SoccerTrack's hand-marked keypoints, not from our automatic calibration. That held in both the detection spike and the full pipeline. Positions, teams and ball were already computed from the video, but D20–D22's claim of "no dataset calibration at all" was not fully true.
+- **Fix:** The detector first builds the empty-pitch image with no mask, then calibrates automatically, then masks with *that* calibration. Dataset keypoints and boxes are now used only to score results. A unit test builds a clip from video-derived columns alone.
+- **Re-measured** (D19–D22 figures replaced where they changed):
+
+  | Segment | Detection recall / precision / auto-calibration error | Purity | Team correct | Ball correct |
+  |---|---|---|---|---|
+  | 0:30–1:00 | 98.6% / 75.3% / 0.55 m (unchanged) | 95.1% (was 95.2%) | 94.4% | 70.0% |
+  | 5:00–5:30 | 99.1% / 84.8% / 0.43 m (unchanged) | 99.6% | 99.6% | 40.7% |
+  | 10:00–10:30 | 99.1% / 78.7% / 0.52 m (unchanged) | 96.1% (was 96.3%) | 97.8% (was 98.9%) | **61.0% (was 69.9%)** |
+
+  The demo clip `drone-0600-0630` was rebuilt: the ball is visible in 63% of frames (was 71%). The explanation was regenerated and passes grounding (34 items) after one length repair.
+- **Lesson:** "Uses no ground truth" must be checked line by line, and guarded by a test, not asserted. The leak mattered most for the ball, whose candidates near the pitch edge depend on the mask.

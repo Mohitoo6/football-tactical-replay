@@ -41,14 +41,17 @@ def main(approaches: list[str], segment: str) -> None:
     # The calibration matches frame 0 (checked visually), so frame 0 is the reference for stabilisation.
     stabilizer = Stabilizer(frames[0])
     warps = {index: stabilizer.warp(frame) for index, frame in frames.items()}
-    mask = pitch_mask(frames[0].shape[:2], calibration)
+    shape = frames[0].shape[:2]
     detectors = {}
     if "background" in approaches:
         start = time.perf_counter()
         background = [Stabilizer.align(f, stabilizer.warp(f)) for f in read_frames(video, BACKGROUND_FRAMES).values()]
-        detectors["background"] = BackgroundDetector(background, mask)
+        detectors["background"] = BackgroundDetector(background, np.full(shape, 255, dtype=np.uint8))
         print(f"background model from {len(BACKGROUND_FRAMES)} aligned frames in {time.perf_counter() - start:.1f} s")
         auto = auto_calibrate(detectors["background"].background, image_scale=detectors["background"].scale)
+        # The pitch area for detection comes from our automatic calibration, not the dataset's keypoints.
+        detectors["background"].mask = detectors["background"]._resize(pitch_mask(shape, auto))
+    mask = pitch_mask(shape, auto) if "background" in approaches else pitch_mask(shape, calibration)
     if "rfdetr" in approaches:
         detectors["rfdetr"] = RFDetrDetector()
 

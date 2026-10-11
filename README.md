@@ -69,7 +69,7 @@ The same pipeline also runs on **raw top-view drone video**, with no tracking pr
 
 The result is exported as a normal clip (`clips/drone-0600-0630`), so the overlays and the AI coach work on it unchanged.
 
-Measured on 3 × 30 s SoccerTrack segments against the dataset's ground truth ([D19–D22](DECISIONS.md)):
+Measured on 3 × 30 s SoccerTrack segments against the dataset's ground truth, which is used **only for scoring** ([D19–D23](DECISIONS.md)):
 
 | What | Result |
 |---|---|
@@ -78,6 +78,7 @@ Measured on 3 × 30 s SoccerTrack segments against the dataset's ground truth ([
 | Identity kept (purity) | 95–99.6% |
 | Correct team | 94–99.6% |
 | Ball correct, all frames | 41–70% (it is mostly hidden at players' feet otherwise) |
+| Speed | ~0.2–0.3 s per 4K frame on an Apple M2 (offline) |
 
 A pretrained deep detector (RF-DETR, tiled) found only 43% of players from straight above, at 100× the cost. The classical method won here. Limits: hovering top-down camera, whole pitch outline visible, one ground tested so far.
 

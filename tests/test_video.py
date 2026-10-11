@@ -199,3 +199,29 @@ def test_ball_both_ways_fills_frames_before_a_restart():
     assert follow_ball(candidates, 30.0)["frame"].min() == 5
     both = follow_ball_both_ways(candidates, 30.0)
     assert both["frame"].min() == 0 and both.loc[both["frame"] == 0, "x_m"].iloc[0] == 0.0
+
+
+def test_export_uses_only_video_derived_columns():
+    """The clip must be buildable from our own video columns alone (x_m, y_m, colour),
+    with no dataset-calibrated x/y present: guards against ground truth leaking in."""
+    from tactics.video.export import tracks_to_clip
+
+    rows = []
+    for f in range(40):
+        for k in range(3):
+            rows.append({"frame": f, "track_id": k, "x_m": -45.0 + 10 * k if k == 0 else 5.0 * k, "y_m": 2.0 * k,
+                         **dict(zip("bgr", WHITE_SHIRT))})
+            rows.append({"frame": f, "track_id": 10 + k, "x_m": 45.0 - 10 * k if k == 0 else -5.0 * k, "y_m": -2.0 * k,
+                         **dict(zip("bgr", BLUE_SHIRT))})
+    tracks = pd.DataFrame(rows)
+    assert not {"x", "y"} & set(tracks.columns)
+    teams = pd.Series({0: "A", 1: "A", 2: "A", 10: "B", 11: "B", 12: "B"})
+    teams.attrs["keepers"] = {-1: 0, 1: 10}
+    ball = pd.DataFrame({"frame": range(0, 40, 2), "x_m": 0.0, "y_m": 0.0})
+
+    clip = tracks_to_clip(tracks, teams, ball, fps=30.0, clip_id="t", title="t", start_s=0)
+
+    assert clip.meta["teams"]["home"]["name"].endswith("(lighter shirts)")  # white team is home
+    keepers = clip.players[clip.players["position"] == "Goalkeeper"]
+    assert keepers.loc[keepers["team"] == "home", "x"].mean() < 0  # home attacks left to right
+    assert clip.ball["alive"].mean() == 0.5  # ball known in every other frame only
