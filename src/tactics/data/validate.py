@@ -14,8 +14,8 @@ MAX_PLAYERS_PER_TEAM = 11
 MAX_PLAYER_SPEED_MS = 12.0
 
 
-def find_problems(players: pd.DataFrame, ball: pd.DataFrame, frame_rate: float = 25.0) -> list[str]:
-    """Return a list of human-readable problems. An empty list means the data looks clean."""
+def find_problems(players: pd.DataFrame, ball: pd.DataFrame) -> list[str]:
+    """Return a list of human-readable problems that make the data unusable. Empty means clean."""
     missing = set(PLAYER_COLUMNS) - set(players.columns) | set(BALL_COLUMNS) - set(ball.columns)
     if missing:
         return [f"missing columns: {sorted(missing)}"]
@@ -37,15 +37,25 @@ def find_problems(players: pd.DataFrame, ball: pd.DataFrame, frame_rate: float =
     if outside_ball.any():
         problems.append(f"ball in play but more than {OUTSIDE_MARGIN_M} m outside the pitch in {int(outside_ball.sum())} frames")
 
-    too_fast = player_speeds(players, frame_rate) > MAX_PLAYER_SPEED_MS
-    if too_fast.any():
-        problems.append(f"{int(too_fast.sum())} player moves faster than {MAX_PLAYER_SPEED_MS} m/s (tracking jumps)")
-
     if not set(players["frame"]).issubset(set(ball["frame"])):
         problems.append("some player frames have no ball row")
-    if ball["frame"].diff().dropna().ne(1).any():
-        problems.append("ball frames are not consecutive")
+    # Frame numbers restart at each period (e.g. 10000.. then 100000..), so check within periods.
+    if ball.groupby("period")["frame"].diff().dropna().ne(1).any():
+        problems.append("ball frames are not consecutive within a period")
     return problems
+
+
+def find_warnings(players: pd.DataFrame, frame_rate: float = 25.0) -> list[str]:
+    """Return small, tolerable issues worth knowing about (the data is still usable).
+
+    The full Köln v Bayern match has 16 single-frame tracking jumps among 3.2 million
+    player moves, mostly near the touchlines, so one jump should not reject a clip.
+    """
+    warnings = []
+    too_fast = player_speeds(players, frame_rate) > MAX_PLAYER_SPEED_MS
+    if too_fast.any():
+        warnings.append(f"{int(too_fast.sum())} player moves faster than {MAX_PLAYER_SPEED_MS} m/s (tracking jumps)")
+    return warnings
 
 
 def players_per_team(players: pd.DataFrame) -> pd.DataFrame:

@@ -121,6 +121,24 @@ def get_frames(match: Match, start_frame: int, end_frame: int) -> tuple[pd.DataF
     return players, ball
 
 
+def find_goals(data_dir: Path, match: Match) -> pd.DataFrame:
+    """Goals from the DFL event data: one row per goal with period, time_s, team ("home"/"away"), player."""
+    meta_path = _find_file(data_dir, "matchinformation", match.match_id)
+    events_path = _find_file(data_dir, "events_raw", match.match_id)
+    events = sportec.load_event(event_data=events_path, meta_data=meta_path)
+    rows = [
+        {
+            "period": e.period.id,
+            "time_s": e.timestamp.total_seconds(),
+            "team": match.side_of(e.team.team_id),
+            "player": e.player.name if e.player else None,
+        }
+        for e in events.events
+        if e.event_type.value == "SHOT" and str(e.result) == "GOAL"
+    ]
+    return pd.DataFrame(rows, columns=["period", "time_s", "team", "player"]).sort_values(["period", "time_s"])
+
+
 def frame_at(match: Match, period: int, time_s: float) -> int:
     """Return the frame closest to `time_s` seconds after the start of `period`."""
     rows = match.tracking[match.tracking["period_id"] == period]

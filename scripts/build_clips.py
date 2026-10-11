@@ -14,7 +14,7 @@ from pathlib import Path
 
 from tactics.data.clips import build_clip, load_clip_specs, save_clip
 from tactics.data.load import load_dfl_match
-from tactics.data.validate import find_problems, players_per_team
+from tactics.data.validate import find_problems, find_warnings, players_per_team
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "data" / "raw" / "dfl"
@@ -34,13 +34,15 @@ def main() -> int:
             clip = build_clip(match, spec)
             folder = save_clip(clip, CLIPS_DIR)
             counts = players_per_team(clip.players)
-            problems = find_problems(clip.players, clip.ball, match.frame_rate)
+            problems = find_problems(clip.players, clip.ball)
             failed += bool(problems)
             print(f"  {spec.clip_id}: {clip.meta['start_clock']}-{clip.meta['end_clock']}, "
                   f"{len(clip.ball)} frames, players per team "
                   f"{counts.to_dict('index')} -> {folder.relative_to(ROOT)}")
             for problem in problems:
                 print(f"    PROBLEM: {problem}")
+            for warning in find_warnings(clip.players, match.frame_rate):
+                print(f"    warning: {warning}")
     return 1 if failed else 0
 
 
