@@ -240,3 +240,11 @@ def test_format_problems_flags_missing_sections_and_length():
     assert format_problems(good) == []
     assert format_problems(good + " word" * 230) == ["too long: 239 words (limit 220)"]  # 9 heading words + 230
     assert format_problems("Key numbers: z") == ["missing section: What happened", "missing section: Coach's view"]
+
+
+def test_explain_keeps_a_shorter_rewrite_when_problem_counts_tie(tmp_path):
+    answers = iter(["one two three four five six", "one two three four"])
+    result = explain({"a": 1}, tmp_path / "e.json", providers=[],
+                     complete_fn=lambda s, u, p: (next(answers), PROVIDERS[0]),
+                     check=lambda text: ["too long"] if len(text.split()) > 3 else [])
+    assert result["text"] == "one two three four"

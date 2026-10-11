@@ -111,7 +111,8 @@ def explain(summary: dict, cache_path: Path, providers: list[Provider] | None = 
     if problems:
         new_text, new_provider = complete_fn(SYSTEM_PROMPT, repair_message(user, text, problems), providers)
         new_problems = check(new_text)
-        if len(new_problems) < len(problems):  # keep the rewrite only if it is better
+        # Keep the rewrite only if it is better: fewer problems, or as many but shorter (e.g. still a bit too long).
+        if (len(new_problems), len(new_text.split())) < (len(problems), len(text.split())):
             repair = {"first_text": text, "first_model": provider.model, "first_problems": problems}
             text, provider = new_text, new_provider
     record = {
