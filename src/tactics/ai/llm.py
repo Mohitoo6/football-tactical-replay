@@ -1,10 +1,12 @@
 """Call a free-tier LLM through the OpenAI-compatible API (DECISIONS.md, D4, D5).
 
-- Providers are read from .env and tried in order (Gemini, then Groq, then OpenRouter).
+- Providers are read from .env and tried in order (two Gemini models, then Groq, then OpenRouter).
 - Busy or rate-limited responses (429, 5xx, timeouts) are retried with a pause;
   other errors (bad key, unknown model) skip straight to the next provider.
 - Each explanation is cached next to its clip, keyed by a hash of the prompt and
   the facts, so the same clip never costs a second request.
+- If a check function finds items that are not in the facts, the model gets one
+  chance to rewrite its answer without them (the first answer is kept in the record).
 """
 
 import hashlib
@@ -18,9 +20,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import APIConnectionError, APIStatusError, APITimeoutError, InternalServerError, OpenAI, RateLimitError
 
-from tactics.ai.prompt import PROMPT_VERSION, SYSTEM_PROMPT, user_message
+from tactics.ai.prompt import PROMPT_VERSION, SYSTEM_PROMPT, repair_message, user_message
 
-ENV_PREFIXES = ("LLM", "FALLBACK1", "FALLBACK2")
+ENV_PREFIXES = ("LLM", "FALLBACK1", "FALLBACK2", "FALLBACK3")
 RETRYABLE = (RateLimitError, InternalServerError, APIConnectionError, APITimeoutError)
 ATTEMPTS_PER_PROVIDER = 3
 FIRST_PAUSE_S = 5  # then 10 s
@@ -87,17 +89,31 @@ def cache_key(system: str, user: str) -> str:
     return hashlib.sha256(f"{PROMPT_VERSION}\n{system}\n{user}".encode()).hexdigest()
 
 
-def explain(summary: dict, cache_path: Path, providers: list[Provider] | None = None, complete_fn=complete) -> dict:
-    """Explanation for a summary: from the cache if it is still valid, otherwise from an LLM (then cached)."""
+def explain(summary: dict, cache_path: Path, providers: list[Provider] | None = None, complete_fn=complete,
+            check=None) -> dict:
+    """Explanation for a summary: from the cache if it is still valid, otherwise from an LLM (then cached).
+
+    `check(text) -> list of problems` (e.g. grounding); one repair attempt is made if it finds any.
+    """
     user = user_message(summary)
     key = cache_key(SYSTEM_PROMPT, user)
     cache_path = Path(cache_path)
     if cache_path.exists():
         cached = json.loads(cache_path.read_text())
-        if cached.get("cache_key") == key:
+        # Reuse only if facts and prompt are unchanged and the cached answer still passes the check.
+        if cached.get("cache_key") == key and not (check and check(cached["text"])):
             return {**cached, "from_cache": True}
 
-    text, provider = complete_fn(SYSTEM_PROMPT, user, providers if providers is not None else providers_from_env())
+    providers = providers if providers is not None else providers_from_env()
+    text, provider = complete_fn(SYSTEM_PROMPT, user, providers)
+    repair = None
+    problems = check(text) if check else []
+    if problems:
+        new_text, new_provider = complete_fn(SYSTEM_PROMPT, repair_message(user, text, problems), providers)
+        new_problems = check(new_text)
+        if len(new_problems) < len(problems):  # keep the rewrite only if it is better
+            repair = {"first_text": text, "first_model": provider.model, "first_problems": problems}
+            text, provider = new_text, new_provider
     record = {
         "cache_key": key,
         "prompt_version": PROMPT_VERSION,
@@ -105,6 +121,7 @@ def explain(summary: dict, cache_path: Path, providers: list[Provider] | None = 
         "model": provider.model,
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "text": text,
+        "repair": repair,
     }
     cache_path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n")
     return {**record, "from_cache": False}

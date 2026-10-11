@@ -10,6 +10,7 @@ import pytest
 
 from tactics.ai.grounding import check_grounding
 from tactics.ai.llm import AllProvidersFailed, Provider, complete, explain, providers_from_env
+from tactics.ai.prompt import format_problems, missing_sections
 from tactics.ai.summary import ball_carriers, build_summary, in_play, notable_changes, timeline
 from tactics.data.clips import Clip, load_clip
 from tactics.geometry.shape import shape_over_time
@@ -27,7 +28,7 @@ def musiala():
 def test_in_play_drops_dead_ball_and_post_goal_frames(musiala):
     players, ball = in_play(musiala)
     assert ball["alive"].all()
-    assert ball["time_s"].max() <= musiala.meta["goals"][0]["time_s"]
+    assert ball["time_s"].max() <= musiala.meta["goals"][0]["time_s"] - 1.0  # stops at the shot
     assert set(players["frame"]) <= set(ball["frame"])
 
 
@@ -112,6 +113,12 @@ def test_grounding_flags_names_not_in_the_facts():
     assert report.unknown_capitalised == ["Lewandowski"]  # "The"/"Then" start sentences; Musiala is a fact
 
 
+def test_missing_sections_accepts_markdown_headings():
+    text = "**What happened**\nfacts\n\n**Coach’s view**\n* point\n\nKey numbers:\n* n"
+    assert missing_sections(text) == []
+    assert missing_sections("What happened: facts only") == ["Coach's view", "Key numbers"]
+
+
 # --- llm.py (fake clients, no network) --------------------------------------
 
 def api_error(cls, status):
@@ -180,7 +187,7 @@ def test_explain_uses_cache_until_facts_change(tmp_path):
 
 
 def test_providers_from_env_skips_incomplete_entries(tmp_path, monkeypatch):
-    for prefix in ("LLM", "FALLBACK1", "FALLBACK2"):
+    for prefix in ("LLM", "FALLBACK1", "FALLBACK2", "FALLBACK3"):
         for field in ("BASE_URL", "MODEL", "API_KEY", "REASONING_EFFORT"):
             monkeypatch.delenv(f"{prefix}_{field}", raising=False)
     env = tmp_path / ".env"
@@ -188,3 +195,48 @@ def test_providers_from_env_skips_incomplete_entries(tmp_path, monkeypatch):
                    "FALLBACK1_BASE_URL=https://b.test\nFALLBACK1_MODEL=m2\nFALLBACK1_API_KEY=\n")
     providers = providers_from_env(env)
     assert [(p.name, p.model, p.reasoning_effort) for p in providers] == [("llm", "m", "low")]
+
+
+def test_explain_repairs_ungrounded_answer_once(tmp_path):
+    answers = iter(["Köln dropped 12 m.", "Köln dropped to 10 m."])
+    calls = []
+
+    def fake_complete(system, user, providers):
+        calls.append(user)
+        return next(answers), PROVIDERS[0]
+
+    result = explain({"back_line_m": 10}, tmp_path / "e.json", providers=[], complete_fn=fake_complete,
+                     check=lambda text: check_grounding(text, {"back_line_m": 10}).problems)
+    assert result["text"] == "Köln dropped to 10 m."
+    assert result["repair"]["first_problems"] == ["not in the facts: 12"]
+    assert "not in the facts: 12" in calls[1] and "Köln dropped 12 m." in calls[1]
+
+
+def test_explain_keeps_first_answer_if_repair_is_not_better(tmp_path):
+    answers = iter(["Köln dropped 12 m.", "Köln dropped 12 m in 3 s."])
+    result = explain({"back_line_m": 10}, tmp_path / "e.json", providers=[],
+                     complete_fn=lambda s, u, p: (next(answers), PROVIDERS[0]),
+                     check=lambda text: check_grounding(text, {"back_line_m": 10}).problems)
+    assert result["text"] == "Köln dropped 12 m." and result["repair"] is None
+
+
+def test_grounding_normalises_typography_and_number_words():
+    summary = {"teams": [{"shape_in_clip": "4-4-2", "players_behind_ball": 9, "area_m2": 1226}]}
+    assert check_grounding("A 4\u20114\u20112 shape, 1\u202f226 m² and nine players behind the ball.", summary).passed
+    assert check_grounding("Eleven players were behind the ball.", summary).unsupported_numbers == ["11"]
+
+
+def test_explain_regenerates_a_cached_answer_that_fails_the_check(tmp_path):
+    cache = tmp_path / "e.json"
+    explain({"back_line_m": 10}, cache, providers=[], complete_fn=lambda s, u, p: ("Line at 12 m.", PROVIDERS[0]))
+    result = explain({"back_line_m": 10}, cache, providers=[],
+                     complete_fn=lambda s, u, p: ("Line at 10 m.", PROVIDERS[0]),
+                     check=lambda text: check_grounding(text, {"back_line_m": 10}).problems)
+    assert result["from_cache"] is False and result["text"] == "Line at 10 m."
+
+
+def test_format_problems_flags_missing_sections_and_length():
+    good = "What happened: x\nCoach's view: y\nKey numbers: z"
+    assert format_problems(good) == []
+    assert format_problems(good + " word" * 230) == ["too long: 239 words (limit 220)"]  # 9 heading words + 230
+    assert format_problems("Key numbers: z") == ["missing section: What happened", "missing section: Coach's view"]

@@ -14,11 +14,19 @@ CLOCK = re.compile(r"\b\d{1,3}:\d{2}\b")
 FORMATION = re.compile(r"\b\d(?:-\d){2,4}\b")
 NUMBER = re.compile(r"(?<![\w.])\d{1,3}(?:,\d{3})+(?:\.\d+)?|(?<![\w.])\d+(?:\.\d+)?")
 WORD = re.compile(r"[^\W\d_][\w'’.-]*")
-SENTENCE_START = re.compile(r"(?:^|[.!?:]\s+|\n\s*[-*•]?\s*)$")
+SENTENCE_START = re.compile(r"(?:^|[.!?:]\s+|\n)[\s*•#-]*$")  # also after Markdown bullets/bold
+NUMBER_WORDS = {
+    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+    "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15,
+    "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+}
+NUMBER_WORD = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\b", re.IGNORECASE)
+HYPHENS = dict.fromkeys(map(ord, "\u2010\u2011\u2012\u2013\u2014\u2212"), "-")
 COMMON_WORDS = {
     "Key", "Numbers", "The", "A", "An", "In", "At", "As", "By", "On", "Of", "To", "This", "That", "These",
     "Then", "When", "While", "After", "Before", "Their", "Its", "It", "Meanwhile", "Over", "From", "With",
     "Both", "Ball", "Back", "Area", "Width", "Depth", "Shape", "Here", "By", "Within",
+    "What", "Coach", "Coach's",
 }
 
 
@@ -32,7 +40,13 @@ class GroundingReport:
 
     @property
     def passed(self) -> bool:
-        return not (self.unsupported_numbers or self.unsupported_clocks or self.unsupported_formations)
+        return not self.problems
+
+    @property
+    def problems(self) -> list[str]:
+        """Every unsupported item, phrased so it can be shown to the model when asking for a fix."""
+        items = self.unsupported_numbers + self.unsupported_clocks + self.unsupported_formations
+        return [f"not in the facts: {item}" for item in items]
 
 
 def _base_word(word: str) -> str:
@@ -41,6 +55,12 @@ def _base_word(word: str) -> str:
         if word.endswith(suffix):
             word = word[: -len(suffix)]
     return word.rstrip(".’'")
+
+
+def normalise(text: str) -> str:
+    """Make typographic variants comparable: "4‑4‑2" -> "4-4-2", "1 226" (thin space) -> "1226"."""
+    text = text.translate(HYPHENS)
+    return re.sub(r"(?<=\d)[\u00a0\u2009\u202f](?=\d{3}\b)", "", text)
 
 
 def _number(token: str) -> float:
@@ -62,7 +82,10 @@ def check_grounding(text: str, summary: dict) -> GroundingReport:
     allowed_numbers = {_number(n) for n in fact_numbers}
     fact_words = {_base_word(w) for w in WORD.findall(facts)}
 
+    text = normalise(text)
     clocks, formations, numbers = _split(text)
+    # Numbers written as words ("nine players") must be supported too.
+    numbers += [str(NUMBER_WORDS[w.lower()]) for w in NUMBER_WORD.findall(text)]
     report = GroundingReport(numbers_checked=len(clocks) + len(formations) + len(numbers))
     report.unsupported_clocks = [c for c in clocks if c not in fact_clocks]
     report.unsupported_formations = [f for f in formations if f not in fact_formations]
