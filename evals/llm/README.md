@@ -11,7 +11,7 @@ Each clip has a sheet in this folder with the explanation, the automatic groundi
 | forster-opener | gemini-3.8-flash | 212 | PASS | yes (too long: 238 words (limit 220)) | Coach's view now reads 0 players behind the ball correctly (defence bypassed). First answer was rewritten for length by the repair step. |
 | ljubicic-equaliser | gemini-3.8-flash | 196 | PASS | no | Penalty with no open play before the shot: says there was too little open play to analyse instead of speculating. |
 | musiala-winner | gemini-3.8-flash | 230 | PASS | no | Sound coaching point: a deep, compact block (757 → 388 m²) denies space near goal but gives away territory around the box. Minor: "designed to" implies intent (rule 6). |
-| drone-0600-0630 | gemini-3.8-flash | 223 | PASS | yes (too long: 253 words (limit 220)) | First clip computed from raw drone video (Phase 7). Facts are ours, not a provider's. Coach's view is sensible; player names are generic ("Player B7") because video has no names. |
+| drone-0600-0630 | gemini-3.8-flash | 225 | PASS | yes (too long: 250 words (limit 220)) | First clip computed from raw drone video (Phase 7); facts are ours, not a provider's (rebuilt after the D23 fix). Coach's view is sensible; player names are generic ("Player B7") because video has no names. |
 
 How we got here (each step was found by reading real outputs):
 
