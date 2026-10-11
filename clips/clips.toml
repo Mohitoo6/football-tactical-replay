@@ -32,3 +32,15 @@ period = 2
 start_s = 2577.0    # Sané's saved shot at 2579.4 s, Musiala's goal at 2595.3 s (88:15)
 end_s = 2600.0
 focus_team = "away"
+
+# Match J03WN1: VfL Bochum 1848 3-0 Bayer 04 Leverkusen, Bundesliga matchday 34,
+# 27 May 2023. Leverkusen played with 10 men from the 8th minute (red card, Adli).
+
+[[clip]]
+id = "forster-opener"
+match_id = "J03WN1"
+title = "Förster's 19th-minute opener for Bochum against 10-man Leverkusen"
+period = 1
+start_s = 1068.6    # shot at 1083.6 s (18:03)
+end_s = 1088.6
+focus_team = "home"

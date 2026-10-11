@@ -116,6 +116,11 @@ Entries marked *(pending spike)* still need evidence from a test run.
   | Köln | all frames | 40% | 70% | 80% |
   | Bayern | out of possession | 10% | 20% | 60% |
   | Bayern | in possession | 0% | 0% | 16% |
+  | Bochum (official "4-3-3 Double-6", compared as 4-3-3) | all frames | 10% | 35% | 70% |
+  | Bochum | in possession | 15% | 55% | 65% |
+  | Leverkusen | — | only 1 window before a 7th-minute red card | | |
+
+  Second match: J03WN1. For Bochum the detector most often says 4-2-3-1 (6 of 20 windows). A 4-3-3 with a "double six" (two holding midfielders) is close to a 4-2-3-1, so 30% exact if you accept that mapping. We report the stricter number.
 
 - **Interpretation:**
   - The detector is reliable for a settled defensive block. Köln defended for most of this match.
@@ -123,7 +128,9 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Most errors are close neighbours (4-1-4-1 vs 4-2-3-1 differ only in midfield).
   - The official lineup is a nominal starting label, not the shape a team holds in every phase.
 - **Limitations:**
-  - It has been evaluated on one match only (2 teams). The other 6 open matches would give a better estimate.
+  - It has been evaluated on two matches (4 teams, one of which played 83 minutes with 10 men). The other 5 open matches would give a better estimate.
+  - Templates assume 10 outfield players. Windows or clips with fewer (red cards) are excluded from the evaluation and labelled "n/a" in the app.
+  - Official labels can carry extra words ("4-3-3 Double-6"). `base_formation` keeps only the numbers.
   - Templates assume evenly spaced lines.
   - In the app we label the result "shape in clip", never as a fact about the team's formation.
 
@@ -192,3 +199,27 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Limitations:**
   - Metrics are meaningless during dead-ball moments, e.g. a goal celebration ("line 77 m from goal"). Phase 5 summaries must use ball-in-play frames only.
   - In attacking phases, a formation line can stretch the length of the pitch, which reads as a long diagonal.
+
+## D14. Generalization check on a second match
+*2026-10-11*
+
+- **Decision:**
+  - `scripts/check_match.py <match_id>` runs our checks on every frame of a match, not just on clips.
+  - Validation is split into **problems** (data unusable, the clip is rejected) and **warnings** (rare tracking jumps).
+  - Before calling a feature general, we test it on a match we did not build it on.
+- **Why:** Our first three clips all came from one match. Running the full pipeline on Bochum v Leverkusen (J03WN1) found five issues that the clips never showed:
+  1. Frame numbers restart each period, so the "consecutive frames" check failed on full matches.
+  2. Single-frame tracking jumps are real but rare (16 of 3.2 M moves in J03WMX, 239 of 3.0 M in J03WN1, mostly near the touchlines). Treating them as errors would reject good clips.
+  3. Official formation labels can include extra words ("4-3-3 Double-6").
+  4. Red cards: Leverkusen had 10 players for 83 minutes, but our clip test assumed 11 v 11 and formation templates assume 10 outfield players.
+  5. Clip ids built from player names contained non-ASCII letters ("förster").
+- **Evidence:** With these fixes, J03WN1 works with no code specific to it:
+  - Orientation is correct in both periods (home keeper at x = −32.7 / −38.0).
+  - No positions are more than 5 m outside the pitch.
+  - No ball position is missing.
+  - The data matches the events (red card at 7:03; 3 Bochum goals; result 3:0).
+  - A new clip (`forster-opener`) builds, validates and renders (501 frames, 20.04 s).
+  - Rebuilding the original clips reproduced their files byte for byte.
+- **Limitations:**
+  - Only DFL data is supported end-to-end. Another provider (e.g. Metrica) needs its own loader, because formations, goals and file naming are provider-specific.
+  - The defensive-line height uses the single deepest outfield player, so one player on the goal line gives "1 m from goal". The Phase 5 summaries should use a more robust measure (e.g. the average of the back line).
