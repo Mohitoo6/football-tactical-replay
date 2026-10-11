@@ -105,7 +105,9 @@ class FramePainter:
         self._hulls, self._links = {}, {}
         for side in ("home", "away"):
             result, positions = detect_formation(in_play, side, self.attacking_right(side))
-            self.detected_formation[side] = result.formation
+            # Templates have 10 outfield players, so a label for fewer (red card) would mislead.
+            self.detected_formation[side] = (
+                result.formation if len(positions) == 10 else f"n/a, {len(positions)} outfield players")
             self._formation_lines[side] = dict(zip(positions["player_id"], positions["line"]))
             self._hulls[side] = self.ax.add_patch(Polygon(
                 np.zeros((1, 2)), closed=True, facecolor=TEAM_COLOURS[side], edgecolor=TEAM_COLOURS[side],

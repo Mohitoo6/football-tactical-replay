@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from tactics.data.load import get_frames, load_dfl_match
-from tactics.geometry.formation import detect_formation
+from tactics.geometry.formation import average_positions, base_formation, detect_formation
 
 ROOT = Path(__file__).resolve().parents[1]
 WINDOW_S = 300
@@ -66,19 +66,26 @@ def main(match_id: str) -> None:
                 if subset["frame"].nunique() < 50:  # under 10 s of play: too little to judge
                     row[variant] = "–"
                     continue
+                if len(average_positions(subset, team.side, attacking_right)) < 10:
+                    row[variant] = "(<10 outfield)"  # e.g. after a red card: templates assume 10
+                    continue
                 result = detect_formation(subset, team.side, attacking_right)[0]
                 results[variant].append(result)
                 row[variant] = result.formation
             rows.append(row)
         table = pd.DataFrame(rows)
 
-        lines += [f"## {team.name} — official: {team.formation}", ""]
-        official_back_line = team.formation.split("-")[0]
+        official = base_formation(team.formation)
+        lines += [f"## {team.name} — official: {team.formation} (compared as {official})", ""]
+        official_back_line = official.split("-")[0]
         for variant in VARIANTS:
             found = results[variant]
-            exact = sum(r.formation == team.formation for r in found) / len(found)
-            top2 = sum(team.formation in [name for name, _ in r.ranking[:2]] for r in found) / len(found)
+            exact = sum(r.formation == official for r in found) / len(found)
+            top2 = sum(official in [name for name, _ in r.ranking[:2]] for r in found) / len(found)
             back = sum(r.formation.split("-")[0] == official_back_line for r in found) / len(found)
+            if not found:
+                lines.append(f"- **{variant}**: no window with 10 regular outfield players")
+                continue
             whole = detect_formation(select(players, ball, team.side, variant), team.side, attacking_right)[0]
             top = ", ".join(f"{name} ({cost:.4f})" for name, cost in whole.ranking[:3])
             summary.append((team.name, variant, exact, top2, back, len(found)))
@@ -88,7 +95,7 @@ def main(match_id: str) -> None:
                          f"Whole match: {whole.formation} (top 3 by cost: {top})")
         lines += ["", markdown_table(table), ""]
 
-    out = ROOT / "evals" / "formation_eval.md"
+    out = ROOT / "evals" / f"formation_eval_{match_id}.md"
     out.parent.mkdir(exist_ok=True)
     out.write_text("\n".join(lines) + "\n")
     print(f"{'team':22} {'variant':18} {'exact':>6} {'top-2':>6} {'back line':>10}  windows")
