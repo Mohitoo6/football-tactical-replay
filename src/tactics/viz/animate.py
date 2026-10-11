@@ -26,7 +26,8 @@ def save_animation(clip: Clip, path: Path, step: int = 1, dpi: int = 100, overla
     path = Path(path)
     fps = clip.meta["frame_rate"] / step
     if path.suffix == ".mp4":
-        writer = FFMpegWriter(fps=fps, bitrate=2500)
+        # yuv420p + faststart: the H.264 flavour every browser can play and start streaming early.
+        writer = FFMpegWriter(fps=fps, bitrate=2500, extra_args=["-pix_fmt", "yuv420p", "-movflags", "+faststart"])
     elif path.suffix == ".gif":
         writer = PillowWriter(fps=fps)
     else:
