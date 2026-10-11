@@ -13,7 +13,7 @@ import pytest
 from tactics.data.clips import ClipSpec, build_clip, load_clip, load_clip_specs, match_clock, save_clip
 from tactics.data.load import BALL_COLUMNS, PLAYER_COLUMNS, Match, Team, frame_at, get_frames, orient_home_left_to_right
 from tactics.data.normalize import home_attacks_left_to_right, orient_for_team, rotate_180
-from tactics.data.validate import find_problems, players_per_team
+from tactics.data.validate import find_problems, find_warnings, players_per_team
 
 CLIPS_DIR = Path(__file__).resolve().parents[1] / "clips"
 
@@ -115,6 +115,7 @@ def test_orient_home_left_to_right_flips_only_the_wrong_period():
 def test_find_problems_accepts_clean_data():
     players, ball = get_frames(make_match(), 10000, 10003)
     assert find_problems(players, ball) == []
+    assert find_warnings(players) == []
 
 
 def test_find_problems_flags_bad_data():
@@ -127,10 +128,15 @@ def test_find_problems_flags_bad_data():
     assert any("outside the pitch" in p for p in find_problems(far_away, ball))
 
     jump = players.assign(x=players["x"].where(~((players["player_id"] == "A9") & (players["frame"] == 10003)), 30.0))
-    assert any("faster than" in p for p in find_problems(jump, ball))  # 19.8 m in 0.08 s = 248 m/s
+    assert find_problems(jump, ball) == []  # a tracking jump alone does not make data unusable...
+    assert any("faster than" in w for w in find_warnings(jump))  # ...but it is reported: 19.8 m in 0.08 s
 
     gap = ball[ball["frame"] != 10001]
     assert any("not consecutive" in p for p in find_problems(players[players["frame"] != 10001], gap))
+
+    # A new period restarts the frame numbers: that is not a gap.
+    second_half = ball.assign(period=2, frame=ball["frame"] + 90000)
+    assert find_problems(players, pd.concat([ball, second_half], ignore_index=True)) == []
 
     assert find_problems(players.drop(columns="x"), ball) == ["missing columns: ['x']"]
 
@@ -174,8 +180,7 @@ def test_committed_clip_is_clean(folder):
     clip = load_clip(folder)
     assert find_problems(clip.players, clip.ball) == []
     counts = players_per_team(clip.players)
-    assert counts.loc["home"].tolist() == [11, 11]  # 11 players in every frame
-    assert counts.loc["away"].tolist() == [11, 11]
+    assert counts["max"].le(11).all() and counts["min"].ge(7).all()  # 7 is the legal minimum
     assert "CC-BY 4.0" in clip.meta["source"]
 
 
