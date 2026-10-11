@@ -53,9 +53,33 @@ Key decisions, with alternatives and evidence, are in [`DECISIONS.md`](DECISIONS
 | Generalisation | Ran the pipeline on a second match it was not built on | Worked after fixing 5 issues the first match never showed (D14) |
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | LLM grounding | 4 clips, prompt v3 | 4 / 4 pass; a naive prompt on the same facts invented a number and two names (caught) |
-| Tests | `uv run pytest` | 69 passing, including the app and LLM layer with fake clients (no network) |
+| Tests | `uv run pytest` | 72 passing (+14 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md).
+
+## From drone video to coaching (Phase 7)
+
+The same pipeline also runs on **raw top-view drone video**, with no tracking provider. The system finds the players and the ball itself:
+
+1. Stabilise the hovering drone's drift.
+2. Build an empty-pitch image (per-pixel median of the frames).
+3. Calibrate from the painted pitch lines.
+4. Detect players as blobs that differ from the empty pitch.
+5. Track them with a colour-aware tracker, split teams by shirt colour (with an offside-logic goalkeeper rule) and follow the ball.
+
+The result is exported as a normal clip (`clips/drone-0600-0630`), so the overlays and the AI coach work on it unchanged.
+
+Measured on 3 × 30 s SoccerTrack segments against the dataset's ground truth ([D19–D22](DECISIONS.md)):
+
+| What | Result |
+|---|---|
+| Players found (recall) | 98.6–99.1% |
+| Position error, automatic calibration (no hand-marked points) | 0.43–0.55 m |
+| Identity kept (purity) | 95–99.6% |
+| Correct team | 94–99.6% |
+| Ball correct, all frames | 41–70% (it is mostly hidden at players' feet otherwise) |
+
+A pretrained deep detector (RF-DETR, tiled) found only 43% of players from straight above, at 100× the cost. The classical method won here. Limits: hovering top-down camera, whole pitch outline visible, one ground tested so far.
 
 ## Run it
 
@@ -66,7 +90,7 @@ git clone https://github.com/Mohitoo6/football-tactical-replay.git
 cd football-tactical-replay
 uv sync
 uv run streamlit run app/streamlit_app.py      # opens http://localhost:8501
-uv run pytest                                  # 69 tests
+uv run pytest                                  # 72 tests (video tests skip without --group video)
 ```
 
 ### Rebuild everything from raw data (optional)
@@ -95,7 +119,7 @@ app/         Streamlit app
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate_explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation and LLM evaluations
-tests/       69 tests
+tests/       72 tests + 14 video tests
 ```
 
 ## Limitations
@@ -106,11 +130,12 @@ tests/       69 tests
 - **"Ball carrier"** means the nearest player to the ball, not confirmed possession.
 - **Grounding check:** it confirms each number, time and formation exists in the facts, but not that it is attached to the right team or metric. It cannot judge the soundness of coaching reasoning. Both need human review (`evals/llm/`).
 - **Free tiers:** Gemini allowed 20 requests per day per model when measured (2026-10-11). Explanations are generated offline and cached; the app makes no LLM calls.
-- **In progress:** turning top-view video into tracking data (Phase 7) so the system can work without a tracking provider.
+- **Drone video (Phase 7):** tested on one match and one ground. It needs a hovering, top-down camera with the whole pitch visible. A keeper who barely moves can fade into the background. No player names or goals are detected from video.
 
 ## Data and attribution
 
 - Tracking and event data: **Sportec Open DFL Tracking and Event Data**. Bassek, M., Rein, R., Weber, H. & Memmert, D. *An integrated dataset of spatiotemporal and event data in elite soccer.* Scientific Data 12, 195 (2025). doi:[10.1038/s41597-025-04505-y](https://doi.org/10.1038/s41597-025-04505-y). Licensed **CC-BY 4.0**.
+- Drone video and ground truth for Phase 7: **SoccerTrack**, Scott et al., CVPR Workshops 2022 ([Kaggle](https://www.kaggle.com/datasets/atomscott/soccertrack)), LGPL-3.0. Raw videos are not redistributed; `clips/drone-0600-0630` contains positions we computed and a rendered video.
 - Metrica Sports sample data ([github.com/metrica-sports/sample-data](https://github.com/metrica-sports/sample-data)) was used in early tests.
 - Built with kloppy, mplsoccer, numpy, scipy, pandas, matplotlib, Streamlit and the OpenAI-compatible APIs of Google Gemini, Groq and OpenRouter.
 
@@ -124,6 +149,6 @@ tests/       69 tests
 Co-built by two brothers:
 
 - **Rohit** ([@Rohit-0612](https://github.com/Rohit-0612)): data pipeline, orientation and validation, geometry and formation detection, visualisation (Phases 1–4).
-- **Mohit** ([@Mohitoo6](https://github.com/Mohitoo6)): AI explanation layer (facts summary, prompts, fallbacks, caching, grounding and repair), evaluation, Streamlit app (Phases 5–6); video-to-tracking (Phase 7, in progress).
+- **Mohit** ([@Mohitoo6](https://github.com/Mohitoo6)): AI explanation layer (facts summary, prompts, fallbacks, caching, grounding and repair), evaluation, Streamlit app (Phases 5–6); video-to-tracking (Phase 7).
 
 Developed with Claude Code as a pair programmer; every decision and its evidence is recorded in `DECISIONS.md`.

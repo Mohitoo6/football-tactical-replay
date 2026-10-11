@@ -1,0 +1,15 @@
+{
+  "cache_key": "cf96f9976ef44e21925c963e1ee9ebc82ff8ce0dca9d102cb7461aa4d1765472",
+  "prompt_version": "v3",
+  "provider": "llm",
+  "model": "gemini-3.8-flash",
+  "created_utc": "2026-10-11T13:35:04+00:00",
+  "text": "**What happened**  \nTeam B (lighter shirts) showed a 4-1-4-1 shape, while Team A (darker shirts) showed a 4-4-2 shape. The ball moved from Player B1 at 10:00 through Player A12, Player B11, Player B7, Player B3, Player A4, Player B7, Player B5, Player B1, Player B2, Player B10, Player A1, Player B10, Player A8, and finally Player A2 at 10:29. During this sequence, Team B advanced its back line—the average distance of the four deepest outfield players from their goal line—from 11 metres to 50 metres, widening from 40 metres to 50 metres. Team A's back line dropped from 63 metres to 26 metres.\n\n**Coach's view**  \n* Team B pushing its back line up to 50 metres suggests strong territorial control, allowing them to stretch the pitch across 50 metres of width.  \n* Team A retreating to a 26-metre back line typically protects the space behind their defence, but having 10 players behind the ball between 10:14 and 10:20 invited Team B forward.  \n* A coach would ask Team A to step up higher to contest possession earlier.\n\n**Key numbers**  \n* Team B width: 40 m at 10:00 to 50 m at 10:28.  \n* Team B back line: 11 m at 10:00 up to 50 m at 10:28.  \n* Team A back line: 63 m at 10:00 down to 26 m at 10:28.",
+  "repair": {
+    "first_text": "**What happened**  \nTeam B (lighter shirts) showed a 4-1-4-1 shape in this clip, while Team A (darker shirts) showed a 4-4-2 shape. The ball moved across several players, starting with Player B1 at 10:00, then Player A12, Player B11, Player B7, Player B3, Player A4, back to Player B7, then Player B5, Player B1, Player B2, Player B10, Player A1, back to Player B10, and finally Player A8 and Player A2 at 10:29. During this sequence, Team B pushed its back line—the average distance of the four deepest outfield defenders from their own goal line—from 11 metres up to 50 metres, while expanding its width from 40 metres to 50 metres. Meanwhile, Team A’s back line retreated from 63 metres to 26 metres.\n\n**Coach's view**  \n* Team B's back line moving up to 50 metres suggests they successfully pinned Team A back, maintaining possession through multiple players while controlling territory.  \n* Team A dropped deeper, with their back line falling to 26 metres, which typically protects the space behind their defence but conceded room across the middle third.  \n* A coach would ask Team A to step up earlier, as having 10 players behind the ball between 10:14 and 10:20 surrendered control of wide areas to Team B.\n\n**Key numbers**  \n* Team B width: 40 m at 10:00 to 50 m at 10:28.  \n* Team B back line: 11 m at 10:00 up to 50 m at 10:28.  \n* Team A back line: 63 m at 10:00 down to 26 m at 10:28.",
+    "first_model": "gemini-3.8-flash",
+    "first_problems": [
+      "too long: 253 words (limit 220)"
+    ]
+  }
+}

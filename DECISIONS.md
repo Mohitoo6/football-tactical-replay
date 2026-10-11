@@ -405,3 +405,29 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - The keeper's team is wrong for one keeper in segment 1. Options: combine several cues, let the user confirm in the app, or give shirt colours as input.
   - The ball is unknown in 30–60% of frames, mostly when it is at a player's feet. Segment 2 is the weakest (41%).
   - All three segments are from one match on one ground.
+
+## D22. End to end: drone video → clip → overlays → AI coach
+*2026-10-11 · `scripts/video_to_clip.py`, clip `drone-0600-0630`*
+
+- **Decision:** `video/export.py` turns our own tracks, teams and ball into the same clip format as the DFL clips (players/ball parquet + meta), so the overlays, facts summary, AI coach and app work unchanged. Rules:
+  - Keep only the two teams' tracks of at least 1 s, at most 11 per team per frame.
+  - Drop assistant referees (tracks that never come 2 m inside a touchline) *after* team assignment.
+  - Name players "Player A3" and teams by shirt shade ("lighter" / "darker"). Colour names were wrong under the green-tinted light (blue measured as green).
+  - The lighter team is "home" (drawn white) and attacks left to right.
+  - When the ball is not visible it is hidden with the label "Ball not visible" (not "out of play").
+- **Evidence:**
+  - Segment 10:00–10:30 builds with no validation problems (25 speed warnings from identity jumps).
+  - One keeper per team, each in its own half.
+  - The ball is visible in 71% of frames.
+  - The coach explanation passes grounding (29 items) and format checks after one live repair (253 → 223 words).
+  - The app smoke test renders it.
+  - We chose this segment for the demo because its team labels are best (98.9%). The scores of all three segments are in D21.
+- **Bugs found on the way, each fixed:**
+  - Segment names are seconds ("0600" = 10:00), not mm:ss.
+  - Removing officials before team assignment dropped team accuracy from 99.6% to 86.0%.
+  - The keeper test assumed an elite keeper (> 35 m); the amateur keeper averages 32 m.
+- **Limitations:**
+  - No player names or official formations from video.
+  - A keeper who barely moves fades into the median background and is detected in fragments, as seen in segment 0:30–1:00.
+  - Segment 0:30–1:00 still assigns one keeper to the wrong team.
+  - Tested on one ground and one match. Goals are not detected from video, so "goals" is empty for drone clips.

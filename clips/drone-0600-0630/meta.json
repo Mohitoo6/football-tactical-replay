@@ -1,0 +1,28 @@
+{
+  "clip_id": "drone-0600-0630",
+  "match_id": null,
+  "title": "Drone clip 10:00–10:30 (SoccerTrack university match)",
+  "period": 1,
+  "start_s": 600,
+  "end_s": 629.9966633299966,
+  "focus_team": "home",
+  "start_clock": "10:00",
+  "end_clock": "10:29",
+  "frame_rate": 29.97,
+  "teams": {
+    "away": {
+      "name": "Team A (darker shirts)",
+      "formation": null
+    },
+    "home": {
+      "name": "Team B (lighter shirts)",
+      "formation": null
+    }
+  },
+  "goals": [],
+  "data_kind": "video",
+  "ball_hidden_text": "Ball not visible",
+  "coordinates": "metres, origin at pitch centre; from drone video via automatic calibration",
+  "source": "Scott, A., Uchida, I., Onishi, M., Kameda, Y., Fukui, K. & Fujii, K. SoccerTrack: A Dataset and Tracking Algorithm for Soccer with Fish-eye and Drone Videos. CVPR Workshops (2022). Data: LGPL-3.0.",
+  "credit": "Video & ground truth: SoccerTrack (Scott et al. 2022), LGPL-3.0 · positions computed by this project"
+}
