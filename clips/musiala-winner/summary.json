@@ -1,0 +1,286 @@
+{
+ "clip": {
+  "title": "Musiala's 89th-minute winner for Bayern",
+  "from_clock": "87:57",
+  "to_clock": "88:20",
+  "clip_seconds": 23,
+  "seconds_ball_in_play": 18
+ },
+ "teams": [
+  {
+   "name": "FC Bayern München",
+   "role": "focus team (its move is shown)",
+   "players_on_pitch": 11,
+   "official_formation": "4-2-3-1",
+   "shape_in_clip": "4-1-4-1"
+  },
+  {
+   "name": "1. FC Köln",
+   "role": "opponent",
+   "players_on_pitch": 11,
+   "official_formation": "4-2-3-1",
+   "shape_in_clip": "3-5-2"
+  }
+ ],
+ "goals": [
+  {
+   "clock": "88:15",
+   "player": "J. Musiala",
+   "team": "FC Bayern München"
+  }
+ ],
+ "ball_carriers": [
+  {
+   "clock": "87:57",
+   "player": "Leroy Sané",
+   "team": "FC Bayern München"
+  },
+  {
+   "clock": "88:00",
+   "player": "M. Schwäbe",
+   "team": "1. FC Köln"
+  },
+  {
+   "clock": "88:03",
+   "player": "Jeff Chabot",
+   "team": "1. FC Köln"
+  },
+  {
+   "clock": "88:03",
+   "player": "Joshua Kimmich",
+   "team": "FC Bayern München"
+  },
+  {
+   "clock": "88:07",
+   "player": "Joao Cancelo",
+   "team": "FC Bayern München"
+  },
+  {
+   "clock": "88:09",
+   "player": "Serge Gnabry",
+   "team": "FC Bayern München"
+  },
+  {
+   "clock": "88:12",
+   "player": "J. Musiala",
+   "team": "FC Bayern München"
+  }
+ ],
+ "timeline": [
+  {
+   "clock": "87:57",
+   "1. FC Köln": {
+    "width_m": 24,
+    "depth_m": 41,
+    "area_m2": 757,
+    "back_line_m": 25
+   },
+   "FC Bayern München": {
+    "width_m": 35,
+    "depth_m": 49,
+    "area_m2": 1398,
+    "back_line_m": 42
+   }
+  },
+  {
+   "clock": "87:59",
+   "1. FC Köln": {
+    "width_m": 24,
+    "depth_m": 49,
+    "area_m2": 737,
+    "back_line_m": 15
+   },
+   "FC Bayern München": {
+    "width_m": 32,
+    "depth_m": 56,
+    "area_m2": 1388,
+    "back_line_m": 46
+   }
+  },
+  {
+   "clock": "88:01",
+   "1. FC Köln": {
+    "width_m": 23,
+    "depth_m": 47,
+    "area_m2": 610,
+    "back_line_m": 12
+   },
+   "FC Bayern München": {
+    "width_m": 34,
+    "depth_m": 55,
+    "area_m2": 1225,
+    "back_line_m": 52
+   }
+  },
+  {
+   "clock": "88:03",
+   "1. FC Köln": {
+    "width_m": 22,
+    "depth_m": 38,
+    "area_m2": 482,
+    "back_line_m": 14
+   },
+   "FC Bayern München": {
+    "width_m": 34,
+    "depth_m": 45,
+    "area_m2": 1026,
+    "back_line_m": 56
+   }
+  },
+  {
+   "clock": "88:05",
+   "1. FC Köln": {
+    "width_m": 23,
+    "depth_m": 26,
+    "area_m2": 372,
+    "back_line_m": 19
+   },
+   "FC Bayern München": {
+    "width_m": 38,
+    "depth_m": 40,
+    "area_m2": 1032,
+    "back_line_m": 58
+   }
+  },
+  {
+   "clock": "88:07",
+   "1. FC Köln": {
+    "width_m": 28,
+    "depth_m": 20,
+    "area_m2": 386,
+    "back_line_m": 20
+   },
+   "FC Bayern München": {
+    "width_m": 46,
+    "depth_m": 36,
+    "area_m2": 1024,
+    "back_line_m": 60
+   }
+  },
+  {
+   "clock": "88:09",
+   "1. FC Köln": {
+    "width_m": 34,
+    "depth_m": 23,
+    "area_m2": 506,
+    "back_line_m": 17
+   },
+   "FC Bayern München": {
+    "width_m": 51,
+    "depth_m": 33,
+    "area_m2": 1042,
+    "back_line_m": 63
+   }
+  },
+  {
+   "clock": "88:11",
+   "1. FC Köln": {
+    "width_m": 31,
+    "depth_m": 27,
+    "area_m2": 515,
+    "back_line_m": 11
+   },
+   "FC Bayern München": {
+    "width_m": 48,
+    "depth_m": 32,
+    "area_m2": 1018,
+    "back_line_m": 68
+   }
+  },
+  {
+   "clock": "88:13",
+   "1. FC Köln": {
+    "width_m": 23,
+    "depth_m": 26,
+    "area_m2": 362,
+    "back_line_m": 10
+   },
+   "FC Bayern München": {
+    "width_m": 44,
+    "depth_m": 32,
+    "area_m2": 867,
+    "back_line_m": 73
+   }
+  },
+  {
+   "clock": "88:15",
+   "1. FC Köln": {
+    "width_m": 20,
+    "depth_m": 25,
+    "area_m2": 301,
+    "back_line_m": 10
+   },
+   "FC Bayern München": {
+    "width_m": 42,
+    "depth_m": 31,
+    "area_m2": 790,
+    "back_line_m": 75
+   }
+  }
+ ],
+ "notable_changes": [
+  {
+   "team": "FC Bayern München",
+   "metric": "width_m",
+   "from": 35,
+   "to": 42,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "FC Bayern München",
+   "metric": "depth_m",
+   "from": 49,
+   "to": 31,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "FC Bayern München",
+   "metric": "area_m2",
+   "from": 1398,
+   "to": 790,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "FC Bayern München",
+   "metric": "back_line_m",
+   "from": 42,
+   "to": 75,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "1. FC Köln",
+   "metric": "depth_m",
+   "from": 41,
+   "to": 25,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "1. FC Köln",
+   "metric": "area_m2",
+   "from": 757,
+   "to": 301,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  },
+  {
+   "team": "1. FC Köln",
+   "metric": "back_line_m",
+   "from": 25,
+   "to": 10,
+   "from_clock": "87:57",
+   "to_clock": "88:15"
+  }
+ ],
+ "definitions": {
+  "width_m": "distance between the team's widest outfield players across the pitch",
+  "depth_m": "distance between the team's deepest and most advanced outfield players",
+  "area_m2": "area of the shape around all outfield players (smaller = more compact)",
+  "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
+ }
+}

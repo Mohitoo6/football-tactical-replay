@@ -1,0 +1,58 @@
+{
+ "clip": {
+  "title": "Ljubicic's 81st-minute equaliser for Köln",
+  "from_clock": "79:50",
+  "to_clock": "80:10",
+  "clip_seconds": 20,
+  "seconds_ball_in_play": 1
+ },
+ "teams": [
+  {
+   "name": "1. FC Köln",
+   "role": "focus team (its move is shown)",
+   "players_on_pitch": 11,
+   "official_formation": "4-2-3-1",
+   "shape_in_clip": "n/a, under 5 s of open play"
+  },
+  {
+   "name": "FC Bayern München",
+   "role": "opponent",
+   "players_on_pitch": 11,
+   "official_formation": "4-2-3-1",
+   "shape_in_clip": "n/a, under 5 s of open play"
+  }
+ ],
+ "goals": [
+  {
+   "clock": "80:04",
+   "player": "D. Ljubicic",
+   "team": "1. FC Köln"
+  }
+ ],
+ "ball_carriers": [],
+ "timeline": [
+  {
+   "clock": "80:04",
+   "1. FC Köln": {
+    "width_m": 21,
+    "depth_m": 42,
+    "area_m2": 557,
+    "back_line_m": 62
+   },
+   "FC Bayern München": {
+    "width_m": 21,
+    "depth_m": 35,
+    "area_m2": 325,
+    "back_line_m": 16
+   }
+  }
+ ],
+ "notable_changes": [],
+ "definitions": {
+  "width_m": "distance between the team's widest outfield players across the pitch",
+  "depth_m": "distance between the team's deepest and most advanced outfield players",
+  "area_m2": "area of the shape around all outfield players (smaller = more compact)",
+  "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
+ }
+}

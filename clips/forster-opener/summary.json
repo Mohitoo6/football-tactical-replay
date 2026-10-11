@@ -1,0 +1,249 @@
+{
+ "clip": {
+  "title": "Förster's 19th-minute opener for Bochum against 10-man Leverkusen",
+  "from_clock": "17:48",
+  "to_clock": "18:08",
+  "clip_seconds": 20,
+  "seconds_ball_in_play": 15
+ },
+ "teams": [
+  {
+   "name": "VfL Bochum 1848",
+   "role": "focus team (its move is shown)",
+   "players_on_pitch": 11,
+   "official_formation": "4-3-3 Double-6",
+   "shape_in_clip": "4-2-3-1"
+  },
+  {
+   "name": "Bayer 04 Leverkusen",
+   "role": "opponent",
+   "players_on_pitch": 10,
+   "official_formation": "4-2-3-1",
+   "shape_in_clip": "n/a, 9 outfield players"
+  }
+ ],
+ "goals": [
+  {
+   "clock": "18:03",
+   "player": "P. Förster",
+   "team": "VfL Bochum 1848"
+  }
+ ],
+ "ball_carriers": [
+  {
+   "clock": "17:51",
+   "player": "P. Förster",
+   "team": "VfL Bochum 1848"
+  },
+  {
+   "clock": "17:52",
+   "player": "N. Amiri",
+   "team": "Bayer 04 Leverkusen"
+  },
+  {
+   "clock": "17:53",
+   "player": "K. Stöger",
+   "team": "VfL Bochum 1848"
+  },
+  {
+   "clock": "17:58",
+   "player": "T. Asano",
+   "team": "VfL Bochum 1848"
+  }
+ ],
+ "timeline": [
+  {
+   "clock": "17:48",
+   "VfL Bochum 1848": {
+    "width_m": 26,
+    "depth_m": 25,
+    "area_m2": 384,
+    "back_line_m": 38
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 30,
+    "depth_m": 28,
+    "area_m2": 460,
+    "back_line_m": 44
+   }
+  },
+  {
+   "clock": "17:50",
+   "VfL Bochum 1848": {
+    "width_m": 28,
+    "depth_m": 25,
+    "area_m2": 437,
+    "back_line_m": 42
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 32,
+    "depth_m": 29,
+    "area_m2": 485,
+    "back_line_m": 41
+   }
+  },
+  {
+   "clock": "17:52",
+   "VfL Bochum 1848": {
+    "width_m": 30,
+    "depth_m": 27,
+    "area_m2": 516,
+    "back_line_m": 43
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 32,
+    "depth_m": 23,
+    "area_m2": 449,
+    "back_line_m": 39
+   }
+  },
+  {
+   "clock": "17:54",
+   "VfL Bochum 1848": {
+    "width_m": 34,
+    "depth_m": 36,
+    "area_m2": 767,
+    "back_line_m": 43
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 30,
+    "depth_m": 26,
+    "area_m2": 538,
+    "back_line_m": 34
+   }
+  },
+  {
+   "clock": "17:56",
+   "VfL Bochum 1848": {
+    "width_m": 36,
+    "depth_m": 44,
+    "area_m2": 1037,
+    "back_line_m": 48
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 33,
+    "depth_m": 34,
+    "area_m2": 731,
+    "back_line_m": 25
+   }
+  },
+  {
+   "clock": "17:58",
+   "VfL Bochum 1848": {
+    "width_m": 39,
+    "depth_m": 47,
+    "area_m2": 1236,
+    "back_line_m": 54
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 37,
+    "depth_m": 39,
+    "area_m2": 842,
+    "back_line_m": 15
+   }
+  },
+  {
+   "clock": "18:00",
+   "VfL Bochum 1848": {
+    "width_m": 38,
+    "depth_m": 46,
+    "area_m2": 1226,
+    "back_line_m": 61
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 37,
+    "depth_m": 38,
+    "area_m2": 799,
+    "back_line_m": 9
+   }
+  },
+  {
+   "clock": "18:02",
+   "VfL Bochum 1848": {
+    "width_m": 38,
+    "depth_m": 44,
+    "area_m2": 1217,
+    "back_line_m": 65
+   },
+   "Bayer 04 Leverkusen": {
+    "width_m": 36,
+    "depth_m": 37,
+    "area_m2": 815,
+    "back_line_m": 6
+   }
+  }
+ ],
+ "notable_changes": [
+  {
+   "team": "VfL Bochum 1848",
+   "metric": "width_m",
+   "from": 26,
+   "to": 38,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "VfL Bochum 1848",
+   "metric": "depth_m",
+   "from": 25,
+   "to": 44,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "VfL Bochum 1848",
+   "metric": "area_m2",
+   "from": 384,
+   "to": 1217,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "VfL Bochum 1848",
+   "metric": "back_line_m",
+   "from": 38,
+   "to": 65,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "Bayer 04 Leverkusen",
+   "metric": "width_m",
+   "from": 30,
+   "to": 36,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "Bayer 04 Leverkusen",
+   "metric": "depth_m",
+   "from": 28,
+   "to": 37,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "Bayer 04 Leverkusen",
+   "metric": "area_m2",
+   "from": 460,
+   "to": 815,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  },
+  {
+   "team": "Bayer 04 Leverkusen",
+   "metric": "back_line_m",
+   "from": 44,
+   "to": 6,
+   "from_clock": "17:48",
+   "to_clock": "18:02"
+  }
+ ],
+ "definitions": {
+  "width_m": "distance between the team's widest outfield players across the pitch",
+  "depth_m": "distance between the team's deepest and most advanced outfield players",
+  "area_m2": "area of the shape around all outfield players (smaller = more compact)",
+  "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
+ }
+}

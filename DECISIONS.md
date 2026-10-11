@@ -64,7 +64,16 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Decision:** Use the `openai` Python SDK. Gemini, Groq and OpenRouter differ only in `base_url`, model and API key (set in `.env`).
 - **Alternatives:** One official SDK per provider (`google-genai`, `groq`, …); LiteLLM.
 - **Why:** One code path and one dependency. Switching provider is a config change, not a code change.
-- **Limitations:** Gemini's OpenAI compatibility is labelled beta, and unsupported parameters are silently ignored. If this causes problems, we swap `google-genai` in for that provider only.
+- **Evidence (2026-10-11):**
+  - All three providers work through one `openai` client (v3.28): Gemini `gemini-3.8-flash`, Groq `openai/gpt-oss-120b` and OpenRouter `nvidia/nemotron-3-super-120b-a12b:free`.
+  - Free-tier reality showed up on day one:
+    - Groq had removed `llama-3.3-70b-versatile` (404).
+    - OpenRouter's Gemma models were rate-limited upstream (429).
+    - Gemini returned 503 "high demand" on one call.
+    - Gemini 3.x spends output tokens on "thinking", so with a small `max_tokens` the answer was empty. We set `reasoning_effort=low` and `max_tokens=2000`.
+- **Limitations:**
+  - Gemini's OpenAI compatibility is labelled beta, and unsupported parameters are silently ignored. If this causes problems, we swap `google-genai` in for that provider only.
+  - Free model lists change often, so `.env.example` records the date the models were checked.
 
 ## D5. Pre-generate and commit LLM explanations
 *2026-10-10*
@@ -72,6 +81,7 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Decision:** `scripts/generate_explanations.py` writes `clips/<clip_id>.explanation.json`, keyed by a hash of (summary + prompt). The app shows the cached text and calls the LLM only on a cache miss, with backoff on HTTP 429 and then the fallback provider.
 - **Alternatives:** Call the LLM live on every view.
 - **Why:** Free tiers have strict rate limits. The deployed demo then works without an API key and never hits a rate limit in front of an interviewer.
+- **Evidence:** A re-run reuses `clips/<id>/explanation.json` with no API call, and changing the facts or the prompt changes the key and triggers one new call (unit-tested with a fake client). Retries cover 429, 5xx, timeouts and connection errors (pauses of 5 s and 10 s, three attempts per provider); 4xx errors such as a bad key or unknown model skip straight to the next provider.
 - **Limitations:** Explanations are static until regenerated.
 
 ## D6. Automatic grounding check on LLM output
@@ -80,7 +90,13 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Decision:** A checker extracts every number and player name from the LLM's explanation and verifies that each one appears in the structured input summary. Anything unmatched gets flagged. Outputs are saved to `evals/` with a manual checklist.
 - **Alternatives:** Manual review only; an LLM-as-judge.
 - **Why:** The LLM must never invent facts. A deterministic check is cheap, explainable and makes no extra API calls.
-- **Limitations:** It catches invented numbers and names, but not wrong *qualitative* claims (e.g. "pressed high"). Those still need the manual checklist.
+- **Evidence (`evals/llm/README.md`):**
+  - All 4 clip explanations pass (21–30 numbers, clocks and formations checked each).
+  - On the same facts, a naive "football pundit" prompt failed the check. It wrote "300" for 301, and pulled "Jamal" Musiala and "João" Cancelo from the model's own knowledge. All three were caught.
+  - Disabling the number check makes a unit test fail.
+- **Limitations:**
+  - It catches invented numbers, clocks, formations and names, but not invented qualitative claims. The naive prompt's "slips it", "bottom corner" and "title race" all passed unflagged. Those still need the manual checklist.
+  - The name check is a heuristic (capitalised words not in the facts).
 
 ## D7. Animation: matplotlib for exports, Plotly in the app
 *2026-10-10 · (pending spike for Plotly smoothness)*
@@ -236,3 +252,31 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Phase 7 brings back the computer-vision accuracy risk that the original design avoided, so its output must be measured against ground truth before we trust it.
   - The detector models' licenses (e.g. AGPL for some YOLO versions) matter if the project is ever sold.
   - Two branches on one shared machine need discipline when switching driver.
+
+## D16. What the LLM sees: a compact summary of ball-in-play facts
+*2026-10-11*
+
+- **Decision:** `ai/summary.py` builds a ~4 KB JSON per clip containing:
+  - clip times and seconds of open play
+  - each team's official formation, players on the pitch and "shape in clip"
+  - goals from the DFL events
+  - ball carriers (nearest player within 1.5 m, ball below 1 m, held for at least 0.12 s)
+  - width, depth, area and back line per 2-second window
+  - changes from the first to the last window above set thresholds
+  - plain-language definitions of every metric
+
+  Only ball-in-play frames up to the goal are used. The back line is the average of the 4 deepest outfield players, both in the summary and in the video overlay. The prompt (`ai/prompt.py`, v1) forbids outside knowledge, new numbers (no differences or durations) and invented event types.
+- **Alternatives:** Send raw per-frame positions (far too large, and the model would do the maths); send only start and end values (loses the story).
+- **Why:**
+  - The model narrates numbers our tested code computed. It never computes them itself.
+  - A small, fixed structure is cheap on free-tier token limits and easy to check.
+  - Definitions let the model explain terms without making them up.
+- **Evidence:**
+  - Three issues found by reviewing real outputs were fixed in the facts, not the prompt:
+    1. Post-goal frames inflated the last window, so we stop at the goal.
+    2. One defender on the goal line dragged "defensive line" to ~1 m, so we use the back-line average.
+    3. A penalty clip with 1 s of open play got a confident shape label, so under 5 s the shape is "n/a". The model then said so itself.
+- **Limitations:**
+  - "Ball carrier" is proximity, not possession: a defender running past the ball can appear.
+  - Change thresholds (5 m, 150 m²) are hand-picked.
+  - The model sometimes exceeds the 180-word target or adds causal words ("forced").
