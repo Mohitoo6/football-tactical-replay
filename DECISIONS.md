@@ -248,6 +248,7 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Why:**
   - The clean table (frame, team, player, x, y) separates the two pieces of work. The AI layer only reads geometry outputs, which already exist, so it does not depend on where the coordinates come from.
   - Running both tracks keeps each person's ownership clear, and the AI part of this AI Engineer project does not wait behind the riskiest component.
+- **Update (2026-10-11):** Rohit was unavailable, so Mohit took over Phase 7. The two branch commits first made under Rohit's name were re-authored to Mohit before being pushed, so the history shows who did the work.
 - **Limitations:**
   - Phase 7 brings back the computer-vision accuracy risk that the original design avoided, so its output must be measured against ground truth before we trust it.
   - The detector models' licenses (e.g. AGPL for some YOLO versions) matter if the project is ever sold.
