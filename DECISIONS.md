@@ -447,3 +447,30 @@ Entries marked *(pending spike)* still need evidence from a test run.
 
   The demo clip `drone-0600-0630` was rebuilt: the ball is visible in 63% of frames (was 71%). The explanation was regenerated and passes grounding (34 items) after one length repair.
 - **Lesson:** "Uses no ground truth" must be checked line by line, and guarded by a test, not asserted. The leak mattered most for the ball, whose candidates near the pitch edge depend on the mask.
+
+## D24. Calibration picks the outline with a real pitch's proportions
+*2026-10-12 · `evals/video/README.md`*
+
+- **Problem found by testing more of the match:** On 3 of 12 new segments (22:30, 25:00, 27:30), only 2.7–4.8% of players landed in the right place. The cause was "take the outermost long lines": it chose a row of white practice goals beyond the left goal line, which runs the full height of the image. Before finding this, we briefly suspected the dataset's own calibration. A frame overlay proved the dataset right and us wrong.
+- **Decision:** Collect all long lines in each direction, and choose the rectangle whose length/width ratio is closest to 105/68 (within 5%; among equals, the largest). A synthetic test now includes a row of goals beyond the pitch.
+- **Evidence:**
+  - Those 3 segments went from 2.7% / 4.6% / 4.8% to **99.5% / 98.1% / 98.1%** of players found, with errors of 0.59 / 0.44 / 0.37 m.
+  - Segments that were already correct are unchanged.
+  - Across all 13 segments: median 98.4% found, median error 0.51 m, worst 92.0% and 0.80 m.
+- **Limitations:**
+  - It assumes the standard 105 × 68 m ratio.
+  - It is still one ground.
+  - Ball accuracy on 20:00 is unexplained (13.7%) and not yet investigated.
+- **Process note:** The low-heat run (`taskpolicy -b`, efficiency cores) took ~18 min per segment against ~4.5 min normally. Runs now carry a thermal watcher that pauses the job if macOS reports a thermal or performance warning. None was reported.
+
+## D25. Full-resolution ball detector: better on average, not yet adopted
+*2026-10-12 · `scripts/spike_phase7_ball.py`*
+
+- **Diagnosis:** Ball misses came from detection, not the follower. Whenever a candidate existed, the follower found the ball, except in 0–9% of frames. The half-resolution player detector closes gaps and glues a ball at someone's feet onto the player.
+- **Change:** `BallDetector` works at full resolution with no closing. It keeps small, round, white blobs off the painted lines, against a full-resolution median background computed in strips (a plain median would need ~12 GB). `mark_candidates` demotes candidates within 0.3 m of a player-blob centre: they cannot start a track and carry an 8 m penalty. The data showed white-shirt fragments sit a median 0.29 m from a player centre (roundness 0.65), while the ball sits 2.2 m away (roundness 0.88). Dropping them outright lost the ball at players' feet: 61% → 42% on 5:00.
+- **Evidence:**
+  - Ball-candidate ceiling rose from 41–75% to 79–97% of frames.
+  - On the 3 tuning segments, ball correct went 70.0 / 40.7 / 61.0% → 82.1 / 63.1 / 65.0%.
+  - On 3 **held-out** segments it went 63.7 / 60.1 / 67.4% → **97.3 / 77.2 / 38.0%**: better on 5 of 6 segments and +10 points on average, but much worse on 12:30, where the follower locks onto wrong blobs.
+- **Decision:** It is not yet used in the app's drone clip. The spike scores candidates in dataset metres, so adopting it also needs automatic-calibration coordinates. We stopped after two follower attempts, as the project rules require.
+- **Next:** A tracklet-based follower: link candidates into short tracks, drop ones that never move or move with a player, then pick the most ball-like path.
