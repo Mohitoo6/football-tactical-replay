@@ -474,3 +474,30 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - On 3 **held-out** segments it went 63.7 / 60.1 / 67.4% → **97.3 / 77.2 / 38.0%**: better on 5 of 6 segments and +10 points on average, but much worse on 12:30, where the follower locks onto wrong blobs.
 - **Decision:** It is not yet used in the app's drone clip. The spike scores candidates in dataset metres, so adopting it also needs automatic-calibration coordinates. We stopped after two follower attempts, as the project rules require.
 - **Next:** A tracklet-based follower: link candidates into short tracks, drop ones that never move or move with a player, then pick the most ball-like path.
+
+## D26. One pipeline for any drone clip, with a quality report that can refuse
+*2026-10-12 · `src/tactics/video/pipeline.py`, `scripts/process_video.py`*
+
+- **Decision:** `process_video(path, clip_id, title, length_m, width_m, progress, start_s)` turns any top-view clip into a standard clip plus a `QualityReport`.
+  - Everything comes from the file itself (frame rate, length). Background frames are sampled across the actual clip.
+  - Tracker time limits are set in seconds and converted with the clip's frame rate.
+  - The SoccerTrack names, paths and the hardcoded 29.97 fps / 900 frames now live only in the evaluation script. Ground-truth scoring moved to `video/scoring.py`.
+  - `scripts/video_to_tracks.py` evaluates the exact production path; `video_to_clip.py` was retired.
+- **Quality gates** (blocking unless noted):
+  - clip at least 10 s long
+  - pitch outline found, and its ratio within 5% of 105:68
+  - calibrations from the first and second half of the clip agree within 2 m
+  - camera drift at most 200 px, with at most 5% unaligned frames
+  - median player blobs per frame between 14 and 30
+  - non-blocking: ball visible in at least 30% of frames, and one keeper per team
+- **Found and fixed while building it:**
+  1. **Teams split when there is no third colour.** With no referee or staff in view, the 3-colour k-means split one team in two. This was caught by a synthetic clip, where 8 of 11 blue players were kept. A third cluster within 15 Lab units of a team is now merged back. On real segment 0:30 this also raised team accuracy from 94.4% to 99.0%.
+  2. **A touchline cut out of the field mask.** On segment 22:30 the top touchline sat outside the green mask (the strip beyond it was not green enough), and the new pipeline rejected the clip. The mask is now grown by ~0.8% of the image size before taking line pixels.
+  3. **Speed.** Blob colours are now computed with `np.bincount`, and players and ball candidates come from one foreground pass. This takes ~2 min per 30 s 4K clip on an M2, down from ~4.5 min, with colours identical to the old loop.
+- **Evidence (`evals/video/README.md`):**
+  - All 13 segments pass the quality report.
+  - Median: 98.4% of players found, 0.49 m error, 97.4% identity purity, 98.5% correct teams, ball 61.7%.
+  - Synthetic tests: an end-to-end clip passes, while a 4 s clip and a clip with a third of the pitch cut off are rejected.
+- **Honest regressions:**
+  - Identity purity median fell from 98.5% to 97.4%; the worst segment (15:00) fell from 94.9% to 90.2%. Different background frames and the grown mask change detections slightly, and tracking is sensitive to that. Not yet investigated.
+  - It is still one ground and one match. The gates catch obvious failures, but only for the conditions we have seen.

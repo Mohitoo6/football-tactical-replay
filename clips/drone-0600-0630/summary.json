@@ -41,7 +41,7 @@
   },
   {
    "clock": "10:08",
-   "player": "Player B3",
+   "player": "Player B4",
    "team": "Team B (lighter shirts)"
   },
   {
@@ -56,7 +56,7 @@
   },
   {
    "clock": "10:13",
-   "player": "Player B5",
+   "player": "Player B3",
    "team": "Team B (lighter shirts)"
   },
   {
@@ -104,7 +104,7 @@
    "Team A (darker shirts)": {
     "width_m": 35,
     "depth_m": 43,
-    "area_m2": 1003,
+    "area_m2": 1002,
     "back_line_m": 63,
     "players_behind_ball": 6
    }
@@ -133,7 +133,7 @@
    "Team B (lighter shirts)": {
     "width_m": 33,
     "depth_m": 30,
-    "area_m2": 663,
+    "area_m2": 652,
     "back_line_m": 19,
     "players_behind_ball": 7
    },
@@ -169,15 +169,15 @@
    "Team B (lighter shirts)": {
     "width_m": 41,
     "depth_m": 30,
-    "area_m2": 838,
+    "area_m2": 833,
     "back_line_m": 30,
     "players_behind_ball": 6
    },
    "Team A (darker shirts)": {
     "width_m": 31,
     "depth_m": 27,
-    "area_m2": 621,
-    "back_line_m": 48,
+    "area_m2": 619,
+    "back_line_m": 49,
     "players_behind_ball": 6
    }
   },
@@ -187,14 +187,14 @@
    "Team B (lighter shirts)": {
     "width_m": 45,
     "depth_m": 37,
-    "area_m2": 1177,
+    "area_m2": 1176,
     "back_line_m": 35,
     "players_behind_ball": 5
    },
    "Team A (darker shirts)": {
     "width_m": 31,
     "depth_m": 28,
-    "area_m2": 678,
+    "area_m2": 677,
     "back_line_m": 40,
     "players_behind_ball": 7
    }
@@ -205,14 +205,14 @@
    "Team B (lighter shirts)": {
     "width_m": 49,
     "depth_m": 37,
-    "area_m2": 1312,
-    "back_line_m": 36,
+    "area_m2": 1311,
+    "back_line_m": 35,
     "players_behind_ball": 4
    },
    "Team A (darker shirts)": {
     "width_m": 30,
     "depth_m": 26,
-    "area_m2": 604,
+    "area_m2": 603,
     "back_line_m": 40,
     "players_behind_ball": 9
    }
@@ -223,14 +223,14 @@
    "Team B (lighter shirts)": {
     "width_m": 53,
     "depth_m": 39,
-    "area_m2": 1501,
+    "area_m2": 1500,
     "back_line_m": 33,
     "players_behind_ball": 1
    },
    "Team A (darker shirts)": {
     "width_m": 31,
     "depth_m": 27,
-    "area_m2": 632,
+    "area_m2": 631,
     "back_line_m": 43,
     "players_behind_ball": 10
    }
@@ -241,14 +241,14 @@
    "Team B (lighter shirts)": {
     "width_m": 55,
     "depth_m": 39,
-    "area_m2": 1577,
+    "area_m2": 1576,
     "back_line_m": 32,
     "players_behind_ball": 1
    },
    "Team A (darker shirts)": {
     "width_m": 32,
     "depth_m": 26,
-    "area_m2": 641,
+    "area_m2": 640,
     "back_line_m": 46,
     "players_behind_ball": 10
    }
@@ -259,7 +259,7 @@
    "Team B (lighter shirts)": {
     "width_m": 55,
     "depth_m": 30,
-    "area_m2": 1263,
+    "area_m2": 1262,
     "back_line_m": 34,
     "players_behind_ball": 2
    },
@@ -313,7 +313,7 @@
    "Team B (lighter shirts)": {
     "width_m": 52,
     "depth_m": 40,
-    "area_m2": 1395,
+    "area_m2": 1394,
     "back_line_m": 40,
     "players_behind_ball": 9
    },
@@ -338,7 +338,7 @@
    "Team A (darker shirts)": {
     "width_m": 38,
     "depth_m": 33,
-    "area_m2": 913,
+    "area_m2": 914,
     "back_line_m": 26,
     "players_behind_ball": 3
    }
@@ -356,7 +356,7 @@
    "Team A (darker shirts)": {
     "width_m": 39,
     "depth_m": 32,
-    "area_m2": 835,
+    "area_m2": 836,
     "back_line_m": 26,
     "players_behind_ball": 7
    }
@@ -398,8 +398,8 @@
   {
    "team": "Team A (darker shirts)",
    "metric": "area_m2",
-   "from": 1003,
-   "to": 835,
+   "from": 1002,
+   "to": 836,
    "from_clock": "10:00",
    "to_clock": "10:28"
   },

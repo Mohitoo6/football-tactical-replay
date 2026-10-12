@@ -1,29 +1,28 @@
 # Drone video → tracking: evaluation across the match
 
-Generated from `segments.csv`, which `scripts/video_to_tracks.py all` writes. There are 13 SoccerTrack top-view segments of 30 s each, spread over the 30 minutes of one university match.
+Generated from `segments.csv`, which `scripts/video_to_tracks.py all` writes. The script runs **the same `process_video` pipeline that builds clips** (`src/tactics/video/pipeline.py`) on 13 SoccerTrack top-view segments of 30 s each, spread over the 30 minutes of one university match.
 
-- **Positions** come only from the video. Pitch calibration and the detection pitch area come from our automatic calibration (D20, D23, D24).
-- **The dataset's ground truth** (boxes and its own calibration) is used only for scoring. A detection counts as matched within 1.5 m.
+- **Positions** come only from the video: frame rate and length are read from the file, and the pitch is calibrated from its lines (D20, D23, D24, D26).
+- **The dataset's ground truth** is used only afterwards, for scoring (`src/tactics/video/scoring.py`). A detection counts as matched within 1.5 m.
+- Every segment passed the pipeline's own quality report. Processing took ~2 min per 30 s of 4K video on an Apple M2.
 
-| Segment | Players found | Position error (auto calibration) | Identity purity | Team correct | Ball correct |
-|---|---|---|---|---|---|
-| 0:30 | 98.4% | 0.55 m | 95.1% | 94.4% | 70.0% |
-| 2:30 | 92.0% | 0.80 m | 99.4% | 95.2% | 63.7% |
-| 5:00 | 99.5% | 0.43 m | 99.6% | 99.6% | 40.7% |
-| 7:30 | 98.0% | 0.59 m | 98.8% | 94.5% | 60.1% |
-| 10:00 | 98.2% | 0.51 m | 96.1% | 97.8% | 61.0% |
-| 12:30 | 99.7% | 0.36 m | 99.7% | 99.7% | 67.4% |
-| 15:00 | 97.7% | 0.36 m | 94.9% | 98.9% | 61.3% |
-| 17:30 | 98.8% | 0.65 m | 97.6% | 99.5% | 59.9% |
-| 20:00 | 100.0% | 0.57 m | 100.0% | 100.0% | 13.7% |
-| 22:30 | 99.5% | 0.59 m | 99.8% | 99.8% | 68.9% |
-| 25:00 | 98.1% | 0.44 m | 96.3% | 99.5% | 58.9% |
-| 27:30 | 98.1% | 0.37 m | 98.5% | 99.1% | 66.8% |
-| 29:30 | 98.6% | 0.47 m | 97.5% | 97.6% | 72.2% |
-| **median** | **98.4%** | **0.51 m** | **98.5%** | **99.1%** | **61.3%** |
-| worst | 92.0% | 0.80 m | 94.9% | 94.4% | 13.7% |
-
-Segments 15:00, 17:30 and 20:00 were scored before the D24 calibration fix. Their automatic calibration was already correct then (98–100% found), so the fix does not change them. They were not re-run because of time and laptop heat.
+| Segment | Quality | Players found | Position error (auto calibration) | Identity purity | Team correct | Ball correct |
+|---|---|---|---|---|---|---|
+| 0:30 | ok | 98.4% | 0.51 m | 95.1% | 99.0% | 69.9% |
+| 2:30 | ok | 91.0% | 0.81 m | 99.2% | 99.6% | 59.9% |
+| 5:00 | ok | 99.6% | 0.42 m | 99.7% | 99.7% | 40.8% |
+| 7:30 | ok | 98.0% | 0.58 m | 98.7% | 94.3% | 57.7% |
+| 10:00 | ok | 98.2% | 0.49 m | 96.4% | 98.2% | 61.1% |
+| 12:30 | ok | 99.7% | 0.40 m | 99.9% | 99.9% | 67.4% |
+| 15:00 | ok | 97.7% | 0.35 m | 90.2% | 97.4% | 61.7% |
+| 17:30 | ok | 98.8% | 0.64 m | 99.0% | 99.6% | 73.4% |
+| 20:00 | ok | 100.0% | 0.56 m | 100.0% | 100.0% | 14.4% |
+| 22:30 | ok | 99.5% | 0.59 m | 96.5% | 97.2% | 70.2% |
+| 25:00 | ok | 98.1% | 0.43 m | 95.6% | 98.5% | 59.0% |
+| 27:30 | ok | 98.1% | 0.38 m | 96.3% | 97.0% | 67.1% |
+| 29:30 | ok | 98.6% | 0.47 m | 97.4% | 97.5% | 71.9% |
+| **median** | | **98.4%** | **0.49 m** | **97.4%** | **98.5%** | **61.7%** |
+| worst | | 91.0% | 0.81 m | 90.2% | 94.3% | 14.4% |
 
 ## Ball: full-resolution detector (D25)
 

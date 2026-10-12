@@ -69,7 +69,21 @@ The same pipeline also runs on **raw top-view drone video**, with no tracking pr
 4. Detect players as blobs that differ from the empty pitch.
 5. Track them with a colour-aware tracker, split teams by shirt colour (with an offside-logic goalkeeper rule) and follow the ball.
 
-The result is exported as a normal clip (`clips/drone-0600-0630`), so the overlays and the AI coach work on it unchanged.
+The result is exported as a normal clip (`clips/drone-0600-0630`), so the overlays and the AI coach work on it unchanged. It works on any clip file:
+
+```bash
+uv sync --group video
+uv run --group video python scripts/process_video.py my_drone_clip.mp4 --render --explain
+```
+
+Before any tracking, the pipeline prints a **quality report**:
+- clip length
+- pitch outline shape
+- calibration stable over the clip
+- camera holding still
+- plausible player count
+
+If a check fails, it refuses the clip instead of producing wrong positions.
 
 Measured on **13 × 30 s SoccerTrack segments** spread over one match. The dataset's ground truth is used **only for scoring** ([evals/video](evals/video/README.md), [D19–D25](DECISIONS.md)):
 
