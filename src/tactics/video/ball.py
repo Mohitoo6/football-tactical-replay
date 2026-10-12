@@ -31,27 +31,36 @@ def drop_static(candidates: pd.DataFrame, radius_m: float = 0.3, max_share: floa
 def follow_ball(candidates: pd.DataFrame, fps: float, max_lost_frames: int = 45) -> pd.DataFrame:
     """One ball position per frame where we are confident (columns frame, x_m, y_m).
 
-    candidates: frame, x_m, y_m for every small white blob (static spots removed).
-    We follow the candidate nearest the last known ball position, within the
-    distance a ball could travel since it was last seen. After losing it for
-    longer than `max_lost_frames`, we restart from a frame with a single candidate.
+    candidates: frame, x_m, y_m for every ball-like blob (static spots removed). Optional columns:
+    - `reliable` (bool): only reliable candidates may start or restart the ball (e.g. away from players);
+    - `penalty_m` (float): added to the distance when choosing between candidates, so a candidate
+      near a player's body (often a shirt fragment) loses to a clean one but still wins if it is alone.
+    We follow the candidate nearest the last known ball position, within the distance a ball could
+    travel since it was last seen.
     """
     candidates = drop_static(candidates)
-    by_frame = {f: g[["x_m", "y_m"]].to_numpy() for f, g in candidates.groupby("frame")}
+    if "reliable" not in candidates:
+        candidates = candidates.assign(reliable=True)
+    if "penalty_m" not in candidates:
+        candidates = candidates.assign(penalty_m=0.0)
+    by_frame = {f: g for f, g in candidates.groupby("frame")}
     rows, last, last_frame = [], None, None
     for frame in sorted(by_frame):
-        points = by_frame[frame]
+        group = by_frame[frame]
+        points = group[["x_m", "y_m"]].to_numpy()
         if last is not None and frame - last_frame > max_lost_frames:
             last = None  # lost for too long: search afresh
         if last is None:
-            if len(points) == 1:  # only (re)start when the choice is unambiguous
-                last, last_frame = points[0], frame
+            reliable = points[group["reliable"].to_numpy()]
+            if len(reliable) == 1:  # only (re)start when the choice is unambiguous
+                last, last_frame = reliable[0], frame
                 rows.append((frame, *last))
             continue
         reach = 1.0 + MAX_BALL_SPEED_MPS * (frame - last_frame) / fps
         distances = np.linalg.norm(points - last, axis=1)
-        if distances.min() <= reach:
-            last, last_frame = points[distances.argmin()], frame
+        cost = np.where(distances <= reach, distances + group["penalty_m"].to_numpy(), np.inf)
+        if np.isfinite(cost).any():
+            last, last_frame = points[cost.argmin()], frame
             rows.append((frame, *last))
     return pd.DataFrame(rows, columns=["frame", "x_m", "y_m"])
 
@@ -74,3 +83,81 @@ def follow_ball_both_ways(candidates: pd.DataFrame, fps: float, max_lost_frames:
     x = both["x_m_f"].fillna(both["x_m_b"])
     y = both["y_m_f"].fillna(both["y_m_b"])
     return pd.DataFrame({"frame": both["frame"], "x_m": x, "y_m": y}).sort_values("frame").reset_index(drop=True)
+
+
+def median_background(frames: list[np.ndarray], rows_per_chunk: int = 120) -> np.ndarray:
+    """Per-pixel median of full-resolution frames, computed in horizontal strips.
+
+    A plain np.median over 60 4K frames would build a ~12 GB float copy; strips keep it small.
+    """
+    stack_height = frames[0].shape[0]
+    out = np.empty_like(frames[0])
+    for top in range(0, stack_height, rows_per_chunk):
+        strip = np.stack([f[top:top + rows_per_chunk] for f in frames])
+        out[top:top + rows_per_chunk] = np.median(strip, axis=0).astype(np.uint8)
+    return out
+
+
+class BallDetector:
+    """Ball candidates at full resolution: small, round, white blobs that differ from the empty pitch.
+
+    The player detector works at half resolution and closes gaps so a player is one blob; that also
+    glues a ball at someone's feet onto the player. Here we keep full resolution and do not close,
+    so a ball a few pixels from a boot stays separate.
+    """
+
+    def __init__(self, background: np.ndarray, mask: np.ndarray, threshold: int = 35,
+                 min_area_px: int = 25, max_area_px: int = 220, min_roundness: float = 0.55):
+        self.background, self.mask = background, mask
+        self.threshold, self.min_area, self.max_area, self.min_roundness = threshold, min_area_px, max_area_px, min_roundness
+        hsv = cv2.cvtColor(background, cv2.COLOR_BGR2HSV)
+        lines = cv2.inRange(hsv, (0, 0, 170), (180, 70, 255))
+        self.lines = cv2.dilate(lines, np.ones((7, 7), np.uint8))  # painted lines (+ a margin), never the ball
+
+    def candidates(self, frame: np.ndarray) -> pd.DataFrame:
+        """Centres (x, y) in full-resolution pixels of ball-like blobs, with their mean colour."""
+        diff = cv2.absdiff(frame, self.background).max(axis=2)
+        _, moving = cv2.threshold(diff, self.threshold, 255, cv2.THRESH_BINARY)
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        white = cv2.inRange(hsv, (0, 0, 160), (180, 80, 255))
+        ball_like = cv2.bitwise_and(cv2.bitwise_and(moving, white), self.mask)
+        ball_like = cv2.bitwise_and(ball_like, cv2.bitwise_not(self.lines))
+        ball_like = cv2.morphologyEx(ball_like, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
+        contours, _ = cv2.findContours(ball_like, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        rows = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            perimeter = cv2.arcLength(contour, True)
+            if not self.min_area <= area <= self.max_area or perimeter == 0:
+                continue
+            roundness = 4 * np.pi * area / perimeter**2  # 1.0 for a perfect circle
+            if roundness < self.min_roundness:
+                continue
+            m = cv2.moments(contour)
+            rows.append((m["m10"] / m["m00"], m["m01"] / m["m00"], area, roundness))
+        return pd.DataFrame(rows, columns=["x", "y", "area_px", "roundness"])
+
+
+def distance_to_players(candidates: pd.DataFrame, players: pd.DataFrame, x: str = "x_m", y: str = "y_m") -> np.ndarray:
+    """For each candidate, the distance to the nearest player-blob centre in the same frame (inf if none)."""
+    out = np.full(len(candidates), np.inf)
+    by_frame = {f: g[[x, y]].to_numpy() for f, g in players.groupby("frame")}
+    for i, (frame, cx, cy) in enumerate(candidates[["frame", x, y]].itertuples(index=False)):
+        centres = by_frame.get(frame)
+        if centres is not None and len(centres):
+            out[i] = np.hypot(centres[:, 0] - cx, centres[:, 1] - cy).min()
+    return out
+
+
+def mark_candidates(candidates: pd.DataFrame, players: pd.DataFrame, near_player_m: float = 0.4,
+                    min_roundness: float = 0.75, penalty_m: float = 1.0, x: str = "x_m", y: str = "y_m") -> pd.DataFrame:
+    """Add `reliable` and `penalty_m` for `follow_ball`.
+
+    Measured on 10:00-10:30: false candidates (mostly white-shirt fragments) sit a median 0.29 m
+    from a player-blob centre with roundness 0.65; real ball candidates sit a median 2.2 m away
+    (10th percentile 0.53 m) with roundness 0.88. Dropping near-player candidates outright lost the
+    ball when it was at a player's feet, so they are only demoted.
+    """
+    near = distance_to_players(candidates, players, x, y) <= near_player_m
+    round_enough = candidates["roundness"].to_numpy() >= min_roundness if "roundness" in candidates else True
+    return candidates.assign(reliable=~near & round_enough, penalty_m=np.where(near, penalty_m, 0.0))
