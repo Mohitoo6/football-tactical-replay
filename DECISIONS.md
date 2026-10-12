@@ -248,6 +248,7 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Why:**
   - The clean table (frame, team, player, x, y) separates the two pieces of work. The AI layer only reads geometry outputs, which already exist, so it does not depend on where the coordinates come from.
   - Running both tracks keeps each person's ownership clear, and the AI part of this AI Engineer project does not wait behind the riskiest component.
+- **Update (2026-10-11):** Rohit was unavailable, so Mohit took over Phase 7. The two branch commits first made under Rohit's name were re-authored to Mohit before being pushed, so the history shows who did the work.
 - **Limitations:**
   - Phase 7 brings back the computer-vision accuracy risk that the original design avoided, so its output must be measured against ground truth before we trust it.
   - The detector models' licenses (e.g. AGPL for some YOLO versions) matter if the project is ever sold.
@@ -326,3 +327,150 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Overlays cannot be toggled in the app.
   - The videos add ~18 MB to the repo, and re-rendering adds more to git history.
   - Streamlit resolved to 1.59.1 rather than the newest release because of dependency constraints. It works, but this is noted.
+
+## D19. Phase 7 detector: stabilised background subtraction, not a pretrained deep detector
+*2026-10-11 · `scripts/spike_phase7_detect.py`*
+
+- **Data:** SoccerTrack top-view, from [kaggle.com/datasets/atomscott/soccertrack](https://www.kaggle.com/datasets/atomscott/soccertrack) (LGPL-3.0). DJI drone, 4K, 29.97 fps, 30 s segments. Ground truth is a 39×39 px box per player per frame (semi-automatic, from GNSS vests), and pitch keypoints map pixels to metres. We used one segment (`D_20220220_1_0030_0060`), kept in git-ignored `data/raw/soccertrack/`.
+- **Decision:** Detect players by:
+  1. aligning every frame to a reference frame (ECC, rotation + shift)
+  2. taking the per-pixel median of 60 aligned frames as an empty pitch
+  3. keeping player-sized blobs that differ from it inside the pitch (+2 m)
+
+  Positions go to metres through the keypoint homography.
+- **Alternatives:** RF-DETR (pretrained on COCO, Apache 2.0) on overlapping 640 px tiles; fine-tuning a detector on SoccerTrack boxes (needs a GPU).
+- **Evidence** (10 frames, 220 player instances, match radius 1.5 m):
+
+  | | Recall | Precision | Position error | Speed |
+  |---|---|---|---|---|
+  | Background subtraction, no stabilisation | 98.2% | 15.9% | 0.25 m | 0.03 s/frame |
+  | **Background subtraction, stabilised** | **98.6–99.1%** | **74.6–75.4%** | **0.23 m** | **0.03 s/frame** |
+  | RF-DETR base, tiled | 43.2% | 76.0% | 0.27 m | 3.0 s/frame |
+
+  - **The drone drifts:** up to ~50 px and 1.5° within 30 s, about 2 m on the pitch. Without stabilisation, pitch lines shift against the background and produce ~114 false detections per frame. Stabilisation removes almost all of them.
+  - **Remaining "false" detections are mostly real people:** the referee and staff near the touchlines, who are not in the 22-player ground truth.
+  - **RF-DETR misses most players:** COCO people are mostly seen from the side, not straight down.
+- **Why:** The classical method is 100× faster, needs no model download or GPU, and is more accurate in this setting. It is also easy to explain.
+- **Limitations:**
+  - It depends on a hovering camera, a mostly static scene and a long enough clip for the median. A player standing still for most of the clip could fade into the background.
+  - Players in contact merge into one blob.
+  - It does not detect the ball yet.
+  - The keypoint calibration matches frame 0 to within ~0.5 m near the corners.
+  - GNSS and video only agree to ~3 m (median, best offset ~1.2 s) in this segment, with player IDs numbered differently. So we evaluate against the annotation boxes, not GNSS.
+
+## D20. Automatic pitch calibration from the painted lines
+*2026-10-11*
+
+- **Decision:** For raw footage with no hand-marked points, `video/pitch_lines.py` calibrates from the empty-pitch (median) image:
+  1. green field mask
+  2. white line pixels
+  3. long Hough segments in two directions
+  4. the outermost lines that run at least 60% as far as the longest line in their direction (touchlines and goal lines)
+  5. four corner intersections → homography to a 105 × 68 m pitch
+- **Alternatives:** Hand-mark four corners per video (reliable, but it is a manual step); a trained pitch-keypoint model (needs labelled data and a GPU).
+- **Evidence:**
+  - Against SoccerTrack's 65 hand-made keypoints: mean 0.45 m, median 0.36 m.
+  - End to end on 3 segments, using **no dataset calibration at all**: player recall 98.6–99.1% and mean position error **0.43–0.55 m** (p90 ≤ 0.80 m), compared with 0.11–0.23 m using the dataset's calibration. Ground truth itself comes from the dataset calibration, so part of the gap is its error.
+  - The first version picked the painted text "IMAGINE THE FUTURE" below the touchline as the boundary (1.78 m mean error). The 60% span rule fixed it (unit-tested on a synthetic pitch with text).
+- **Limitations:**
+  - It needs the whole outline visible, a near top-down view and a known pitch size.
+  - It cannot tell the two ends apart: the result is correct up to mirror symmetry. On one of three segments the best mirror differed, so a clip must set its attacking direction.
+  - It has only been tested on one ground.
+
+## D21. Tracking, teams and ball from top-view video
+*2026-10-11 · `scripts/video_to_tracks.py`, 3 SoccerTrack segments × 900 frames*
+
+- **Decision:**
+  - **Tracking:** our own point tracker in pitch metres. It predicts each track forward from its velocity, and matches tracks to detections with the Hungarian algorithm on distance + 2 × shirt-colour difference. Offline stitching then joins tracks that break and restart nearby in a similar colour.
+  - **Teams:** 3-cluster k-means on each track's average shirt colour; the two biggest clusters are the teams. Goalkeepers are long tracks whose colour is far from their cluster. A keeper joins the team whose outfield player stands deepest towards that goal in most frames (offside logic).
+  - **Ball:** small white blobs, followed forwards and backwards in time with a 35 m/s speed limit. Frames where the passes disagree, or the ball is hidden, are left empty.
+- **Alternatives:**
+  - supervision's ByteTrack. It is deprecated in supervision 0.28+ and was run as a baseline.
+  - Adding the `trackers` package.
+  - Deep re-identification models (need a GPU and training data).
+- **Evidence:**
+
+  | Segment | Coverage | Identity purity (ours / ByteTrack) | ID switches (ours / ByteTrack) | Team correct | Ball correct, all frames |
+  |---|---|---|---|---|---|
+  | 0:30–1:00 | 98.5% | 95.2% / 88.5% | 26 / 26 | 94.4% | 70.0% |
+  | 5:00–5:30 | 99.6% | 99.6% / 99.5% | 18 / 7 | 99.6% | 40.7% |
+  | 10:00–10:30 | 98.3% | 96.3% / 96.1% | 28 / 15 | 98.9% | 69.9% |
+
+  - **Shirt colour in the cost:** cut ID switches from 33 to 27 and raised purity from 88% to 92% on segment 1. 74% of switches happened with another player within 2 m. Stitching then raised purity to 95% and cut tracks from 183 to 110.
+  - **Team errors:** before the keeper rule, 91% of team errors came from the two goalkeepers (yellow shirts). A simpler "team leaning towards that goal" rule fixed segment 1 but failed when a team pressed high. The offside rule averages 97.6% across segments. We stopped after two attempts.
+  - **Ball:** following both ways reached 70% against a ceiling of 71% (frames where any blob is near the ball). When no blob is near the ball, a player is within 1 m of it 90% of the time: it is at someone's feet, merged with their blob. Positions we do give are correct (within 1 m) 91–99% of the time.
+- **Limitations:**
+  - ByteTrack has fewer ID switches on two segments; ours keeps a player's identity longer (purity).
+  - Same-team players crossing can still swap.
+  - The keeper's team is wrong for one keeper in segment 1. Options: combine several cues, let the user confirm in the app, or give shirt colours as input.
+  - The ball is unknown in 30–60% of frames, mostly when it is at a player's feet. Segment 2 is the weakest (41%).
+  - All three segments are from one match on one ground.
+
+## D22. End to end: drone video → clip → overlays → AI coach
+*2026-10-11 · `scripts/video_to_clip.py`, clip `drone-0600-0630`*
+
+- **Decision:** `video/export.py` turns our own tracks, teams and ball into the same clip format as the DFL clips (players/ball parquet + meta), so the overlays, facts summary, AI coach and app work unchanged. Rules:
+  - Keep only the two teams' tracks of at least 1 s, at most 11 per team per frame.
+  - Drop assistant referees (tracks that never come 2 m inside a touchline) *after* team assignment.
+  - Name players "Player A3" and teams by shirt shade ("lighter" / "darker"). Colour names were wrong under the green-tinted light (blue measured as green).
+  - The lighter team is "home" (drawn white) and attacks left to right.
+  - When the ball is not visible it is hidden with the label "Ball not visible" (not "out of play").
+- **Evidence:**
+  - Segment 10:00–10:30 builds with no validation problems (25 speed warnings from identity jumps).
+  - One keeper per team, each in its own half.
+  - The ball is visible in 71% of frames.
+  - The coach explanation passes grounding (29 items) and format checks after one live repair (253 → 223 words).
+  - The app smoke test renders it.
+  - We chose this segment for the demo because its team labels are best (98.9%). The scores of all three segments are in D21.
+- **Bugs found on the way, each fixed:**
+  - Segment names are seconds ("0600" = 10:00), not mm:ss.
+  - Removing officials before team assignment dropped team accuracy from 99.6% to 86.0%.
+  - The keeper test assumed an elite keeper (> 35 m); the amateur keeper averages 32 m.
+- **Limitations:**
+  - No player names or official formations from video.
+  - A keeper who barely moves fades into the median background and is detected in fragments, as seen in segment 0:30–1:00.
+  - Segment 0:30–1:00 still assigns one keeper to the wrong team.
+  - Tested on one ground and one match. Goals are not detected from video, so "goals" is empty for drone clips.
+
+## D23. Correction: the dataset's calibration had leaked into detection
+*2026-10-11*
+
+- **What was wrong:** Prompted by Mohit's question ("did the drone clip really use no given coordinates?"), we re-checked the code. The *pitch area* used to discard detections off the pitch (`pitch_mask`) was built from SoccerTrack's hand-marked keypoints, not from our automatic calibration. That held in both the detection spike and the full pipeline. Positions, teams and ball were already computed from the video, but D20–D22's claim of "no dataset calibration at all" was not fully true.
+- **Fix:** The detector first builds the empty-pitch image with no mask, then calibrates automatically, then masks with *that* calibration. Dataset keypoints and boxes are now used only to score results. A unit test builds a clip from video-derived columns alone.
+- **Re-measured** (D19–D22 figures replaced where they changed):
+
+  | Segment | Detection recall / precision / auto-calibration error | Purity | Team correct | Ball correct |
+  |---|---|---|---|---|
+  | 0:30–1:00 | 98.6% / 75.3% / 0.55 m (unchanged) | 95.1% (was 95.2%) | 94.4% | 70.0% |
+  | 5:00–5:30 | 99.1% / 84.8% / 0.43 m (unchanged) | 99.6% | 99.6% | 40.7% |
+  | 10:00–10:30 | 99.1% / 78.7% / 0.52 m (unchanged) | 96.1% (was 96.3%) | 97.8% (was 98.9%) | **61.0% (was 69.9%)** |
+
+  The demo clip `drone-0600-0630` was rebuilt: the ball is visible in 63% of frames (was 71%). The explanation was regenerated and passes grounding (34 items) after one length repair.
+- **Lesson:** "Uses no ground truth" must be checked line by line, and guarded by a test, not asserted. The leak mattered most for the ball, whose candidates near the pitch edge depend on the mask.
+
+## D24. Calibration picks the outline with a real pitch's proportions
+*2026-10-12 · `evals/video/README.md`*
+
+- **Problem found by testing more of the match:** On 3 of 12 new segments (22:30, 25:00, 27:30), only 2.7–4.8% of players landed in the right place. The cause was "take the outermost long lines": it chose a row of white practice goals beyond the left goal line, which runs the full height of the image. Before finding this, we briefly suspected the dataset's own calibration. A frame overlay proved the dataset right and us wrong.
+- **Decision:** Collect all long lines in each direction, and choose the rectangle whose length/width ratio is closest to 105/68 (within 5%; among equals, the largest). A synthetic test now includes a row of goals beyond the pitch.
+- **Evidence:**
+  - Those 3 segments went from 2.7% / 4.6% / 4.8% to **99.5% / 98.1% / 98.1%** of players found, with errors of 0.59 / 0.44 / 0.37 m.
+  - Segments that were already correct are unchanged.
+  - Across all 13 segments: median 98.4% found, median error 0.51 m, worst 92.0% and 0.80 m.
+- **Limitations:**
+  - It assumes the standard 105 × 68 m ratio.
+  - It is still one ground.
+  - Ball accuracy on 20:00 is unexplained (13.7%) and not yet investigated.
+- **Process note:** The low-heat run (`taskpolicy -b`, efficiency cores) took ~18 min per segment against ~4.5 min normally. Runs now carry a thermal watcher that pauses the job if macOS reports a thermal or performance warning. None was reported.
+
+## D25. Full-resolution ball detector: better on average, not yet adopted
+*2026-10-12 · `scripts/spike_phase7_ball.py`*
+
+- **Diagnosis:** Ball misses came from detection, not the follower. Whenever a candidate existed, the follower found the ball, except in 0–9% of frames. The half-resolution player detector closes gaps and glues a ball at someone's feet onto the player.
+- **Change:** `BallDetector` works at full resolution with no closing. It keeps small, round, white blobs off the painted lines, against a full-resolution median background computed in strips (a plain median would need ~12 GB). `mark_candidates` demotes candidates within 0.3 m of a player-blob centre: they cannot start a track and carry an 8 m penalty. The data showed white-shirt fragments sit a median 0.29 m from a player centre (roundness 0.65), while the ball sits 2.2 m away (roundness 0.88). Dropping them outright lost the ball at players' feet: 61% → 42% on 5:00.
+- **Evidence:**
+  - Ball-candidate ceiling rose from 41–75% to 79–97% of frames.
+  - On the 3 tuning segments, ball correct went 70.0 / 40.7 / 61.0% → 82.1 / 63.1 / 65.0%.
+  - On 3 **held-out** segments it went 63.7 / 60.1 / 67.4% → **97.3 / 77.2 / 38.0%**: better on 5 of 6 segments and +10 points on average, but much worse on 12:30, where the follower locks onto wrong blobs.
+- **Decision:** It is not yet used in the app's drone clip. The spike scores candidates in dataset metres, so adopting it also needs automatic-calibration coordinates. We stopped after two follower attempts, as the project rules require.
+- **Next:** A tracklet-based follower: link candidates into short tracks, drop ones that never move or move with a player, then pick the most ball-like path.

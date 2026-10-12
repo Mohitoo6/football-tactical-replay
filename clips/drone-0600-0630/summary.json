@@ -1,0 +1,424 @@
+{
+ "clip": {
+  "title": "Drone clip 10:00–10:30 (SoccerTrack university match)",
+  "from_clock": "10:00",
+  "to_clock": "10:29",
+  "clip_seconds": 30,
+  "seconds_ball_in_play": 19
+ },
+ "teams": [
+  {
+   "name": "Team B (lighter shirts)",
+   "role": "focus team (its move is shown)",
+   "players_on_pitch": 11,
+   "official_formation": null,
+   "shape_in_clip": "3-5-2"
+  },
+  {
+   "name": "Team A (darker shirts)",
+   "role": "opponent",
+   "players_on_pitch": 11,
+   "official_formation": null,
+   "shape_in_clip": "4-4-2"
+  }
+ ],
+ "goals": [],
+ "ball_carriers": [
+  {
+   "clock": "10:00",
+   "player": "Player B2",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:03",
+   "player": "Player B10",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:05",
+   "player": "Player B7",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:08",
+   "player": "Player B3",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:11",
+   "player": "Player A4",
+   "team": "Team A (darker shirts)"
+  },
+  {
+   "clock": "10:11",
+   "player": "Player B7",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:13",
+   "player": "Player B5",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:15",
+   "player": "Player B2",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:20",
+   "player": "Player B1",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:24",
+   "player": "Player A1",
+   "team": "Team A (darker shirts)"
+  },
+  {
+   "clock": "10:26",
+   "player": "Player B9",
+   "team": "Team B (lighter shirts)"
+  },
+  {
+   "clock": "10:28",
+   "player": "Player A8",
+   "team": "Team A (darker shirts)"
+  },
+  {
+   "clock": "10:29",
+   "player": "Player A2",
+   "team": "Team A (darker shirts)"
+  }
+ ],
+ "timeline": [
+  {
+   "clock": "10:00",
+   "ball_zone": "defensive third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 40,
+    "depth_m": 39,
+    "area_m2": 1084,
+    "back_line_m": 11,
+    "players_behind_ball": 5
+   },
+   "Team A (darker shirts)": {
+    "width_m": 35,
+    "depth_m": 43,
+    "area_m2": 1003,
+    "back_line_m": 63,
+    "players_behind_ball": 6
+   }
+  },
+  {
+   "clock": "10:02",
+   "ball_zone": "defensive third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 35,
+    "depth_m": 32,
+    "area_m2": 818,
+    "back_line_m": 17,
+    "players_behind_ball": 6
+   },
+   "Team A (darker shirts)": {
+    "width_m": 31,
+    "depth_m": 38,
+    "area_m2": 887,
+    "back_line_m": 61,
+    "players_behind_ball": 5
+   }
+  },
+  {
+   "clock": "10:04",
+   "ball_zone": "middle third, centre",
+   "Team B (lighter shirts)": {
+    "width_m": 33,
+    "depth_m": 30,
+    "area_m2": 663,
+    "back_line_m": 19,
+    "players_behind_ball": 7
+   },
+   "Team A (darker shirts)": {
+    "width_m": 30,
+    "depth_m": 30,
+    "area_m2": 709,
+    "back_line_m": 59,
+    "players_behind_ball": 4
+   }
+  },
+  {
+   "clock": "10:06",
+   "ball_zone": "middle third, centre",
+   "Team B (lighter shirts)": {
+    "width_m": 37,
+    "depth_m": 23,
+    "area_m2": 600,
+    "back_line_m": 27,
+    "players_behind_ball": 7
+   },
+   "Team A (darker shirts)": {
+    "width_m": 28,
+    "depth_m": 27,
+    "area_m2": 575,
+    "back_line_m": 55,
+    "players_behind_ball": 4
+   }
+  },
+  {
+   "clock": "10:08",
+   "ball_zone": "middle third, right",
+   "Team B (lighter shirts)": {
+    "width_m": 41,
+    "depth_m": 30,
+    "area_m2": 838,
+    "back_line_m": 30,
+    "players_behind_ball": 6
+   },
+   "Team A (darker shirts)": {
+    "width_m": 31,
+    "depth_m": 27,
+    "area_m2": 621,
+    "back_line_m": 48,
+    "players_behind_ball": 6
+   }
+  },
+  {
+   "clock": "10:10",
+   "ball_zone": "middle third, right",
+   "Team B (lighter shirts)": {
+    "width_m": 45,
+    "depth_m": 37,
+    "area_m2": 1177,
+    "back_line_m": 35,
+    "players_behind_ball": 5
+   },
+   "Team A (darker shirts)": {
+    "width_m": 31,
+    "depth_m": 28,
+    "area_m2": 678,
+    "back_line_m": 40,
+    "players_behind_ball": 7
+   }
+  },
+  {
+   "clock": "10:12",
+   "ball_zone": "middle third, right",
+   "Team B (lighter shirts)": {
+    "width_m": 49,
+    "depth_m": 37,
+    "area_m2": 1312,
+    "back_line_m": 36,
+    "players_behind_ball": 4
+   },
+   "Team A (darker shirts)": {
+    "width_m": 30,
+    "depth_m": 26,
+    "area_m2": 604,
+    "back_line_m": 40,
+    "players_behind_ball": 9
+   }
+  },
+  {
+   "clock": "10:14",
+   "ball_zone": "defensive third, right",
+   "Team B (lighter shirts)": {
+    "width_m": 53,
+    "depth_m": 39,
+    "area_m2": 1501,
+    "back_line_m": 33,
+    "players_behind_ball": 1
+   },
+   "Team A (darker shirts)": {
+    "width_m": 31,
+    "depth_m": 27,
+    "area_m2": 632,
+    "back_line_m": 43,
+    "players_behind_ball": 10
+   }
+  },
+  {
+   "clock": "10:16",
+   "ball_zone": "defensive third, right",
+   "Team B (lighter shirts)": {
+    "width_m": 55,
+    "depth_m": 39,
+    "area_m2": 1577,
+    "back_line_m": 32,
+    "players_behind_ball": 1
+   },
+   "Team A (darker shirts)": {
+    "width_m": 32,
+    "depth_m": 26,
+    "area_m2": 641,
+    "back_line_m": 46,
+    "players_behind_ball": 10
+   }
+  },
+  {
+   "clock": "10:18",
+   "ball_zone": "defensive third, centre",
+   "Team B (lighter shirts)": {
+    "width_m": 55,
+    "depth_m": 30,
+    "area_m2": 1263,
+    "back_line_m": 34,
+    "players_behind_ball": 2
+   },
+   "Team A (darker shirts)": {
+    "width_m": 34,
+    "depth_m": 22,
+    "area_m2": 585,
+    "back_line_m": 47,
+    "players_behind_ball": 10
+   }
+  },
+  {
+   "clock": "10:20",
+   "ball_zone": "defensive third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 56,
+    "depth_m": 28,
+    "area_m2": 1142,
+    "back_line_m": 33,
+    "players_behind_ball": 2
+   },
+   "Team A (darker shirts)": {
+    "width_m": 36,
+    "depth_m": 23,
+    "area_m2": 638,
+    "back_line_m": 47,
+    "players_behind_ball": 10
+   }
+  },
+  {
+   "clock": "10:22",
+   "ball_zone": "middle third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 55,
+    "depth_m": 35,
+    "area_m2": 1335,
+    "back_line_m": 36,
+    "players_behind_ball": 8
+   },
+   "Team A (darker shirts)": {
+    "width_m": 37,
+    "depth_m": 31,
+    "area_m2": 822,
+    "back_line_m": 39,
+    "players_behind_ball": 4
+   }
+  },
+  {
+   "clock": "10:24",
+   "ball_zone": "attacking third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 52,
+    "depth_m": 40,
+    "area_m2": 1395,
+    "back_line_m": 40,
+    "players_behind_ball": 9
+   },
+   "Team A (darker shirts)": {
+    "width_m": 38,
+    "depth_m": 33,
+    "area_m2": 899,
+    "back_line_m": 33,
+    "players_behind_ball": 3
+   }
+  },
+  {
+   "clock": "10:26",
+   "ball_zone": "attacking third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 51,
+    "depth_m": 35,
+    "area_m2": 1254,
+    "back_line_m": 47,
+    "players_behind_ball": 9
+   },
+   "Team A (darker shirts)": {
+    "width_m": 38,
+    "depth_m": 33,
+    "area_m2": 913,
+    "back_line_m": 26,
+    "players_behind_ball": 3
+   }
+  },
+  {
+   "clock": "10:28",
+   "ball_zone": "middle third, left",
+   "Team B (lighter shirts)": {
+    "width_m": 50,
+    "depth_m": 32,
+    "area_m2": 1158,
+    "back_line_m": 50,
+    "players_behind_ball": 6
+   },
+   "Team A (darker shirts)": {
+    "width_m": 39,
+    "depth_m": 32,
+    "area_m2": 835,
+    "back_line_m": 26,
+    "players_behind_ball": 7
+   }
+  }
+ ],
+ "notable_changes": [
+  {
+   "team": "Team B (lighter shirts)",
+   "metric": "width_m",
+   "from": 40,
+   "to": 50,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  },
+  {
+   "team": "Team B (lighter shirts)",
+   "metric": "depth_m",
+   "from": 39,
+   "to": 32,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  },
+  {
+   "team": "Team B (lighter shirts)",
+   "metric": "back_line_m",
+   "from": 11,
+   "to": 50,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  },
+  {
+   "team": "Team A (darker shirts)",
+   "metric": "depth_m",
+   "from": 43,
+   "to": 32,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  },
+  {
+   "team": "Team A (darker shirts)",
+   "metric": "area_m2",
+   "from": 1003,
+   "to": 835,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  },
+  {
+   "team": "Team A (darker shirts)",
+   "metric": "back_line_m",
+   "from": 63,
+   "to": 26,
+   "from_clock": "10:00",
+   "to_clock": "10:28"
+  }
+ ],
+ "definitions": {
+  "width_m": "distance between the team's widest outfield players across the pitch",
+  "depth_m": "distance between the team's deepest and most advanced outfield players",
+  "area_m2": "area of the shape around all outfield players (smaller = more compact)",
+  "back_line_m": "average distance of the 4 deepest outfield players from their own goal line",
+  "players_behind_ball": "outfield players between the ball and their own goal (average over the window); 0 means the ball is closer to their goal than all of them, i.e. the defence has been bypassed",
+  "ball_zone": "where the ball mostly was in the window, seen from the focus team attacking towards the opponent's goal",
+  "ball_carriers": "player nearest the ball (within 1.5 m, ball below 1 m) for at least 0.12 s, in time order"
+ }
+}
