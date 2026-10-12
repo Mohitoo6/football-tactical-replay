@@ -1,5 +1,7 @@
 # ⚽ Football Tactical Replay
 
+[![tests](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml/badge.svg)](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml)
+
 Replays real football moments from open player-tracking data, draws each team's shape as it moves, and has an LLM explain the tactics **using only facts the code has measured**. Every number in the explanation is checked automatically.
 
 ![Musiala's 89th-minute winner for Bayern at Köln, with team shapes and live metrics](docs/demo.gif)

@@ -1,0 +1,26 @@
+# Runs the test suite on every push and pull request (free for public repositories).
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    name: Core tests (data, geometry, viz, AI with fake clients, app)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync
+      - run: uv run pytest -q   # video tests skip here: OpenCV is not in the default dependencies
+
+  video-tests:
+    name: Video tests (synthetic frames, OpenCV)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync
+      # The headless OpenCV build is enough for these tests and avoids the full video group (PyTorch).
+      - run: uv run --with opencv-python-headless python -m pytest -q tests/test_video.py   # "python -m" so pytest sees the extra package
