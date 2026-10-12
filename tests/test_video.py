@@ -225,3 +225,43 @@ def test_export_uses_only_video_derived_columns():
     keepers = clip.players[clip.players["position"] == "Goalkeeper"]
     assert keepers.loc[keepers["team"] == "home", "x"].mean() < 0  # home attacks left to right
     assert clip.ball["alive"].mean() == 0.5  # ball known in every other frame only
+
+
+def test_full_resolution_ball_detector_separates_ball_from_boot_and_ignores_lines_and_shirts():
+    from tactics.video.ball import BallDetector, median_background
+
+    background = textured_pitch()
+    frame = background.copy()
+    cv2.circle(frame, (300, 300), 14, BLUE_SHIRT, -1)  # a player (blue shirt) ...
+    cv2.circle(frame, (322, 300), 5, (245, 245, 245), -1)  # ... with the ball 3 px from his boot
+    cv2.circle(frame, (480, 120), 15, WHITE_SHIRT, -1)  # a white-shirted player: white, but too big
+    cv2.circle(frame, (110, 330), 5, (245, 245, 245), -1)  # a ball alone in open play
+    detector = BallDetector(median_background([background] * 3), np.full((400, 600), 255, np.uint8),
+                            min_area_px=20, max_area_px=150)
+
+    found = detector.candidates(frame)
+
+    result = match(found[["x", "y"]].to_numpy(), np.array([[322.0, 300.0], [110.0, 330.0]]), max_distance=2.0)
+    assert result.true_positives == 2 and result.false_positives == 0
+
+
+def test_median_background_in_strips_matches_numpy():
+    from tactics.video.ball import median_background
+
+    rng = np.random.default_rng(3)
+    frames = [rng.integers(0, 255, (50, 40, 3), dtype=np.uint8) for _ in range(5)]
+    np.testing.assert_array_equal(median_background(frames, rows_per_chunk=7),
+                                  np.median(np.stack(frames), axis=0).astype(np.uint8))
+
+
+def test_auto_calibration_ignores_a_row_of_goals_beyond_the_pitch():
+    from tactics.video.pitch_lines import pitch_corners
+
+    image, true_corners = drawn_pitch(offset=(120, 40))
+    # A row of white practice goals 25 m beyond the left goal line, running the full height of the image.
+    for y in range(10, image.shape[0] - 10, 14):
+        cv2.rectangle(image, (20, y), (24, y + 10), (255, 255, 255), -1)
+    cv2.line(image, (22, 5), (22, image.shape[0] - 5), (255, 255, 255), 2)
+    found = pitch_corners(image)
+    distances = np.linalg.norm(found[:, None] - true_corners[None], axis=2)
+    assert distances.min(axis=1).max() < 2.0

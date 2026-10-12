@@ -62,8 +62,13 @@ def _fit_line(points: np.ndarray) -> LineFit:
     return LineFit(np.array([x0, y0]), np.array([vx, vy]))
 
 
-def outer_lines(lines_mask: np.ndarray, min_length_px: int) -> dict[str, LineFit]:
-    """The four outermost long lines: two per main direction (touchlines and goal lines)."""
+def candidate_lines(lines_mask: np.ndarray, min_length_px: int) -> dict[str, list[tuple[float, LineFit]]]:
+    """Long straight lines in the two main directions ("a" and "b"), each with its position across that direction.
+
+    A line counts if it runs at least 60% as far as the longest line in its direction: touchlines,
+    goal lines and the halfway line do; painted text does not. Rows of white objects beyond the
+    pitch (e.g. practice goals) can also qualify, so the final choice is left to `pitch_corners`.
+    """
     segments = cv2.HoughLinesP(lines_mask, 1, np.pi / 720, threshold=80, minLineLength=min_length_px, maxLineGap=25)
     if segments is None or len(segments) < 4:
         raise ValueError("not enough long straight lines found to locate the pitch outline")
@@ -71,6 +76,8 @@ def outer_lines(lines_mask: np.ndarray, min_length_px: int) -> dict[str, LineFit
     angles = np.degrees(np.arctan2(segments[:, 3] - segments[:, 1], segments[:, 2] - segments[:, 0])) % 180
     lengths = np.hypot(segments[:, 2] - segments[:, 0], segments[:, 3] - segments[:, 1])
     main = angles[np.argmax(lengths)] % 90  # the longest segment sets the grid orientation
+    ys, xs = np.nonzero(lines_mask)
+    pixels = np.column_stack([xs, ys])
 
     result = {}
     for name, angle in (("a", main), ("b", main + 90)):
@@ -80,39 +87,54 @@ def outer_lines(lines_mask: np.ndarray, min_length_px: int) -> dict[str, LineFit
             raise ValueError("pitch outline needs lines in two directions")
         normal = np.array([-np.sin(np.radians(angle)), np.cos(np.radians(angle))])
         direction = np.array([np.cos(np.radians(angle)), np.sin(np.radians(angle))])
-        midpoints = (group[:, :2] + group[:, 2:]) / 2
-        distance = midpoints @ normal  # position across this direction
-        ys, xs = np.nonzero(lines_mask)
-        pixels = np.column_stack([xs, ys])
+        distance = ((group[:, :2] + group[:, 2:]) / 2) @ normal  # position across this direction
         pixel_distance = pixels @ normal
 
-        # Merge segments that lie on the same line and measure how far each line runs.
-        # A touchline or goal line runs (almost) the full pitch; painted text beyond it does not.
-        candidates = []
+        levels = []
         for level in np.unique(np.round(distance / 6)):
             on_line = group[np.round(distance / 6) == level]
             span = np.concatenate([on_line[:, :2] @ direction, on_line[:, 2:] @ direction])
-            candidates.append((level * 6, span.max() - span.min()))
-        longest = max(length for _, length in candidates)
-        boundary = [d for d, length in candidates if length >= 0.6 * longest]
-        for side, extreme in (("low", min(boundary)), ("high", max(boundary))):
-            # Refit precisely on all line pixels within a few px of the outermost segment.
-            near = pixels[np.abs(pixel_distance - extreme) < 6]
+            levels.append((level * 6, span.max() - span.min(), span.min(), span.max()))
+        longest = max(length for _, length, _, _ in levels)
+        fitted = []
+        for position, length, low, high in levels:
+            if length < 0.6 * longest:
+                continue
+            # Refit precisely on all line pixels within a few px of this line, along its span.
+            near = pixels[np.abs(pixel_distance - position) < 6]
             along = near @ direction
-            ends = group[np.abs(distance - extreme) < 9]
-            span = np.concatenate([ends[:, :2] @ direction, ends[:, 2:] @ direction])
-            near = near[(along >= span.min() - 5) & (along <= span.max() + 5)]
-            result[f"{name}_{side}"] = _fit_line(near)
+            near = near[(along >= low - 5) & (along <= high + 5)]
+            fitted.append((position, _fit_line(near)))
+        result[name] = sorted(fitted, key=lambda item: item[0])
     return result
 
 
-def pitch_corners(image: np.ndarray, min_length_frac: float = 0.15) -> np.ndarray:
-    """Pixel positions of the four pitch corners, ordered around the outline."""
-    mask = line_pixels(image)
-    lines = outer_lines(mask, int(min_length_frac * max(image.shape[:2])))
-    corners = [_intersect(lines["a_low"], lines["b_low"]), _intersect(lines["a_low"], lines["b_high"]),
-               _intersect(lines["a_high"], lines["b_high"]), _intersect(lines["a_high"], lines["b_low"])]
-    return np.array(corners)
+def pitch_corners(image: np.ndarray, min_length_frac: float = 0.15,
+                  aspect: float = PITCH_LENGTH_M / PITCH_WIDTH_M) -> np.ndarray:
+    """Pixel positions of the four pitch corners, ordered around the outline.
+
+    Among all pairs of long lines in each direction, pick the rectangle whose length/width ratio is
+    closest to a real pitch (105/68 by default); among equally good ones, the larger. Taking simply
+    the outermost lines picked up a row of practice goals beyond the touchline (DECISIONS.md, D24).
+    """
+    lines = candidate_lines(line_pixels(image), int(min_length_frac * max(image.shape[:2])))
+    best, best_key = None, None
+    for i, (pos_a_low, a_low) in enumerate(lines["a"]):
+        for pos_a_high, a_high in lines["a"][i + 1:]:
+            for j, (pos_b_low, b_low) in enumerate(lines["b"]):
+                for pos_b_high, b_high in lines["b"][j + 1:]:
+                    corners = np.array([_intersect(a_low, b_low), _intersect(a_low, b_high),
+                                        _intersect(a_high, b_high), _intersect(a_high, b_low)])
+                    side_1 = np.linalg.norm(corners[1] - corners[0])
+                    side_2 = np.linalg.norm(corners[2] - corners[1])
+                    ratio = max(side_1, side_2) / max(min(side_1, side_2), 1e-6)
+                    # Within 5% of the true ratio counts as a match; then prefer the biggest outline.
+                    key = (round(abs(np.log(ratio / aspect)) / 0.05), -side_1 * side_2)
+                    if best_key is None or key < best_key:
+                        best, best_key = corners, key
+    if best is None:
+        raise ValueError("no pair of lines in each direction forms a pitch outline")
+    return best
 
 
 def auto_calibrate(image: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m: float = PITCH_WIDTH_M,
