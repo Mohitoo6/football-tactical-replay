@@ -117,21 +117,41 @@ class BackgroundDetector:
         blobs = self.detect_blobs(frame)
         return blobs[["x", "y"]].to_numpy()
 
+    def all_blobs(self, frame: np.ndarray) -> pd.DataFrame:
+        """Every blob that differs from the empty pitch: centre x, y (full-resolution px), area, mean colour.
+
+        Colours are averaged with np.bincount over the label image, for all blobs at once
+        (a Python loop over blobs took ~0.17 s per 4K frame).
+        """
+        count, labels, stats, centroids = cv2.connectedComponentsWithStats(self.foreground(frame))
+        small = self._resize(frame)
+        flat = labels.ravel()
+        areas = np.maximum(stats[:, cv2.CC_STAT_AREA], 1)
+        means = np.column_stack([np.bincount(flat, weights=small[..., c].ravel(), minlength=count) / areas
+                                 for c in range(3)])  # the shirt dominates from above
+        rows = np.arange(1, count)  # row 0 is the background
+        return pd.DataFrame({
+            "x": centroids[rows, 0] / self.scale,
+            "y": centroids[rows, 1] / self.scale,
+            "area_px": stats[rows, cv2.CC_STAT_AREA] / self.scale**2,
+            "area_small": stats[rows, cv2.CC_STAT_AREA],
+            "b": means[rows, 0], "g": means[rows, 1], "r": means[rows, 2],
+        })
+
+    def split_blobs(self, frame: np.ndarray) -> tuple[pd.DataFrame, pd.DataFrame]:
+        """(player-sized blobs, smaller blobs that may be the ball) from one foreground pass."""
+        blobs = self.all_blobs(frame)
+        players = blobs[(blobs["area_small"] >= self.min_area) & (blobs["area_small"] <= self.max_area)]
+        small = blobs[blobs["area_small"] < self.min_area]
+        return players.drop(columns="area_small").reset_index(drop=True), small.drop(columns="area_small").reset_index(drop=True)
+
     def detect_blobs(self, frame: np.ndarray, min_area: int | None = None, max_area: int | None = None) -> pd.DataFrame:
         """Blobs within an area range (default: player-sized): centre x, y (full-resolution px), size, mean colour."""
         min_area = self.min_area if min_area is None else min_area
         max_area = self.max_area if max_area is None else max_area
-        count, labels, stats, centroids = cv2.connectedComponentsWithStats(self.foreground(frame))
-        areas = stats[1:, cv2.CC_STAT_AREA]  # row 0 is the background
-        keep = np.flatnonzero((areas >= min_area) & (areas <= max_area)) + 1
-        small = self._resize(frame)
-        colours = [small[labels == label].mean(axis=0) for label in keep]  # the shirt dominates from above
-        return pd.DataFrame({
-            "x": centroids[keep, 0] / self.scale,
-            "y": centroids[keep, 1] / self.scale,
-            "area_px": stats[keep, cv2.CC_STAT_AREA] / self.scale**2,
-            "b": [c[0] for c in colours], "g": [c[1] for c in colours], "r": [c[2] for c in colours],
-        })
+        blobs = self.all_blobs(frame)
+        keep = (blobs["area_small"] >= min_area) & (blobs["area_small"] <= max_area)
+        return blobs[keep].drop(columns="area_small").reset_index(drop=True)
 
 
 class RFDetrDetector:

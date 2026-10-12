@@ -44,10 +44,17 @@ def field_mask(image: np.ndarray) -> np.ndarray:
 
 
 def line_pixels(image: np.ndarray) -> np.ndarray:
-    """255 where the image is white paint inside the field."""
+    """255 where the image is white paint on or at the edge of the field.
+
+    The field mask is grown slightly: when the strip of grass beyond a touchline
+    is not green enough (e.g. in shadow), the green region ends inside the line
+    and the touchline itself would be cut away (seen on segment 22:30).
+    """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     white = cv2.inRange(hsv, (0, 0, 170), (180, 70, 255))
-    return cv2.bitwise_and(white, field_mask(image))
+    grow = int(0.008 * max(image.shape[:2])) | 1  # ~15 px at 1920 px wide, always odd
+    field = cv2.dilate(field_mask(image), np.ones((grow, grow), np.uint8))
+    return cv2.bitwise_and(white, field)
 
 
 def _intersect(a: LineFit, b: LineFit) -> np.ndarray:
@@ -143,7 +150,7 @@ def auto_calibrate(image: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m:
 
     `image_scale` is the size of `image` relative to the video frames (0.5 for a half-resolution background).
     """
-    corners = pitch_corners(image) / image_scale
+    corners = pitch_corners(image, aspect=length_m / width_m) / image_scale
     side_01 = np.linalg.norm(corners[1] - corners[0])
     side_12 = np.linalg.norm(corners[2] - corners[1])
     if side_01 >= side_12:  # corners 0 -> 1 run along a touchline
@@ -151,3 +158,11 @@ def auto_calibrate(image: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m:
     else:
         pitch = [[0, 0], [0, width_m], [length_m, width_m], [length_m, 0]]
     return PitchCalibration(np.array(pitch, dtype=float), corners)
+
+
+def outline_ratio_error(corners: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m: float = PITCH_WIDTH_M) -> float:
+    """How far the found outline's length/width ratio is from the real pitch's, as a fraction (0.03 = 3%)."""
+    side_1 = np.linalg.norm(corners[1] - corners[0])
+    side_2 = np.linalg.norm(corners[2] - corners[1])
+    ratio = max(side_1, side_2) / max(min(side_1, side_2), 1e-6)
+    return float(abs(ratio / (length_m / width_m) - 1))

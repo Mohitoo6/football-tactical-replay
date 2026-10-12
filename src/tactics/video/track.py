@@ -20,6 +20,7 @@ from scipy.optimize import linear_sum_assignment
 
 COLOUR_SCALE = 40.0  # Lab units; the two teams' shirts differ by roughly this much
 COLOUR_MEMORY = 0.1  # how fast a track's remembered colour follows new detections
+SAME_SHIRT_LAB = 15.0  # colour clusters closer than this (Lab units) are the same shirt
 
 
 @dataclass
@@ -134,7 +135,8 @@ def assign_teams(tracks: pd.DataFrame, min_frames: int = 30) -> pd.Series:
 
     Tracks are grouped into three colour clusters (k-means, weighted by length);
     the two clusters with the most player-frames are the teams, the third is
-    everyone else (referee, staff, noise). Short tracks are "other".
+    everyone else (referee, staff, noise) unless its colour matches a team.
+    Short tracks are "other".
     """
     import cv2
 
@@ -148,6 +150,15 @@ def assign_teams(tracks: pd.DataFrame, min_frames: int = 30) -> pd.Series:
     nearest = np.linalg.norm(long[["L", "A", "B"]].to_numpy()[:, None] - centres[None], axis=2).argmin(axis=1)
     weight = pd.Series(long["frames"].to_numpy()).groupby(nearest).sum().sort_values(ascending=False)
     names = {cluster: name for cluster, name in zip(weight.index, ["A", "B", "other"])}
+    # With no referee or staff in view there is no real third colour, and k-means splits a team in two.
+    # A third cluster that looks like one of the teams is that team.
+    for cluster, name in list(names.items()):
+        if name != "other":
+            continue
+        team_centres = {n: centres[c] for c, n in names.items() if n != "other"}
+        closest = min(team_centres, key=lambda n: np.linalg.norm(centres[cluster] - team_centres[n]))
+        if np.linalg.norm(centres[cluster] - team_centres[closest]) < SAME_SHIRT_LAB:
+            names[cluster] = closest
     teams = pd.Series("other", index=per_track.index)
     teams.loc[long.index] = [names.get(c, "other") for c in nearest]
     return teams
