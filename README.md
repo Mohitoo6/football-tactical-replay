@@ -55,7 +55,7 @@ Key decisions, with alternatives and evidence, are in [`DECISIONS.md`](DECISIONS
 | Generalisation | Ran the pipeline on a second match it was not built on | Worked after fixing 5 issues the first match never showed (D14) |
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | LLM grounding | 4 clips, prompt v3 | 4 / 4 pass; a naive prompt on the same facts invented a number and two names (caught) |
-| Tests | `uv run pytest` | 72 passing (+14 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
+| Tests | `uv run pytest` | 72 passing (+24 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md).
 
@@ -89,12 +89,12 @@ Measured on **13 × 30 s SoccerTrack segments** spread over one match. The datas
 
 | What | Median (worst) over 13 segments |
 |---|---|
-| Players found (recall) | 98.4% (92.0%) |
-| Position error, automatic calibration (no hand-marked points) | 0.51 m (0.80 m) |
-| Identity kept (purity) | 98.5% (94.9%) |
-| Correct team | 99.1% (94.4%) |
-| Ball correct, all frames | 61% (14%) — the ball is often hidden at players' feet; a full-resolution ball detector raises this on 5 of 6 test segments but is not adopted yet (D25) |
-| Speed | ~4.5 min per 30 s of 4K video on an Apple M2 (offline) |
+| Players found (recall) | 98.4% (91.0%) |
+| Position error, automatic calibration (no hand-marked points) | 0.49 m (0.81 m) |
+| Identity kept (purity) | 97.4% (90.2%) |
+| Correct team | 98.5% (94.3%) |
+| Ball correct, all frames | 62% (14%) — the ball is often hidden at players' feet; a full-resolution ball detector raises this on 5 of 6 test segments but is not adopted yet (D25) |
+| Speed | ~2 min per 30 s of 4K video on an Apple M2 (offline) |
 
 A pretrained deep detector (RF-DETR, tiled) found only 43% of players from straight above, at 100× the cost. The classical method won here. Limits: hovering top-down camera, whole pitch outline visible, one ground tested so far.
 
@@ -136,7 +136,7 @@ app/         Streamlit app
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate_explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation and LLM evaluations
-tests/       72 tests + 14 video tests
+tests/       72 tests + 24 video tests
 ```
 
 ## Limitations
