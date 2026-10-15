@@ -139,6 +139,36 @@ def test_auto_calibration_finds_the_outline_not_the_text():
     np.testing.assert_allclose(np.abs(centre), [[0, 0]], atol=0.5)  # the centre spot maps to (0, 0)
 
 
+def test_auto_calibration_when_touchlines_are_not_quite_parallel():
+    """Lens or perspective tilts one touchline ~0.8 degrees; the other is broken into pieces (players on it)."""
+    from tactics.video.pitch_lines import pitch_corners
+
+    image = np.full((720, 1120, 3), GRASS, dtype=np.uint8)
+    white = (255, 255, 255)
+    left, right, top, bottom = 140, 980, 86, 624  # the old grouping lost the top line at 8 of 12 heights tried
+    tilt = 12  # px over 840 px: ~0.8 degrees
+    true_corners = np.array([[left, top], [right, top], [right, bottom + tilt], [left, bottom]], dtype=float)
+    cv2.line(image, (left, bottom), (right, bottom + tilt), white, 2)  # the longest, sets the main direction
+    for start in range(left, right, 240):  # top touchline in 200 px pieces with 40 px gaps
+        cv2.line(image, (start, top), (min(start + 200, right), top), white, 2)
+    cv2.line(image, (left, top), (left, bottom), white, 2)
+    cv2.line(image, (right, top), (right, bottom + tilt), white, 2)
+    cv2.line(image, (560, top), (560, bottom + 6), white, 2)
+    found = pitch_corners(image)
+    distances = np.linalg.norm(found[:, None] - true_corners[None], axis=2)
+    assert distances.min(axis=1).max() < 3.0
+
+
+def test_auto_calibration_on_a_darker_clip():
+    from tactics.video.pitch_lines import pitch_corners
+
+    image, true_corners = drawn_pitch()
+    dark = (image * 0.5).astype(np.uint8)  # evening light: the lines are now darker than the old fixed threshold
+    found = pitch_corners(dark)
+    distances = np.linalg.norm(found[:, None] - true_corners[None], axis=2)
+    assert distances.min(axis=1).max() < 2.0
+
+
 # --- tracking, teams and ball (synthetic, no video needed) --------------------
 
 import pandas as pd  # noqa: E402

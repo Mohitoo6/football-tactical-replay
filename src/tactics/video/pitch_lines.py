@@ -22,6 +22,9 @@ import numpy as np
 
 from tactics.video.calibration import PITCH_LENGTH_M, PITCH_WIDTH_M, PitchCalibration
 
+WHITE_OVER_GRASS = 1.17  # paint is this much brighter than the median grass (the old fixed 170 on grass of V ~145)
+SAME_LINE_PX = 6  # segments whose ends are this close to a line belong to it (lines are ~2-5 px wide)
+
 
 @dataclass
 class LineFit:
@@ -44,16 +47,21 @@ def field_mask(image: np.ndarray) -> np.ndarray:
 
 
 def line_pixels(image: np.ndarray) -> np.ndarray:
-    """255 where the image is white paint on or at the edge of the field.
+    """255 where the image is white paint (bright, unsaturated) on or at the edge of the field.
 
     The field mask is grown slightly: when the strip of grass beyond a touchline
     is not green enough (e.g. in shadow), the green region ends inside the line
     and the touchline itself would be cut away (seen on segment 22:30).
     """
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    white = cv2.inRange(hsv, (0, 0, 170), (180, 70, 255))
+    value = hsv[..., 2]
+    field = field_mask(image)
+    # Brighter than this pitch's grass, not brighter than a fixed level: a fixed V >= 170 lost every
+    # line on a 30% darker clip (D27). Comparing with the grass nearby instead added shadow edges.
+    grass = float(np.median(value[field > 0]))
+    white = np.where((value >= grass * WHITE_OVER_GRASS) & (hsv[..., 1] <= 70), 255, 0).astype(np.uint8)
     grow = int(0.008 * max(image.shape[:2])) | 1  # ~15 px at 1920 px wide, always odd
-    field = cv2.dilate(field_mask(image), np.ones((grow, grow), np.uint8))
+    field = cv2.dilate(field, np.ones((grow, grow), np.uint8))
     return cv2.bitwise_and(white, field)
 
 
@@ -94,26 +102,47 @@ def candidate_lines(lines_mask: np.ndarray, min_length_px: int) -> dict[str, lis
             raise ValueError("pitch outline needs lines in two directions")
         normal = np.array([-np.sin(np.radians(angle)), np.cos(np.radians(angle))])
         direction = np.array([np.cos(np.radians(angle)), np.sin(np.radians(angle))])
-        distance = ((group[:, :2] + group[:, 2:]) / 2) @ normal  # position across this direction
-        pixel_distance = pixels @ normal
 
         levels = []
-        for level in np.unique(np.round(distance / 6)):
-            on_line = group[np.round(distance / 6) == level]
+        for on_line in _same_line_groups(group):
+            rough = _fit_line(np.vstack([on_line[:, :2], on_line[:, 2:]]))
             span = np.concatenate([on_line[:, :2] @ direction, on_line[:, 2:] @ direction])
-            levels.append((level * 6, span.max() - span.min(), span.min(), span.max()))
-        longest = max(length for _, length, _, _ in levels)
+            levels.append((float(rough.point @ normal), span.max() - span.min(), span.min(), span.max(), rough))
+        longest = max(length for _, length, _, _, _ in levels)
         fitted = []
-        for position, length, low, high in levels:
+        for position, length, low, high, rough in levels:
             if length < 0.6 * longest:
                 continue
             # Refit precisely on all line pixels within a few px of this line, along its span.
-            near = pixels[np.abs(pixel_distance - position) < 6]
-            along = near @ direction
-            near = near[(along >= low - 5) & (along <= high + 5)]
+            across = np.abs((pixels - rough.point) @ np.array([-rough.direction[1], rough.direction[0]]))
+            along = pixels @ direction
+            near = pixels[(across < SAME_LINE_PX) & (along >= low - 5) & (along <= high + 5)]
             fitted.append((position, _fit_line(near)))
         result[name] = sorted(fitted, key=lambda item: item[0])
     return result
+
+
+def _same_line_groups(segments: np.ndarray) -> list[np.ndarray]:
+    """Group Hough segments that lie on one straight line (both ends within a few px of it), longest first.
+
+    Grouping by distance across one shared direction failed when the two touchlines are not quite
+    parallel in the image (0.8 degrees apart on a 1080p clip): a 700 px line drifts ~10 px across that
+    direction, so its pieces fell into different groups, each too short to count (DECISIONS.md, D27).
+    """
+    lengths = np.hypot(segments[:, 2] - segments[:, 0], segments[:, 3] - segments[:, 1])
+    groups: list[list[int]] = []
+    lines: list[LineFit] = []
+    for i in np.argsort(-lengths):
+        ends = segments[i].reshape(2, 2)
+        for members, line in zip(groups, lines):
+            across = np.abs((ends - line.point) @ np.array([-line.direction[1], line.direction[0]]))
+            if across.max() < SAME_LINE_PX:
+                members.append(i)
+                break
+        else:
+            groups.append([i])
+            lines.append(_fit_line(ends))
+    return [segments[members] for members in groups]
 
 
 def pitch_corners(image: np.ndarray, min_length_frac: float = 0.15,
@@ -162,7 +191,7 @@ def auto_calibrate(image: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m:
 
 def outline_ratio_error(corners: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m: float = PITCH_WIDTH_M) -> float:
     """How far the found outline's length/width ratio is from the real pitch's, as a fraction (0.03 = 3%)."""
-    side_1 = np.linalg.norm(corners[1] - corners[0])
-    side_2 = np.linalg.norm(corners[2] - corners[1])
+    sides = np.linalg.norm(corners - np.roll(corners, -1, axis=0), axis=1)
+    side_1, side_2 = (sides[0] + sides[2]) / 2, (sides[1] + sides[3]) / 2  # mean of opposite sides
     ratio = max(side_1, side_2) / max(min(side_1, side_2), 1e-6)
     return float(abs(ratio / (length_m / width_m) - 1))
