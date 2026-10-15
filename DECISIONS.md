@@ -525,3 +525,44 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - One segment of one ground. Other grounds, partial shadows and tilted cameras are untested.
   - On segment 10:00 the position error went from 0.49 to 0.54 m with the new calibration. The 13-segment table predates D27 and needs a re-run.
   - All runs used low-power mode (efficiency cores), so they took ~8 min per clip instead of ~2.
+
+## D28. Broadcast clips: calibrate the camera in every frame, draw the analysis on the footage
+*2026-10-15 · `src/tactics/broadcast/`, `src/tactics/viz/overlay.py`, `tools/pnlcalib/`, `evals/broadcast/`*
+
+- **Why:** most football video online is TV footage, where the camera pans and zooms. The drone pipeline refuses it: no fixed view, no whole outline.
+- **Decision:**
+  - Calibrate **each keyframe**, 5 per second, with **PnLCalib**, a pretrained keypoint-and-line model.
+  - Find people and the ball with **RF-DETR**. A player's feet are on the ground, so the homography places them on the pitch.
+  - Then reuse the drone pipeline unchanged in pitch metres: tracker, stitching, teams, ball follower and export. Positions in metres do not depend on where the camera points.
+  - Interpolate to 25 fps, and keep one homography per frame so the analysis can be **drawn on the footage itself**: team shapes on the grass, rings at players' feet, the ball, and a corner map showing the camera's view.
+  - `process_video.py --mode auto` tries the drone checks first and falls back to the broadcast path.
+- **Alternatives:**
+  - Roboflow's 32-keypoint YOLOv8-pose model: Ultralytics is AGPL and the weights licence is unclear (same reasoning as D19).
+  - The SoccerNet game-state baseline: GPL-3.0, and far too heavy for the laptop (YOLO, ReID and OCR).
+  - Measuring shapes in image pixels: perspective makes far players look closer together, so all numbers would be wrong.
+- **Licence boundary:**
+  - PnLCalib is GPL-2.0. `tools/pnlcalib/setup.sh` installs it outside the repository, in git-ignored `data/tools/` with its own venv.
+  - Only `tools/pnlcalib/run_pnlcalib.py` imports it, and that one file is GPL-2.0-or-later.
+  - Our MIT code runs it as a subprocess and reads JSON.
+- **Our own check of every calibration (line agreement):** draw the calibrated pitch lines into the frame and measure the share that lands on white paint. Good fits score 0.7–0.9, wrong ones below 0.1. Keyframes under 0.5 are dropped, and a clip with under 70% good keyframes is refused.
+- **Spike findings:**
+  - PnLCalib fails on the high "tactical" camera that looks along the pitch (two World Cup clips: 0 of 11 keyframes; lowering the thresholds gave 7 calibrations, all wrong).
+  - It works on the standard side-on camera: Euro 2020 clip, 200/200 keyframes, median agreement 0.84.
+  - We support the side-on camera and refuse the rest.
+- **Found while building:**
+  1. **Variable frame rate.** A screen recording labelled 60 fps averaged 36. Frames are now resampled to an exact rate with ffmpeg, and other aspect ratios are padded to 16:9, not stretched.
+  2. **ID chains mixed teams.** At 5 fps one "track" was the referee, then a white player, then a dark player; its average colour made all three "white". A player cannot change team, so tracks are now cut where the shirt colour changes (`broadcast/teams.py`). Colour disagreement fell from 7.7% to 3.3%. This is self-consistency, not accuracy.
+  3. **Facts the camera cannot support.** The first coach text said the defence was "bypassed" because the deepest defenders were off screen. For partial views:
+     - the facts keep only width and area of visible players, and only when at least 7 of a team's outfield players are in view;
+     - back line, depth, players behind the ball and the formation are left out;
+     - prompt v4 adds a rule: say the camera shows part of the pitch, and draw no conclusions outside it.
+
+     Clips with full tracking data get exactly the same facts as before (checked on all 5 committed clips).
+- **Limits:**
+  - **No ground-truth evaluation yet.** SoccerNet-GSR has true positions for broadcast clips; download and scoring are the next step (disk permitting).
+  - Only the side-on camera works.
+  - Only players in view are tracked.
+  - The referee is drawn as the white team on the test clip: their light-blue shirt is too close to white in our colour measure.
+  - A ball in the air is placed wrongly, because the homography is for the ground.
+  - The ball is kept in 39% of frames.
+  - One test clip so far.
