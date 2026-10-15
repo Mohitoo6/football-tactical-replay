@@ -36,6 +36,10 @@ MAX_RATIO_ERROR = 0.05
 MAX_CALIBRATION_DISAGREEMENT_M = 2.0
 PLAYERS_ON_PITCH = (14, 30)  # median player-sized blobs per frame we accept (22 players, some merged, some extra)
 MIN_BALL_VISIBLE = 0.3
+# Blob sizes in BackgroundDetector were tuned on 4K SoccerTrack at half resolution: ~14 px per metre.
+# Each clip is processed at the scale that gives it about the same, so 1080p or a higher drone also works.
+WORKING_PX_PER_M = 14.0
+MIN_PX_PER_M = 10.0  # 720p of a full pitch (9.3 px/m) found only 76% of players, so refuse below this (D27)
 
 Progress = Callable[[float, str], None]
 
@@ -112,7 +116,8 @@ def detect_video(path: Path, report: QualityReport, length_m: float = PITCH_LENG
     first = sample[sample_indices[0]]
     stabilizer = Stabilizer(first)
     aligned = [Stabilizer.align(f, stabilizer.warp(f)) for f in sample.values()]
-    detector = BackgroundDetector(aligned, np.full((height, width), 255, dtype=np.uint8))
+    no_mask = np.full((height, width), 255, dtype=np.uint8)
+    detector = BackgroundDetector(aligned, no_mask, scale=min(1.0, 1920 / max(height, width)))  # first guess
 
     progress(0.08, "calibrating from the pitch lines")
     try:
@@ -124,6 +129,12 @@ def detect_video(path: Path, report: QualityReport, length_m: float = PITCH_LENG
     ratio_error = outline_ratio_error(corners, length_m, width_m)
     report.add("pitch outline shape", ratio_error <= MAX_RATIO_ERROR, f"{ratio_error:.1%} off {length_m:g}:{width_m:g}",
                f"<= {MAX_RATIO_ERROR:.0%}")
+    sides = np.linalg.norm(corners - np.roll(corners, -1, axis=0), axis=1)
+    px_per_m = float(sides.sum() / (2 * (length_m + width_m)))  # full-resolution pixels per metre
+    scale = min(1.0, WORKING_PX_PER_M / px_per_m)
+    if abs(scale - detector.scale) > 0.02:
+        detector = BackgroundDetector(aligned, no_mask, scale=scale)
+    report.add("pitch resolution", px_per_m >= MIN_PX_PER_M, f"{px_per_m:.1f} px per metre", f">= {MIN_PX_PER_M:.0f}")
     report.add("calibration stable over the clip", *_calibration_agreement(aligned, detector, calibration, length_m, width_m))
     detector.mask = detector._resize(pitch_mask((height, width), calibration))
     del aligned, sample

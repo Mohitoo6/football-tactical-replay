@@ -10,37 +10,38 @@ cv2 = pytest.importorskip("cv2")
 
 from tactics.video.pipeline import QualityReport, process_video  # noqa: E402
 
-SCALE, OFFSET = 8.0, (60, 40)  # px per metre; pitch drawn 60 px / 40 px from the image edge
+SCALE, OFFSET = 14.0, (60, 40)  # px per metre (as 4K drone footage at half size); pitch 60 / 40 px from the edge
 GRASS, LINE = (60, 140, 60), (255, 255, 255)
 SHIRTS = {"A": (235, 235, 235), "B": (190, 90, 40)}  # BGR: white and blue
 
 
-def px(x_m: float, y_m: float) -> tuple[int, int]:
+def px(x_m: float, y_m: float, scale: float = SCALE) -> tuple[int, int]:
     """Pitch metres (corner origin, 105 x 68) -> image pixels."""
-    return int(round(OFFSET[0] + x_m * SCALE)), int(round(OFFSET[1] + y_m * SCALE))
+    return int(round(OFFSET[0] + x_m * scale)), int(round(OFFSET[1] + y_m * scale))
 
 
-def draw_pitch(height: int, width: int) -> np.ndarray:
+def draw_pitch(height: int, width: int, scale: float = SCALE) -> np.ndarray:
     rng = np.random.default_rng(0)
     image = np.full((height, width, 3), GRASS, np.uint8)
     image = cv2.add(image, cv2.GaussianBlur(rng.integers(0, 40, image.shape, dtype=np.uint8), (31, 31), 0))
-    cv2.rectangle(image, px(0, 0), px(105, 68), LINE, 3)
-    cv2.line(image, px(52.5, 0), px(52.5, 68), LINE, 3)
-    cv2.circle(image, px(52.5, 34), int(9.15 * SCALE), LINE, 3)
-    cv2.rectangle(image, px(0, 13.84), px(16.5, 54.16), LINE, 3)
-    cv2.rectangle(image, px(88.5, 13.84), px(105, 54.16), LINE, 3)
+    cv2.rectangle(image, px(0, 0, scale), px(105, 68, scale), LINE, 3)
+    cv2.line(image, px(52.5, 0, scale), px(52.5, 68, scale), LINE, 3)
+    cv2.circle(image, px(52.5, 34, scale), int(9.15 * scale), LINE, 3)
+    cv2.rectangle(image, px(0, 13.84, scale), px(16.5, 54.16, scale), LINE, 3)
+    cv2.rectangle(image, px(88.5, 13.84, scale), px(105, 54.16, scale), LINE, 3)
     return image
 
 
-def write_video(path, seconds: float = 12.0, fps: float = 10.0, crop_right_m: float = 0.0) -> None:
+def write_video(path, seconds: float = 12.0, fps: float = 10.0, crop_right_m: float = 0.0,
+                scale: float = SCALE) -> None:
     """22 players jogging on circles around fixed spots, plus a ball; optionally cut off part of the pitch."""
-    height, width = int(68 * SCALE + 2 * OFFSET[1]), int(105 * SCALE + 2 * OFFSET[0])
-    pitch = draw_pitch(height, width)
+    height, width = int(68 * scale + 2 * OFFSET[1]), int(105 * scale + 2 * OFFSET[0])
+    pitch = draw_pitch(height, width, scale)
     rng = np.random.default_rng(1)
     homes = {"A": rng.uniform([8, 6], [50, 62], (11, 2)), "B": rng.uniform([55, 6], [97, 62], (11, 2))}
     homes["A"][0] = (3, 34)  # keepers near their goals
     homes["B"][0] = (102, 34)
-    keep_width = width - int(crop_right_m * SCALE)
+    keep_width = width - int(crop_right_m * scale)
     writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (keep_width, height))
     for i in range(int(seconds * fps)):
         t = i / fps
@@ -48,8 +49,10 @@ def write_video(path, seconds: float = 12.0, fps: float = 10.0, crop_right_m: fl
         for team, spots in homes.items():
             for k, (x, y) in enumerate(spots):
                 angle = t * 0.8 + k
-                cv2.circle(frame, px(x + 3 * np.cos(angle), y + 3 * np.sin(angle)), 7, SHIRTS[team], -1)
-        cv2.circle(frame, px(52.5 + 20 * np.sin(t / 2), 34 + 10 * np.cos(t / 3)), 3, (250, 250, 250), -1)
+                spot = px(x + 3 * np.cos(angle), y + 3 * np.sin(angle), scale)
+                cv2.circle(frame, spot, round(0.5 * scale), SHIRTS[team], -1)  # a player from above: ~1 m across
+        ball = px(52.5 + 20 * np.sin(t / 2), 34 + 10 * np.cos(t / 3), scale)
+        cv2.circle(frame, ball, max(1, round(0.15 * scale)), (250, 250, 250), -1)
         writer.write(frame[:, :keep_width])
     writer.release()
 
@@ -93,3 +96,11 @@ def test_pipeline_rejects_a_clip_without_the_whole_pitch(tmp_path):
     write_video(video, crop_right_m=30.0)  # the right goal line and a third of the pitch are out of view
     clip, report = process_video(video, "cropped", "Cropped")
     assert clip is None and report.status == "rejected", report.summary()
+
+
+def test_pipeline_rejects_a_clip_with_too_few_pixels_per_metre(tmp_path):
+    video = tmp_path / "low_res.mp4"
+    write_video(video, scale=8.0)  # like 720p of a full pitch: players ~8 px across
+    clip, report = process_video(video, "low-res", "Low resolution")
+    assert clip is None and report.status == "rejected"
+    assert not next(c for c in report.checks if c.name == "pitch resolution").passed
