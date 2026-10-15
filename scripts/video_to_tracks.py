@@ -13,9 +13,10 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-from tactics.video.calibration import PitchCalibration
+from tactics.video.calibration import PITCH_LENGTH_M, PITCH_WIDTH_M, PitchCalibration
 from tactics.video.pipeline import QualityReport, detect_video, track_everything
 from tactics.video.scoring import (
     ball_scores, detection_scores, in_dataset_metres, team_correct, tracking_scores, truth_in_dataset_metres,
@@ -28,18 +29,35 @@ RESULTS = ROOT / "evals" / "video" / "segments.csv"
 PREFIX = "D_20220220_1_"  # SoccerTrack's file names; only this evaluation script knows them
 
 
-def evaluate(segment: str) -> dict:
+def evaluate(segment: str, video: Path | None = None, pixel_map: np.ndarray | None = None,
+             frame_map: np.ndarray | None = None) -> dict:
+    """Run the pipeline on a segment (or on an edited copy of it, `video`) and score it against the truth.
+
+    For an edited copy (rotated, cropped, resized, re-timed), `pixel_map` is the 2x3 affine map from the
+    original pixels to the copy's pixels and `frame_map[k]` is the original frame shown as the copy's frame k.
+    Both are applied to the ground truth only, never to what the pipeline sees.
+    """
     name = f"{PREFIX}{segment}"
     dataset = PitchCalibration.from_file(DATA / "drone_keypoints.json")  # scoring only
+    boxes = load_boxes(DATA / "top_view" / "annotations" / f"{name}.csv")
+    if pixel_map is not None:
+        moved = lambda xy: np.asarray(xy, dtype=float) @ pixel_map[:, :2].T + pixel_map[:, 2]
+        dataset = PitchCalibration(dataset.pitch_m + [PITCH_LENGTH_M / 2, PITCH_WIDTH_M / 2], moved(dataset.other))
+        boxes[["cx", "cy"]] = moved(boxes[["cx", "cy"]].to_numpy())
+    if frame_map is not None:  # annotation frames start at 1
+        frames = pd.DataFrame({"frame": np.asarray(frame_map) + 1, "copy_frame": np.arange(len(frame_map)) + 1})
+        boxes = boxes.merge(frames, on="frame").drop(columns="frame").rename(columns={"copy_frame": "frame"})
+
     start = time.perf_counter()
     report = QualityReport()
-    detections = detect_video(DATA / "top_view" / "videos" / f"{name}.mp4", report)
+    detections = detect_video(video or DATA / "top_view" / "videos" / f"{name}.mp4", report)
     print(report.summary())
+    failed = "; ".join(c.name for c in report.checks if not c.passed)
     if detections is None:
-        return {"segment": segment, "quality": report.status}
+        return {"segment": segment, "quality": report.status, "failed_checks": failed,
+                "seconds": round(time.perf_counter() - start)}
 
     tracks, teams, ball = track_everything(detections)
-    boxes = load_boxes(DATA / "top_view" / "annotations" / f"{name}.csv")
     truth = truth_in_dataset_metres(boxes, detections.warps, dataset)
     ball_truth = truth[truth["truth_id"] == "BALL-BALL"]
     truth = truth[truth["truth_id"] != "BALL-BALL"]
@@ -49,7 +67,7 @@ def evaluate(segment: str) -> dict:
     ball_xy = dataset.to_pitch(ball_px) if len(ball) else None
     ball_dataset = ball.assign(x=ball_xy[:, 0], y=ball_xy[:, 1]) if len(ball) else ball.assign(x=[], y=[])
 
-    row = {"segment": segment, "quality": report.status,
+    row = {"segment": segment, "quality": report.status, "failed_checks": failed,
            **detection_scores(detections.players, truth),
            **tracking_scores(tracks, truth, detections.fps),
            "team_correct": team_correct(tracks, truth),

@@ -501,3 +501,27 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Honest regressions:**
   - Identity purity median fell from 98.5% to 97.4%; the worst segment (15:00) fell from 94.9% to 90.2%. Different background frames and the grown mask change detections slightly, and tracking is sensitive to that. Not yet investigated.
   - It is still one ground and one match. The gates catch obvious failures, but only for the conditions we have seen.
+
+## D27. Robustness suite: edit real clips the ways they differ, fix what breaks
+*2026-10-15 · `scripts/robustness.py`, `src/tactics/video/pitch_lines.py`, `src/tactics/video/pipeline.py`, `evals/video/robustness.md`*
+
+- **Decision:** before claiming "any drone clip", stress-test the production pipeline on edited copies of segment 10:00. The ground truth is moved the same way as each copy.
+  - **Edits:** rotate 90° and 180°, two crops, 30% darker, 1080p, 720p, 20 s, 25 fps.
+  - **Pass rule:** keep working (players found ≥ 90%) or refuse the clip. Quietly wrong output fails.
+- **Alternatives:**
+  - Transform frames inside the pipeline. This is cheaper, but it would need a test-only hook in production code and would skip real decoding.
+  - Wait for clips from other grounds. These are still needed, but give no ground truth.
+- **Found and fixed** (the first run passed 4 of 7 edits):
+  1. **Line grouping.** One touchline's pieces were binned along the other touchline's direction, 0.8° off, and dropped as too short. Pieces are now grouped when they lie on one straight line. This caused refused 1080p, cropped and 25 fps copies. A test reproduces the failure: the old code lost the line at 8 of 12 heights tried.
+  2. **White paint relative to the grass.** Paint is now brighter than 1.17 × this pitch's median grass, not a fixed V ≥ 170 (the same value on the original footage). Comparing with the *nearby* grass instead was tried and rejected: it added shadow edges and doubled the corner error (0.71 → 1.21 m on the 13 backgrounds).
+  3. **Resolution-independent detection.** Blob sizes are in pixels, tuned at ~14 px per metre. Each clip is now processed at the scale that gives about that, measured from the calibrated outline. 4K keeps its old scale of 0.5; 1080p uses 1.0.
+  4. **Refuse low resolution.** At 720p of a full pitch (9.3 px/m), only 76% of players were found, so clips below 10 px/m are now refused.
+  5. **Outline ratio** is measured from the mean of opposite sides, so it no longer depends on which corner comes first.
+- **Evidence:**
+  - All 10 edits pass. Every accepted edit stays within 0.3 points of the baseline for players found and within 0.02 m for position error (`evals/video/robustness.md`).
+  - On saved backgrounds of all 13 segments, the new calibration moves the corners by at most 0.14 m. It stays identical at 30% and 50% brightness.
+  - 97 tests pass. The two new calibration tests fail on the old code. The synthetic clips are now drawn at a realistic 14 px/m, and a new test checks that a low-resolution clip is refused.
+- **Limits:**
+  - One segment of one ground. Other grounds, partial shadows and tilted cameras are untested.
+  - On segment 10:00 the position error went from 0.49 to 0.54 m with the new calibration. The 13-segment table predates D27 and needs a re-run.
+  - All runs used low-power mode (efficiency cores), so they took ~8 min per clip instead of ~2.

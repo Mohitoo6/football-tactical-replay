@@ -5,6 +5,7 @@ Generated from `segments.csv`, which `scripts/video_to_tracks.py all` writes. Th
 - **Positions** come only from the video: frame rate and length are read from the file, and the pitch is calibrated from its lines (D20, D23, D24, D26).
 - **The dataset's ground truth** is used only afterwards, for scoring (`src/tactics/video/scoring.py`). A detection counts as matched within 1.5 m.
 - Every segment passed the pipeline's own quality report. Processing took ~2 min per 30 s of 4K video on an Apple M2.
+- This table was made with the D26 code. For edited copies (rotated, cropped, darker, 1080p, 25 fps) and the calibration fixes they led to (D27), see [robustness.md](robustness.md).
 
 | Segment | Quality | Players found | Position error (auto calibration) | Identity purity | Team correct | Ball correct |
 |---|---|---|---|---|---|---|
