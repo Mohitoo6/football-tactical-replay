@@ -11,6 +11,7 @@ __pycache__/
 # Raw datasets and caches derived from them (large, local only; never committed)
 data/raw/
 data/processed/
+data/tools/
 
 # Scratch outputs
 outputs/
@@ -19,3 +20,7 @@ outputs/
 .DS_Store
 .vscode/
 .idea/
+
+# Clips made from broadcast footage we may not redistribute (Phase 8)
+clips/local-*/
+evals/llm/local-*

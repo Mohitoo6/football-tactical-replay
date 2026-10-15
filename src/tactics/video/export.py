@@ -77,7 +77,8 @@ def tracks_to_clip(tracks: pd.DataFrame, teams: pd.Series, ball: pd.DataFrame, f
     })[BALL_COLUMNS]
 
     home_keeper_x = players.loc[(players["team"] == "home") & (players["position"] == "Goalkeeper"), "x"].mean()
-    if home_keeper_x > 0:  # home keeper on the right means home attacks right to left: rotate
+    rotated = bool(home_keeper_x > 0)
+    if rotated:  # home keeper on the right means home attacks right to left: rotate
         players, ball_table = rotate_180(players), rotate_180(ball_table)
 
     end_s = start_s + float(frames["frame"].max()) / fps
@@ -92,6 +93,7 @@ def tracks_to_clip(tracks: pd.DataFrame, teams: pd.Series, ball: pd.DataFrame, f
         "start_clock": match_clock(1, start_s),
         "end_clock": match_clock(1, end_s),
         "frame_rate": fps,
+        "rotated": rotated,  # positions were turned 180 degrees from the video's pitch coordinates
         "teams": {side[t]: {"name": f"Team {t} ({shades[t]} shirts)", "formation": None}
                   for t in ("A", "B")},
         "goals": [],
