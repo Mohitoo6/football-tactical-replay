@@ -6,12 +6,14 @@ v2: facts first, then a clearly separated "coach's view" that may apply general
     football principles to those facts (DECISIONS.md, D17).
 v3: numbers must stay attached to their team and metric; no speculation when
     there is too little open play.
+v4: rule 8 for broadcast clips, where the camera shows only part of the pitch
+    (facts carry "camera"); clips without it are unaffected (DECISIONS.md, D28).
 """
 
 import json
 import re
 
-PROMPT_VERSION = "v3"
+PROMPT_VERSION = "v4"
 SECTIONS = ("What happened", "Coach's view", "Key numbers")
 MAX_WORDS = 230  # the prompt asks for at most 220; a little slack before we ask for a rewrite
 
@@ -28,6 +30,7 @@ COACHING - you may apply general football principles to interpret the facts (for
 5. Each coaching point is tied to a fact you stated, and is phrased as interpretation ("this suggests", "typically", "a coach would ask"), never as a new fact.
 6. You do not claim what players intended, thought or were told.
 7. Use the meanings in "definitions". If seconds_ball_in_play is under 5 or the timeline is empty, say in the coach's view that there was too little open play to analyse, instead of speculating.
+8. If the JSON has "camera" under "clip", say once in "What happened" that the camera showed only part of the pitch, and never draw conclusions about players or space outside the view.
 
 FORMAT (at most 220 words, plain words, no greetings or filler):
 What happened: one paragraph using facts only; explain terms like "back line" the first time.

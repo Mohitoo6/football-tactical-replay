@@ -55,6 +55,23 @@ def test_short_open_play_gets_no_shape_estimate():
     assert all(t["shape_in_clip"].startswith("n/a") for t in summary["teams"])
 
 
+def test_partial_view_states_the_camera_limit_and_needs_enough_players_in_view(musiala):
+    partial = Clip({**musiala.meta, "view": "partial"}, musiala.players, musiala.ball)
+    summary = build_summary(partial)
+    assert "only part of the pitch" in summary["clip"]["camera"]
+    assert "visible_players" in summary["definitions"]
+    assert "most_players_visible" in summary["teams"][0]
+    assert all(t["shape_in_clip"].startswith("n/a") for t in summary["teams"])
+    assert all(row[name]["visible_players"] >= 7 for row in summary["timeline"] for name in ("1. FC Köln", "FC Bayern München"))
+    # Metrics that need the deepest players (often out of view) are left out.
+    assert all(set(row["1. FC Köln"]) == {"width_m", "area_m2", "visible_players"} for row in summary["timeline"])
+    # With only 6 Köln outfield players in view, no shape is measured for Köln, so no window is reported.
+    keep = partial.players.groupby(["frame", "team"]).cumcount() < 7  # keeper + 6 outfield per team
+    few = Clip(partial.meta, partial.players[keep | (partial.players["team"] != "home")], partial.ball)
+    assert timeline(few) == []
+    assert "camera" not in build_summary(musiala)["clip"]  # full-pitch tracking data is unchanged
+
+
 def carrier_clip() -> Clip:
     """Ball at the origin; who stands next to it changes over 12 frames."""
     nearest = ["A"] * 5 + ["B"] * 2 + ["C"] * 5  # B only for 2 frames = noise

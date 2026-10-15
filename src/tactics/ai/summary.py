@@ -39,6 +39,13 @@ MIN_CARRIER_FRAMES = 3
 GOAL_CUTOFF_S = 1.0
 # Below this much open play (e.g. a penalty) a shape estimate would only describe a set-piece line-up.
 MIN_OPEN_PLAY_S = 5
+# Broadcast clips show only part of the pitch (meta "view": "partial", D28). A team's shape is measured
+# only in frames where at least this many of its outfield players are visible.
+PARTIAL_MIN_OUTFIELD = 7
+# Back line, depth and players behind the ball depend on the deepest players, who are often out of view.
+PARTIAL_METRICS = ("width_m", "area_m2")
+CAMERA_NOTE = ("broadcast camera that pans and zooms: it shows only part of the pitch, so every shape number "
+               "describes the players visible at that moment, not the whole team")
 
 
 def in_play(clip: Clip) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -53,6 +60,10 @@ def in_play(clip: Clip) -> tuple[pd.DataFrame, pd.DataFrame]:
     if goals:
         ball = ball[ball["time_s"] <= min(g["time_s"] for g in goals) - GOAL_CUTOFF_S]
     return clip.players[clip.players["frame"].isin(ball["frame"])], ball
+
+
+def partial_view(clip: Clip) -> bool:
+    return clip.meta.get("view") == "partial"
 
 
 def team_name(clip: Clip, side: str) -> str:
@@ -73,12 +84,18 @@ def timeline(clip: Clip) -> list[dict]:
 
     ball_by_frame = ball.set_index("frame")
     zones = ball_by_frame.apply(lambda b: ball_zone(b["x"], b["y"]), axis=1).groupby(window_of_frame)
-    per_team, behind = {}, {}
+    per_team, behind, visible = {}, {}, {}
     for side in ("home", "away"):
-        metrics = shape_over_time(players, side, attacking_right(clip, side))
+        team = outfield(players[players["team"] == side])
+        counts = team.groupby("frame").size()
+        if partial_view(clip):  # measure a shape only when most of the team is in view
+            team = team[team["frame"].isin(counts[counts >= PARTIAL_MIN_OUTFIELD].index)]
+        if team.empty:  # this team was never (enough) in view: no window can describe both teams
+            return []
+        metrics = shape_over_time(players[players["frame"].isin(team["frame"])], side, attacking_right(clip, side))
         metrics["window"] = metrics["frame"].map(window_of_frame)
         per_team[side] = metrics.groupby("window")[list(METRICS.values())].mean()
-        team = outfield(players[players["team"] == side])
+        visible[side] = counts.groupby(counts.index.map(window_of_frame)).mean()
         per_frame = team.groupby("frame").apply(lambda g: players_behind_ball(
             g[["x", "y"]].to_numpy(), ball_by_frame.loc[g.name, "x"], attacking_right(clip, side)))
         behind[side] = per_frame.groupby(per_frame.index.map(window_of_frame)).mean()
@@ -91,6 +108,9 @@ def timeline(clip: Clip) -> list[dict]:
             values = per_team[side].loc[window]
             row[team_name(clip, side)] = {key: int(round(values[col])) for key, col in METRICS.items()}
             row[team_name(clip, side)]["players_behind_ball"] = int(round(behind[side].loc[window]))
+            if partial_view(clip):  # only what the visible players can show
+                row[team_name(clip, side)] = {key: row[team_name(clip, side)][key] for key in PARTIAL_METRICS}
+                row[team_name(clip, side)]["visible_players"] = int(round(visible[side].loc[window]))
         rows.append(row)
     return rows
 
@@ -123,6 +143,8 @@ def notable_changes(rows: list[dict], teams: list[str]) -> list[dict]:
     changes = []
     for team in teams:
         for key, threshold in NOTABLE_CHANGE.items():
+            if key not in first[team]:
+                continue
             before, after = first[team][key], last[team][key]
             if abs(after - before) >= threshold:
                 changes.append({"team": team, "metric": key, "from": before, "to": after,
@@ -137,32 +159,47 @@ def build_summary(clip: Clip) -> dict:
     open_play_s = len(ball) / meta["frame_rate"]
     teams = []
     for side in (meta["focus_team"], "home" if meta["focus_team"] == "away" else "away"):
-        if open_play_s >= MIN_OPEN_PLAY_S:
+        if partial_view(clip):  # a formation needs the whole team in view
+            shape = "n/a, the camera shows only part of the team"
+        elif open_play_s >= MIN_OPEN_PLAY_S:
             shape = formation_label(*detect_formation(players, side, attacking_right(clip, side)))
         else:
             shape = f"n/a, under {MIN_OPEN_PLAY_S} s of open play"
         teams.append({
             "name": team_name(clip, side),
             "role": "focus team (its move is shown)" if side == meta["focus_team"] else "opponent",
-            "players_on_pitch": int(clip.players[clip.players["team"] == side].groupby("frame").size().max()),
+            ("most_players_visible" if partial_view(clip) else "players_on_pitch"):
+                int(clip.players[clip.players["team"] == side].groupby("frame").size().max()),
             "official_formation": meta["teams"][side]["formation"],
             "shape_in_clip": shape,
         })
 
     rows = timeline(clip)
+    clip_facts = {
+        "title": meta["title"],
+        "from_clock": meta["start_clock"],
+        "to_clock": meta["end_clock"],
+        "clip_seconds": int(round(len(clip.ball) / meta["frame_rate"])),
+        "seconds_ball_in_play": int(round(open_play_s)),
+    }
+    definitions = DEFINITIONS
+    if partial_view(clip):
+        clip_facts["camera"] = CAMERA_NOTE
+        definitions = {
+            "width_m": "distance between the team's widest visible outfield players across the pitch",
+            "area_m2": "area of the shape around the team's visible outfield players (smaller = more compact)",
+            "visible_players": (f"outfield players of the team in view (average over the window); shape numbers use "
+                                f"only moments with at least {PARTIAL_MIN_OUTFIELD} in view"),
+            "ball_zone": DEFINITIONS["ball_zone"],
+            "ball_carriers": DEFINITIONS["ball_carriers"],
+        }
     return {
-        "clip": {
-            "title": meta["title"],
-            "from_clock": meta["start_clock"],
-            "to_clock": meta["end_clock"],
-            "clip_seconds": int(round(len(clip.ball) / meta["frame_rate"])),
-            "seconds_ball_in_play": int(round(open_play_s)),
-        },
+        "clip": clip_facts,
         "teams": teams,
         "goals": [{"clock": g["clock"], "player": g["player"], "team": team_name(clip, g["team"])}
                   for g in meta.get("goals", [])],
         "ball_carriers": ball_carriers(clip),
         "timeline": rows,
         "notable_changes": notable_changes(rows, [t["name"] for t in teams]),
-        "definitions": DEFINITIONS,
+        "definitions": definitions,
     }
