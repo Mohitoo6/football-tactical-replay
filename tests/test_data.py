@@ -174,7 +174,8 @@ def test_clip_specs_file_is_valid():
 
 # --- committed clips (real DFL data) ----------------------------------------
 
-COMMITTED_CLIPS = sorted(p.parent for p in CLIPS_DIR.glob("*/meta.json"))
+# "local-" clips come from footage we may not redistribute; git ignores them (Phase 8).
+COMMITTED_CLIPS = sorted(p.parent for p in CLIPS_DIR.glob("*/meta.json") if not p.parent.name.startswith("local-"))
 
 
 @pytest.mark.parametrize("folder", COMMITTED_CLIPS, ids=lambda p: p.name)

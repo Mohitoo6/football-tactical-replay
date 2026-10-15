@@ -94,7 +94,9 @@ def main() -> None:
     with left:
         st.video(str(CLIPS_DIR / clip_id / "video.mp4"))
         if summary["timeline"]:
-            metric = st.selectbox("Chart", list(METRICS), format_func=METRICS.get)
+            first = summary["timeline"][0]
+            present = [m for m in METRICS if all(m in v for k, v in first.items() if isinstance(v, dict))]
+            metric = st.selectbox("Chart", present, format_func=METRICS.get)  # broadcast clips have fewer metrics
             st.line_chart(metric_table(summary, metric), x_label="Match clock", y_label=METRICS[metric].split(":")[0])
         else:
             st.info("The ball was hardly in play in this clip, so there is no shape timeline to chart.")
