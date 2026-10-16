@@ -23,8 +23,8 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from tactics.broadcast.ball import (KalmanBall, MAX_LOST_FRAMES, STATIC_CELL_M, STATIC_MIN_FRAMES, link_ball, painted_spot,
-                                   reject_heads, search_window, static_cells)
+from tactics.broadcast.ball import (KalmanBall, MAX_LOST_FRAMES, STATIC_CELL_M, STATIC_MIN_FRAMES, confirm_ball, link_ball,
+                                   painted_spot, reject_heads, search_window, static_cells)
 from tactics.broadcast.calibrate import MIN_AGREEMENT, camera_track, homography_at, line_agreement, run_pnlcalib, to_pitch
 from tactics.broadcast.frames import KEY_FPS, MIN_GREEN_SHARE, VIDEO_FPS, extract_keyframes, green_share, iter_frames
 from tactics.broadcast.teams import split_by_colour
@@ -40,6 +40,7 @@ MIN_PLAYERS_IN_VIEW = 8
 MIN_BALL_VISIBLE = 0.3
 PEOPLE_EVERY = 2  # look for people in every 2nd frame (12.5 fps)
 BRIDGE_S = 0.5  # a player missed for up to this long keeps a (interpolated) position
+SAME_PERSON_M = 0.8  # two tracked positions this close in one frame are one person (keep one ring)
 GLOBAL_SEARCH_EVERY = 5  # while the ball is lost, search the whole frame (in tiles) every 5th frame
 DETECTION_VERSION = 2  # bump when detection changes, so cached detections are recomputed
 
@@ -165,6 +166,9 @@ def process_broadcast(path: Path, clip_id: str, title: str, progress: Progress |
         people.to_parquet(people_file, index=False)
         candidates.to_parquet(ball_file, index=False)
         stamp_file.write_text(json.dumps(stamp))
+    if len(people):  # the on-pitch margin also applies to detections cached with an older, wider margin
+        from tactics.broadcast.detect import ON_PITCH_MARGIN_M
+        people = people[(people["x_m"].abs() <= 52.5 + ON_PITCH_MARGIN_M) & (people["y_m"].abs() <= 34 + ON_PITCH_MARGIN_M)]
     in_view = people.groupby("frame").size().median() if len(people) else 0
     report.add("players in view", in_view >= MIN_PLAYERS_IN_VIEW, f"median {in_view:.0f} per frame", f">= {MIN_PLAYERS_IN_VIEW}")
     if report.status == "rejected":
@@ -173,8 +177,9 @@ def process_broadcast(path: Path, clip_id: str, title: str, progress: Progress |
     progress(0.93, "tracking players and the ball")
     clip, overlay_people = _players_to_clip(people, clip_id, title, start_s)
     marks = static_cells(candidates["frame"].to_numpy(), candidates[["x_m", "y_m"]].to_numpy()) if len(candidates) else []
-    ball = link_ball(candidates[~np.asarray(marks, dtype=bool)] if len(candidates) else candidates, frames)
-    clip = Clip(clip.meta, clip.players[clip.players["frame"] < frames], _ball_on_pitch(ball, camera, clip.meta, start_s))
+    ball = _place_ball(link_ball(candidates[~np.asarray(marks, dtype=bool)] if len(candidates) else candidates, frames), camera)
+    ball["confirmed"] = confirm_ball(ball, VIDEO_FPS)  # only these frames are drawn and analysed
+    clip = Clip(clip.meta, clip.players[clip.players["frame"] < frames], _ball_on_pitch(ball, clip.meta, start_s))
     clip.meta.update({
         "data_kind": "broadcast",
         "view": "partial",
@@ -183,8 +188,8 @@ def process_broadcast(path: Path, clip_id: str, title: str, progress: Progress |
         "credit": "Video: user-supplied broadcast footage · camera calibration: PnLCalib · positions computed by this project",
     })
     overlay_people = _with_pixels(overlay_people[overlay_people["frame"] < frames], camera)
-    visible = float(ball["visible"].mean())
-    report.add("ball visible", visible >= MIN_BALL_VISIBLE, f"{visible:.0%} of frames", f">= {MIN_BALL_VISIBLE:.0%}",
+    confirmed = float(ball["confirmed"].mean())
+    report.add("ball confirmed", confirmed >= MIN_BALL_VISIBLE, f"{confirmed:.0%} of frames", f">= {MIN_BALL_VISIBLE:.0%}",
                blocking=False)
     progress(1.0, "done")
     return BroadcastResult(clip, report, camera, overlay_people, ball)
@@ -249,6 +254,10 @@ def _players_to_clip(people: pd.DataFrame, clip_id: str, title: str, start_s: fl
     detections = people.assign(frame=people["frame"] // PEOPLE_EVERY)
     tracker = PointTracker(max_distance_m=2.0, max_missing_frames=round(fps), colour_weight=2.0)
     tracks = stitch_tracks(track_points(detections, tracker), max_gap_frames=round(2 * fps), fps=fps)
+    # Staff and managers stand outside the lines; a player taking a throw-in is outside only briefly.
+    middle = tracks.groupby("track_id")[["x_m", "y_m"]].median().abs()
+    staff = middle.index[(middle["x_m"] > 52.5) | (middle["y_m"] > 34.0)]
+    tracks = tracks[~tracks["track_id"].isin(staff)]
     tracks, teams = split_by_colour(tracks, min_frames=round(fps))  # cut tracks where the shirt colour changes
     teams = fix_goalkeepers(tracks, teams)
     analysed = tracks[~tracks["track_id"].isin(officials(tracks))]
@@ -256,6 +265,7 @@ def _players_to_clip(people: pd.DataFrame, clip_id: str, title: str, start_s: fl
     clip = tracks_to_clip(analysed, teams, empty_ball, fps, clip_id, title, start_s=start_s, min_track_frames=round(fps))
     bridge = round(BRIDGE_S * fps)
     clip = upsample(clip, PEOPLE_EVERY, bridge=bridge)
+    clip = Clip(clip.meta, merge_close(clip.players, "x", "y", ["team"]), clip.ball)
 
     # Overlay: every tracked person (also referees, short and unsure pieces), in the video's own coordinates.
     side = {"A": None, "B": None}
@@ -265,7 +275,26 @@ def _players_to_clip(people: pd.DataFrame, clip_id: str, title: str, start_s: fl
     everyone = tracks.assign(side=tracks["track_id"].map(teams).map(lambda t: side.get(t, "other")))
     everyone = _interpolate_rows(everyone[["frame", "track_id", "x_m", "y_m", "side"]], "track_id", PEOPLE_EVERY,
                                  bridge, x="x_m", y="y_m")
-    return clip, everyone
+    return clip, merge_close(everyone, "x_m", "y_m")
+
+
+def merge_close(table: pd.DataFrame, x: str, y: str, group: list[str] | None = None, radius: float = SAME_PERSON_M) -> pd.DataFrame:
+    """Keep one row where two rows of the same frame (and group) are within `radius` metres: one person, two tracks.
+
+    Rows earlier in the table win, except that a team label beats "other" (grey) in the overlay table.
+    """
+    if "side" in table:
+        table = table.assign(_grey=table["side"] == "other").sort_values(["frame", "_grey"], kind="stable")
+    keep = np.ones(len(table), dtype=bool)
+    positions = table[[x, y]].to_numpy(float)
+    for _, index in table.groupby(["frame", *(group or [])], sort=False).indices.items():
+        for a_pos, a in enumerate(index):
+            if not keep[a]:
+                continue
+            for b in index[a_pos + 1:]:
+                if keep[b] and np.hypot(*(positions[a] - positions[b])) <= radius:
+                    keep[b] = False
+    return table[keep].drop(columns=["_grey"], errors="ignore").sort_index()
 
 
 def _with_pixels(table: pd.DataFrame, camera: pd.DataFrame) -> pd.DataFrame:
@@ -281,17 +310,22 @@ def _with_pixels(table: pd.DataFrame, camera: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True) if parts else table.assign(px=[], py=[])
 
 
-def _ball_on_pitch(ball: pd.DataFrame, camera: pd.DataFrame, meta: dict, start_s: float) -> pd.DataFrame:
-    """The clip's ball table at 25 fps: the tracked ball placed on the pitch (in the clip's orientation)."""
+def _place_ball(ball: pd.DataFrame, camera: pd.DataFrame) -> pd.DataFrame:
+    """Add x_m, y_m: the tracked ball on the pitch, in the video's pitch coordinates."""
     x = np.full(len(ball), np.nan)
     y = np.full(len(ball), np.nan)
     for i, row in ball[ball["visible"]].iterrows():
         h = homography_at(camera, int(row["frame"]))
         if h is not None:
             x[i], y[i] = to_pitch(np.array([[row["px"], row["py"]]]), h)[0]
+    return ball.assign(x_m=x, y_m=y)
+
+
+def _ball_on_pitch(ball: pd.DataFrame, meta: dict, start_s: float) -> pd.DataFrame:
+    """The clip's ball table at 25 fps, in the clip's orientation; alive only where the ball is confirmed."""
     sign = -1 if meta.get("rotated") else 1
-    alive = np.isfinite(x)
+    alive = ball["confirmed"].to_numpy() & ball["x_m"].notna().to_numpy()
     table = pd.DataFrame({"frame": ball["frame"], "period": 1, "time_s": start_s + ball["frame"] / VIDEO_FPS,
-                          "x": sign * x, "y": sign * y, "z": 0.0, "alive": alive, "owning_team": None})
+                          "x": sign * ball["x_m"], "y": sign * ball["y_m"], "z": 0.0, "alive": alive, "owning_team": None})
     table[["x", "y"]] = table[["x", "y"]].ffill().bfill().fillna(0.0)
     return table

@@ -20,7 +20,7 @@ from tactics.broadcast.calibrate import H_COLUMNS, pitch_line_points, project, t
 TEAM_COLOURS = {"home": (40, 40, 230), "away": (230, 140, 30), "other": (175, 175, 175)}  # BGR: red, blue, grey
 BALL_COLOUR = (0, 230, 255)  # yellow
 RING_RADIUS_M = 0.8
-MAP_WIDTH_SHARE = 0.32  # the minimap is this share of the frame width
+MAP_WIDTH_SHARE = 0.26  # the minimap is this share of the frame width
 TRAIL_FRAMES = 25  # 1 s at 25 fps
 
 
@@ -157,7 +157,7 @@ def render_overlay(frames, clip, camera: pd.DataFrame, people: pd.DataFrame, bal
         if bool(row["valid"]):
             h = row[H_COLUMNS].to_numpy(dtype=float).reshape(3, 3)
             draw_rings(frame, h, people_by_frame.get(j, people.iloc[:0]))
-            if j in ball_px.index and bool(ball_px.loc[j, "visible"]):
+            if j in ball_px.index and bool(ball_px.loc[j, "confirmed"]):  # never a guessed, wandering marker
                 draw_ball(frame, ball_px.loc[j, "px"], ball_px.loc[j, "py"])
             view = camera_view_m(h, frame.shape[1], frame.shape[0])
             map_ball = None

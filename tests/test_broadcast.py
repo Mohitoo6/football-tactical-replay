@@ -158,3 +158,27 @@ def test_painted_spots_and_marks_that_never_move_are_not_the_ball():
     xy = np.r_[np.tile([[17.2, 36.1]], (60, 1)), np.column_stack([np.linspace(-20, 20, 10), np.zeros(10)])]
     still = static_cells(frames, xy)
     assert still[:60].all() and not still[60:].any()
+
+
+def test_ball_is_confirmed_only_when_consistent_and_hidden_in_long_gaps():
+    from tactics.broadcast.ball import confirm_ball
+    frames = 40
+    track = pd.DataFrame({"frame": range(frames), "px": 0.0, "py": 0.0, "detected": False, "both_passes": False,
+                          "visible": False, "x_m": np.nan, "y_m": np.nan})
+    for f in list(range(0, 10)) + [12] + list(range(30, 40)):  # a run, a lone hit 30 m away, a later run
+        track.loc[f, ["detected", "both_passes", "visible", "x_m", "y_m"]] = [True, True, True, 0.2 * f, 0.0]
+    track.loc[12, "x_m"] = 32.0  # a jump no ball can make in 0.1 s
+    track.loc[10:11, "visible"] = True  # interpolated between frame 9 and the lone hit
+    confirmed = confirm_ball(track, fps=25)
+    assert confirmed[0:10].all() and confirmed[30:40].all()
+    assert not confirmed[12]  # the lone jump is dropped
+    assert not confirmed[13:30].any()  # a long gap is hidden, not guessed
+
+
+def test_two_tracks_on_one_person_give_one_ring():
+    from tactics.broadcast.pipeline import merge_close
+    people = pd.DataFrame({"frame": [0, 0, 0, 1], "x_m": [10.0, 10.5, 20.0, 10.0], "y_m": 0.0,
+                           "side": ["other", "home", "away", "home"]})
+    merged = merge_close(people, "x_m", "y_m")
+    assert sorted(merged.loc[merged["frame"] == 0, "side"]) == ["away", "home"]  # the team ring beats grey
+    assert len(merged) == 3

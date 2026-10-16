@@ -52,7 +52,8 @@ def shown_ball(folder: Path, clip, camera: pd.DataFrame, frame: int) -> np.ndarr
     track = folder / "ball_track.parquet"
     if track.exists():
         table = pd.read_parquet(track)
-        row = table[(table["frame"] == frame) & table["visible"]]
+        shown = table["confirmed"] if "confirmed" in table else table["visible"]
+        row = table[(table["frame"] == frame) & shown]
         return None if row.empty else row[["px", "py"]].to_numpy(dtype=float)[0]
     h = homography(camera, frame)
     ball = clip.ball[clip.ball["frame"] == frame]
@@ -84,7 +85,7 @@ def main() -> int:
             rows, cols = linear_sum_assignment(distance)
             found += int((distance[rows, cols] <= PERSON_PX).sum())
 
-    ball_seen = ball_hit = ball_false = ball_given = 0
+    ball_seen = ball_hit = ball_false = ball_given = shown_right = 0
     for frame, point in labels["ball"].items():
         ours = shown_ball(folder, clip, camera, int(frame))
         ball_given += ours is not None
@@ -92,7 +93,9 @@ def main() -> int:
             ball_false += ours is not None
             continue
         ball_seen += 1
-        ball_hit += ours is not None and np.linalg.norm(np.array(point) - ours) <= BALL_PX
+        right = ours is not None and np.linalg.norm(np.array(point) - ours) <= BALL_PX
+        ball_hit += right
+        shown_right += right
     not_visible = len(labels["ball"]) - ball_seen
 
     row = {
@@ -102,13 +105,14 @@ def main() -> int:
         "ball_frames_visible": ball_seen, "ball_correct": ball_hit / max(ball_seen, 1),
         "false_ball_rate": ball_false / max(not_visible, 1) if not_visible else float("nan"),
         "ball_shown": ball_given / max(len(labels["ball"]), 1),
+        "ball_right_when_shown": shown_right / max(ball_given, 1),
     }
     out = ROOT / "evals" / "broadcast" / f"{args.clip_id}.csv"
     table = pd.read_csv(out) if out.exists() else pd.DataFrame()
     pd.concat([table, pd.DataFrame([row])], ignore_index=True).round(4).to_csv(out, index=False)
     print(f"people found {row['people_found']:.1%} of {labelled} labelled (precision {row['people_precision']:.1%}); "
           f"ball correct {row['ball_correct']:.1%} of {ball_seen} visible, false-ball rate {row['false_ball_rate']:.1%}, "
-          f"ball shown in {row['ball_shown']:.0%} of labelled frames")
+          f"ball shown in {row['ball_shown']:.0%} of labelled frames, right when shown {row['ball_right_when_shown']:.0%}")
     return 0
 
 

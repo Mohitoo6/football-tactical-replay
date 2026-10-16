@@ -47,5 +47,7 @@ def split_by_colour(tracks: pd.DataFrame, min_frames: int) -> tuple[pd.DataFrame
 
     per_piece = split.groupby("track_id").agg(own=("own", "first"), far=("far", "mean"), frames=("frame", "size"))
     new_teams = pd.Series(np.where(per_piece["own"] == 0, "A", "B"), index=per_piece.index)
-    new_teams[(per_piece["far"] > 0.5) | (per_piece["frames"] < min_frames)] = "other"
+    # Grey ("other") only for a shirt unlike both teams (referee, or a keeper until fix_goalkeepers places
+    # them). Short pieces used to be grey too, which hid team players behind grey rings.
+    new_teams[per_piece["far"] > 0.5] = "other"
     return split.drop(columns=["team", "own", "far"]).sort_values("frame"), new_teams

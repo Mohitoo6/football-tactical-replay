@@ -167,3 +167,22 @@ def test_line_links_join_neighbours_across_the_pitch():
     # Back four ordered by y: RB -> CB1 -> CB2 -> LB; the lone striker has no partner.
     assert segments == [((-20.0, -30.0), (-25.0, -10.0)), ((-25.0, -10.0), (-25.0, 10.0)),
                         ((-25.0, 10.0), (-20.0, 30.0))]
+
+
+# --- pressure.py (measures around the ball, for partial camera views) ----------
+
+from tactics.geometry.pressure import nearest_opponent_m, players_within, progress_m  # noqa: E402
+
+
+def test_nearest_opponent_is_the_pressure_on_the_carrier():
+    assert nearest_opponent_m([0, 0], [[3, 4], [10, 0]]) == 5.0
+    assert nearest_opponent_m([0, 0], []) == float("inf")
+
+
+def test_players_within_counts_players_near_the_ball():
+    assert players_within([[0, 0], [15, 0], [15.1, 0], [-3, 4]], [0, 0], radius=15) == 3
+
+
+def test_progress_is_measured_towards_the_goal_a_team_attacks():
+    assert progress_m(-10, 5, attacking_right=True) == 15.0
+    assert progress_m(-10, 5, attacking_right=False) == -15.0

@@ -70,6 +70,17 @@ def test_partial_view_states_the_camera_limit_and_needs_enough_players_in_view(m
     few = Clip(partial.meta, partial.players[keep | (partial.players["team"] != "home")], partial.ball)
     assert timeline(few) == []
     assert "camera" not in build_summary(musiala)["clip"]  # full-pitch tracking data is unchanged
+    assert "possession_percent" not in build_summary(musiala)
+    # Play around the ball, for the partial view.
+    assert sum(summary["possession_percent"].values()) == 100
+    assert summary["around_ball"] and all("near_ball" in w for w in summary["around_ball"])
+    assert any("pressure_on_ball_m" in w for w in summary["around_ball"])
+    assert set(summary["ball_moves"]) == {"between_team_mates", "possession_changes"}
+    # Without a goalkeeper in view the direction of attack is unknown: no thirds, no progress.
+    unknown = build_summary(Clip({**partial.meta, "direction_known": False}, partial.players, partial.ball))
+    assert "direction_of_play" in unknown["clip"]
+    assert all("ball_zone" not in w for w in unknown["around_ball"] + unknown["timeline"])
+    assert all("progress_m" not in s for s in unknown["possession_spells"])
 
 
 def carrier_clip() -> Clip:

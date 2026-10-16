@@ -22,7 +22,7 @@ from tactics.broadcast.calibrate import to_pitch
 PERSON, BALL = 1, 37  # COCO category ids in rfdetr's pretrained weights
 PERSON_CONFIDENCE = 0.35
 BALL_CONFIDENCE = 0.1  # low on purpose: the ball tracker decides which candidates are real
-ON_PITCH_MARGIN_M = 3.0
+ON_PITCH_MARGIN_M = 1.0  # enough for a throw-in; 3 m let managers and staff in (D29)
 PLAYER_COLUMNS = ["frame", "x_m", "y_m", "b", "g", "r", "px", "py", "height_px"]
 
 

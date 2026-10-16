@@ -94,6 +94,7 @@ def tracks_to_clip(tracks: pd.DataFrame, teams: pd.Series, ball: pd.DataFrame, f
         "end_clock": match_clock(1, end_s),
         "frame_rate": fps,
         "rotated": rotated,  # positions were turned 180 degrees from the video's pitch coordinates
+        "direction_known": bool(np.isfinite(home_keeper_x)),  # which goal each team attacks comes from its keeper
         "teams": {side[t]: {"name": f"Team {t} ({shades[t]} shirts)", "formation": None}
                   for t in ("A", "B")},
         "goals": [],

@@ -27,6 +27,9 @@ GATE_GROWTH_PX = 25.0  # ... plus this much per frame the ball has been missing
 MAX_LOST_FRAMES = 12  # after ~0.5 s without the ball, search afresh
 MAX_GAP_FRAMES = 12  # gaps up to this long are filled by interpolation
 AGREE_PX = 15.0  # forward and backward passes must agree this closely
+CONFIRM_NEIGHBOUR_FRAMES = 4  # a one-pass detection is confirmed by another detection this close in time
+MAX_BALL_SPEED_MPS = 40.0  # faster than any shot: a jump implying more is a wrong detection
+CONFIRMED_GAP_FRAMES = 5  # gaps up to 0.2 s between confirmed points are still shown
 HEAD_SHARE = 0.6  # a candidate in the top 60% of a person's box is a head or shirt, not the ball
 PAINTED_SPOTS_M = np.array([[0.0, 0.0], [-41.5, 0.0], [41.5, 0.0]])  # centre and penalty spots
 SPOT_RADIUS_M = 1.5
@@ -140,24 +143,56 @@ def link_ball(candidates: pd.DataFrame, frames: int) -> pd.DataFrame:
     by_frame = {f: g[["px", "py", "confidence"]].to_numpy(float) for f, g in candidates.groupby("frame")}
     forward = _one_pass(by_frame, list(range(frames)))
     backward = _one_pass(by_frame, list(range(frames - 1, -1, -1)))
-    points = {}
+    points, both = {}, set()
     for frame in sorted(set(forward) | set(backward)):
         a, b = forward.get(frame), backward.get(frame)
         if a is not None and b is not None:
             if np.linalg.norm(a - b) <= AGREE_PX:
                 points[frame] = (a + b) / 2
+                both.add(frame)
         else:
             points[frame] = a if a is not None else b
 
-    rows = [(f, *xy, True) for f, xy in points.items()]
+    rows = [(f, *xy, True, f in both) for f, xy in points.items()]
     known = sorted(points)
     for before, after in zip(known, known[1:]):
         if 1 < after - before <= MAX_GAP_FRAMES + 1:
             for f in range(before + 1, after):
                 w = (f - before) / (after - before)
-                rows.append((f, *((1 - w) * points[before] + w * points[after]), False))
-    table = pd.DataFrame(rows, columns=["frame", "px", "py", "detected"]).sort_values("frame")
+                rows.append((f, *((1 - w) * points[before] + w * points[after]), False, False))
+    table = pd.DataFrame(rows, columns=["frame", "px", "py", "detected", "both_passes"]).sort_values("frame")
     table = pd.DataFrame({"frame": range(frames)}).merge(table, on="frame", how="left")
     table["visible"] = table["px"].notna()
-    table["detected"] = table["detected"].fillna(False).astype(bool)
+    table[["detected", "both_passes"]] = table[["detected", "both_passes"]].fillna(False).astype(bool)
     return table.reset_index(drop=True)
+
+
+def confirm_ball(track: pd.DataFrame, fps: float) -> pd.Series:
+    """Frames where we are sure enough to show the ball and use it in the analysis.
+
+    `track`: link_ball's output plus x_m, y_m (the ball on the pitch). A detected frame is a seed if both
+    passes agreed on it or another detection lies within CONFIRM_NEIGHBOUR_FRAMES; a seed that would need
+    the ball to fly faster than MAX_BALL_SPEED_MPS to or from both neighbouring seeds is dropped; gaps of
+    up to CONFIRMED_GAP_FRAMES between seeds are filled. Everything else is hidden, rather than drawing a
+    marker that wanders while the ball is lost.
+    """
+    detected = track.loc[track["detected"] & track["x_m"].notna(), "frame"].to_numpy()
+    seeds = [f for f in detected
+             if track.at[f, "both_passes"] or np.any((np.abs(detected - f) <= CONFIRM_NEIGHBOUR_FRAMES) & (detected != f))]
+    xy = track.set_index("frame")[["x_m", "y_m"]]
+
+    def speed(a: int, b: int) -> float:
+        return float(np.linalg.norm(xy.loc[a].to_numpy() - xy.loc[b].to_numpy()) * fps / abs(b - a))
+
+    kept = []
+    for i, f in enumerate(seeds):
+        neighbours = [seeds[k] for k in (i - 1, i + 1) if 0 <= k < len(seeds) and abs(seeds[k] - f) <= MAX_GAP_FRAMES]
+        if neighbours and all(speed(f, n) > MAX_BALL_SPEED_MPS for n in neighbours):
+            continue  # an isolated jump: a wrong detection
+        kept.append(f)
+    confirmed = pd.Series(False, index=track.index)
+    confirmed[track["frame"].isin(kept)] = True
+    for a, b in zip(kept, kept[1:]):
+        if 1 < b - a <= CONFIRMED_GAP_FRAMES + 1:
+            confirmed[(track["frame"] > a) & (track["frame"] < b) & track["visible"]] = True
+    return confirmed
