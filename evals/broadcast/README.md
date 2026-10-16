@@ -51,3 +51,15 @@ Mohit labelled the Euro 2020 clip with `scripts/label_frames.py`: the ball once 
 | **strict confirmed ball (current)** | **90.3%** | **90.3%** | 21.1% | 20% | **100%** | **0%** |
 
 "False ball" is measured on only 2 labelled frames without a visible ball. The current setting shows the ball less often but never in the wrong place, and the coach analyses only those moments. These numbers come from the one clip the settings were tuned on.
+
+## Other clips: does it generalise? (2026-10-16)
+
+Three free-licence clips (Pexels, Pixabay), run exactly as a user would, with `process_video.py --mode auto`:
+
+| Clip | Footage | Result |
+|---|---|---|
+| Pexels 9816476 | phone in the stands of a pro stadium, 7.5 s | refused: too short (< 10 s) |
+| Pexels 15449351 | low side view in a small stadium, 20 s | refused: camera calibrated in 22% of frames (needs 70%) |
+| Pixabay 15734 | distant view of an amateur ground, 44 s | refused: calibrated in 0% of frames |
+
+All three were refused for the right reason, and none produced positions. The calibration model is trained on professional TV broadcasts, and so far it has worked only on that kind of footage: the main camera in a pro stadium. Free-licence TV footage is practically non-existent (broadcast rights), so further tests need screen recordings of real TV clips, used locally only.
