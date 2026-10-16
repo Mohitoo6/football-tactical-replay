@@ -66,9 +66,9 @@ def main() -> int:
     length_m, width_m = (float(v) for v in args.pitch.lower().split("x"))
 
     start = time.perf_counter()
-    mode, clip, camera = args.mode, None, None
+    mode, clip, broadcast = args.mode, None, None
     if mode in ("auto", "drone"):
-        clip, report, camera = run_drone(args, args.id or stem, title, length_m, width_m)
+        clip, report, _ = run_drone(args, args.id or stem, title, length_m, width_m)
         print(f"\r  drone checks done in {time.perf_counter() - start:.0f} s{' ' * 40}\n{report.summary()}")
         failed = {c.name for c in report.checks if not c.passed and c.blocking}
         if clip is None and mode == "auto" and failed & NOT_A_FIXED_VIEW:
@@ -78,21 +78,25 @@ def main() -> int:
             mode = "drone"
     if mode == "broadcast":
         clip_id = args.id or f"local-{stem}"
-        clip, report, camera = run_broadcast(args, clip_id, title)
+        broadcast = run_broadcast(args, clip_id, title)
+        clip, report = broadcast.clip, broadcast.report
         print(f"\r  done in {time.perf_counter() - start:.0f} s{' ' * 50}\n{report.summary()}")
     if clip is None:
         print("This clip is not suitable; nothing was written.")
         return 1
 
     folder = save_clip(clip, ROOT / "clips")
-    if camera is not None:
-        camera.to_parquet(folder / "camera.parquet", index=False)
+    if broadcast is not None:  # what the on-video overlay draws (and the hand-label evaluation measures)
+        broadcast.camera.to_parquet(folder / "camera.parquet", index=False)
+        broadcast.people.to_parquet(folder / "detections.parquet", index=False)
+        broadcast.ball.to_parquet(folder / "ball_track.parquet", index=False)
     problems = find_problems(clip.players, clip.ball)
     print(f"Saved {folder.relative_to(ROOT)} ({len(clip.ball)} frames).", *[f"PROBLEM: {p}" for p in problems], sep="\n")
     if args.render and mode == "broadcast":
         from tactics.broadcast.frames import iter_frames
         from tactics.viz.overlay import render_overlay
-        written = render_overlay(iter_frames(args.video), clip, camera, folder / "video.mp4")
+        written = render_overlay(iter_frames(args.video), clip, broadcast.camera, broadcast.people, broadcast.ball,
+                                 folder / "video.mp4")
         print(f"Rendered {folder.relative_to(ROOT)}/video.mp4 ({written} frames).")
     elif args.render:
         subprocess.run([sys.executable, str(ROOT / "scripts" / "render_clip.py"), "--for-app", clip.meta["clip_id"]], check=True)

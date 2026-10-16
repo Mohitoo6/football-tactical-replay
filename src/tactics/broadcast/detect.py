@@ -1,23 +1,29 @@
-"""Players and ball in a broadcast frame, placed on the pitch.
+"""People and ball in a broadcast frame.
 
-A pretrained RF-DETR (Apache-2.0, COCO classes) finds people and balls. From the
-side-on broadcast camera players are upright and 40-120 px tall, which is what
-COCO "person" was trained on (from straight above it found only 43%, D19).
-A player's feet (bottom centre of the box) are on the ground, so the camera's
-homography places them on the pitch. A ball in the air is not on the ground:
-its pitch position is wrong while it flies (stated as a limit, D28).
+Pretrained RF-DETR models (Apache-2.0, COCO classes). Measured on Mohit's hand-labelled
+frames (DECISIONS.md, D29):
+- people: RF-DETR Base on the whole frame found 87%; tiles or the Large model did not do
+  better (89% at 8x the cost), because the rest are hidden behind other players. Tracking
+  over time fills those gaps instead.
+- ball: on the whole frame the ~10 px ball shrinks to ~3 px and was found in 32% of frames;
+  the Large model on a 704 px window at full resolution around the ball found it in 63%.
+
+A player's feet (bottom centre of the box) are on the ground, so the camera's homography
+places them on the pitch.
 """
 
 import cv2
 import numpy as np
 import pandas as pd
 
+from tactics.broadcast.ball import WINDOW_PX
 from tactics.broadcast.calibrate import to_pitch
 
 PERSON, BALL = 1, 37  # COCO category ids in rfdetr's pretrained weights
 PERSON_CONFIDENCE = 0.35
-BALL_CONFIDENCE = 0.2  # the ball is small and often blurred; the ball follower removes stray hits
+BALL_CONFIDENCE = 0.1  # low on purpose: the ball tracker decides which candidates are real
 ON_PITCH_MARGIN_M = 3.0
+PLAYER_COLUMNS = ["frame", "x_m", "y_m", "b", "g", "r", "px", "py", "height_px"]
 
 
 def shirt_colour(frame: np.ndarray, box: np.ndarray) -> tuple[float, float, float] | None:
@@ -37,35 +43,63 @@ def shirt_colour(frame: np.ndarray, box: np.ndarray) -> tuple[float, float, floa
     return float(b), float(g), float(r)
 
 
-class BroadcastDetector:
+def _rgb(frame: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+
+def _balls(found, offset=(0, 0)) -> np.ndarray:
+    """Ball detections as rows (x, y, confidence) in full-frame pixels."""
+    keep = found.class_id == BALL
+    boxes = found.xyxy[keep]
+    centres = (boxes[:, :2] + boxes[:, 2:]) / 2 + np.asarray(offset, dtype=float)
+    return np.column_stack([centres, found.confidence[keep]]) if len(boxes) else np.empty((0, 3))
+
+
+class PeopleDetector:
+    """RF-DETR Base on the whole frame: people (and ball candidates, for free)."""
+
     def __init__(self):
         from rfdetr import RFDETRBase  # heavy import (PyTorch); only when broadcast clips are processed
 
         self.model = RFDETRBase()
 
-    def detect(self, frame: np.ndarray, homography: np.ndarray, frame_index: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """(players: frame, x_m, y_m, b, g, r, px, py, height_px; ball candidates: frame, x_m, y_m, confidence).
+    def detect(self, frame: np.ndarray, homography: np.ndarray, frame_index: int) -> tuple[pd.DataFrame, np.ndarray, np.ndarray]:
+        """(people on the pitch, all person boxes (x1, y1, x2, y2), ball candidates (x, y, confidence)).
 
-        px, py are the feet in image pixels. Only detections whose feet land on the pitch (+3 m) are kept,
-        which removes the crowd, photographers and substitutes.
+        People columns: frame, x_m, y_m (pitch metres), b, g, r (shirt), px, py (feet pixels), height_px.
+        Only people whose feet land on the pitch (+3 m) are kept: no crowd, photographers or substitutes.
         """
-        found = self.model.predict(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), threshold=BALL_CONFIDENCE)
-        players, balls = [], []
+        found = self.model.predict(_rgb(frame), threshold=BALL_CONFIDENCE)
         people = (found.class_id == PERSON) & (found.confidence >= PERSON_CONFIDENCE)
-        for box in found.xyxy[people]:
+        boxes = found.xyxy[people]
+        rows = []
+        for box in boxes:
             feet = np.array([[(box[0] + box[2]) / 2, box[3]]])
             x, y = to_pitch(feet, homography)[0]
             colour = shirt_colour(frame, box)
-            if colour is not None and _on_pitch(x, y):
-                players.append((frame_index, x, y, *colour, *feet[0], box[3] - box[1]))
-        for box, confidence in zip(found.xyxy[found.class_id == BALL], found.confidence[found.class_id == BALL]):
-            centre = np.array([[(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]])
-            x, y = to_pitch(centre, homography)[0]
-            if _on_pitch(x, y):
-                balls.append((frame_index, x, y, float(confidence)))
-        return (pd.DataFrame(players, columns=["frame", "x_m", "y_m", "b", "g", "r", "px", "py", "height_px"]),
-                pd.DataFrame(balls, columns=["frame", "x_m", "y_m", "confidence"]))
+            if colour is not None and on_pitch(x, y):
+                rows.append((frame_index, x, y, *colour, *feet[0], box[3] - box[1]))
+        return pd.DataFrame(rows, columns=PLAYER_COLUMNS), boxes, _balls(found)
 
 
-def _on_pitch(x: float, y: float) -> bool:
+class BallDetector:
+    """RF-DETR Large at full resolution, in a window around the expected ball or in tiles over the whole frame."""
+
+    def __init__(self):
+        import supervision as sv
+        from rfdetr import RFDETRLarge
+
+        self.model = RFDETRLarge()
+        self.slicer = sv.InferenceSlicer(callback=lambda tile: self.model.predict(_rgb(tile), threshold=BALL_CONFIDENCE),
+                                         slice_wh=(WINDOW_PX, WINDOW_PX), overlap_wh=(100, 100), iou_threshold=0.5)
+
+    def in_window(self, frame: np.ndarray, x0: int, y0: int) -> np.ndarray:
+        window = frame[y0:y0 + WINDOW_PX, x0:x0 + WINDOW_PX]
+        return _balls(self.model.predict(_rgb(window), threshold=BALL_CONFIDENCE), offset=(x0, y0))
+
+    def everywhere(self, frame: np.ndarray) -> np.ndarray:
+        return _balls(self.slicer(frame))
+
+
+def on_pitch(x: float, y: float) -> bool:
     return bool(np.isfinite(x) and np.isfinite(y) and abs(x) <= 52.5 + ON_PITCH_MARGIN_M and abs(y) <= 34 + ON_PITCH_MARGIN_M)

@@ -1,0 +1,5 @@
+when,tag,people_labelled,people_found,people_precision,ball_frames_visible,ball_correct,false_ball_rate,ball_shown
+2026-10-16 04:35,baseline (D28),103,0.8544,0.9167,38,0.1053,0.5,0.525
+2026-10-16 05:41,D29 first run,103,0.8544,0.9167,38,0.1053,0.5,0.525
+2026-10-16 05:49,D29 first run,103,0.9029,0.8378,38,0.1053,1.0,0.95
+2026-10-16 05:59,D29 painted marks rejected,103,0.9029,0.8378,38,0.5,1.0,0.875
