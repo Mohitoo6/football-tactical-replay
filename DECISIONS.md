@@ -566,3 +566,58 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - A ball in the air is placed wrongly, because the homography is for the ground.
   - The ball is kept in 39% of frames.
   - One test clip so far.
+
+## D29. Broadcast tracking measured on hand labels: players over time, a full-resolution ball tracker, a confirmed ball
+*2026-10-16 · `scripts/label_frames.py`, `scripts/evaluate_broadcast.py`, `src/tactics/broadcast/{ball,detect,teams,pipeline}.py`, `src/tactics/geometry/pressure.py`, `src/tactics/viz/overlay.py`, `src/tactics/ai/summary.py`*
+
+- **Why:** Mohit's review of the first broadcast video:
+  - players were missed;
+  - the ball was "badly tracked";
+  - hull lines cluttered the picture;
+  - later, staff got rings, team players got grey rings, and the ball marker wandered.
+- **Ground truth first.**
+  - A click tool collects labels: the ball once per second (40 frames, 38 with the ball visible) and every person's feet on 5 frames (103 people), about 10 minutes of Mohit's time.
+  - `evaluate_broadcast.py` scores what the video shows.
+  - The labels stay local (copyrighted footage); the scores are in `evals/broadcast/local-euro-copenhagen.csv`.
+- **Detector spike on the labels:**
+
+  | Setup | People found | Ball found |
+  |---|---|---|
+  | RF-DETR Base, whole frame | 87% | 32% |
+  | 2 tiles | 88% | – |
+  | 6 tiles (8× the cost) | 89% | 58% |
+  | RF-DETR Large in a 704 px window around the ball | – | 63% |
+
+  So:
+  - **People:** Base on the whole frame every 2nd frame (12.5 fps). The missing players are hidden behind others, so **tracking** fills gaps up to 0.5 s instead of a bigger model.
+  - **Ball:** a Kalman filter predicts the ball and Large searches a full-resolution window there (tiles every 5th frame when lost); forward and backward linking follows.
+- **Found and fixed while measuring:**
+  1. **Painted marks.** The penalty and centre spots score like a ball (0.4–0.56) and captured the tracker, whose window then followed them. Candidates on known spots, or in a pitch cell seen in ≥ 2 s of frames, are dropped (ball within 15 px 10.5% → 50%).
+  2. **Staff.** The 3 m on-pitch margin let managers in. It is now 1 m, and tracks whose median position is outside the lines are dropped (ring precision 84% → 90%).
+  3. **Grey team players.** Short colour pieces had been labelled "other". Grey is now only for a shirt unlike both teams, and two rings within 0.8 m merge.
+  4. **A wandering ball.** Showing every linked ball put the marker on the wrong object 25–43% of the time. The ball is now shown, and analysed, **only when confirmed**: the forward and backward passes agree, no jump faster than 40 m/s, gaps ≤ 0.2 s filled.
+     - Strict confirmation: right 8/8 when shown.
+     - Looser rule (a nearby detection also confirms): right 18/24 when shown.
+
+     Mohit chose strict: better no ball than a wrong ball.
+  5. **Direction of play.** Without a goalkeeper in view it is unknown which goal a team attacks. The first coach text called spells "backwards" on a guess. Thirds and progress are now left out and the facts say the direction is unknown.
+- **Analysis for a partial view.** TV cameras follow the ball, so the facts describe the play around it, from confirmed-ball moments only (`geometry/pressure.py`, prompt v5):
+  - possession share and how the ball moved between team-mates and teams;
+  - pressure on the ball (nearest opponent);
+  - players of each team within 15 m;
+  - possession spells.
+- **Results on Mohit's labels:**
+
+  | | Baseline (D28) | Now |
+  |---|---|---|
+  | People found | 85.4% | 90.3% |
+  | Ring precision | 91.7% | 90.3% |
+  | Ball shown | 52% of frames | 20% |
+  | Ball right when shown | – | 100% |
+  | False ball | 50% | 0% |
+
+- **Limits:**
+  - One clip with 38 ball labels and 103 people labels; the settings were tuned on it, so the numbers are optimistic until other clips are labelled.
+  - The ball is confirmed in only ~26% of frames, so the coach analyses ~11 s of a 40 s clip.
+  - The referee can still be coloured as a team.
+  - A specialised football-ball detector would be the real fix for the ball, but it needs training (heavy on a laptop).

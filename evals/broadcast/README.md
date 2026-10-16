@@ -37,3 +37,17 @@ Quality: OK
 - Calibration: 1.4 s per keyframe on the Apple GPU, about 5 min for 40 s of video at 5 keyframes per second.
 - Detection: 0.18 s per keyframe.
 - A second run of the same video reuses the cached calibration and takes ~1.5 min.
+
+## Measured on hand labels (D29)
+
+Mohit labelled the Euro 2020 clip with `scripts/label_frames.py`: the ball once per second (40 frames, 38 with the ball visible) and every person's feet on 5 frames (103 people). `scripts/evaluate_broadcast.py` scores what the video shows; the history is in `local-euro-copenhagen.csv`.
+
+| Run | People found | Ring precision | Ball within 15 px | Ball shown | Right when shown | False ball |
+|---|---|---|---|---|---|---|
+| baseline (D28) | 85.4% | 91.7% | 10.5% | 52% | – | 50% |
+| full-resolution ball tracker | 90.3% | 83.8% | 10.5% | 95% | – | 100% |
+| painted spots rejected | 90.3% | 83.8% | 50.0% | 88% | – | 100% |
+| confirmed ball, no staff | 90.3% | 90.3% | 47.4% | 60% | 75% | 50% |
+| **strict confirmed ball (current)** | **90.3%** | **90.3%** | 21.1% | 20% | **100%** | **0%** |
+
+"False ball" is measured on only 2 labelled frames without a visible ball. The current setting shows the ball less often but never in the wrong place, and the coach analyses only those moments. These numbers come from the one clip the settings were tuned on.

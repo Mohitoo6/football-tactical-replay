@@ -118,7 +118,10 @@ uv run --group video python scripts/process_video.py my_tv_clip.mp4 --render --e
 ```
 
 First results ([evals/broadcast](evals/broadcast/README.md), [D28](DECISIONS.md)):
-- **A 40 s Euro 2020 clip:** 98% of frames calibrated, ~21 players per frame, and a coach explanation that says the camera showed only part of the pitch.
+- **A 40 s Euro 2020 clip, scored against hand labels:**
+  - 90% of players found;
+  - the ball is shown only when confirmed: in 20% of frames, right every time.
+  - The coach reads possession, pressure on the ball and numbers around it, and says the camera showed only part of the pitch.
 - **High "tactical camera" clips, filmed along the pitch:** refused.
 - **Caveats:**
   - No ground-truth score yet.
@@ -176,7 +179,7 @@ tests/       73 tests + 32 video tests
 - **"Ball carrier"** means the nearest player to the ball, not confirmed possession.
 - **Grounding check:** it confirms each number, time and formation exists in the facts, but not that it is attached to the right team or metric. It cannot judge the soundness of coaching reasoning. Both need human review (`evals/llm/`).
 - **Free tiers:** Gemini allowed 20 requests per day per model when measured (2026-10-11). Explanations are generated offline and cached; the app makes no LLM calls.
-- **TV broadcast video (Phase 8):** only the standard side-on camera, and only the players in view. No ground-truth evaluation yet. On the first clip the referee was coloured as one team, and the ball was kept in 39% of frames. Clips made from TV footage get ids starting with `local-` and are not committed.
+- **TV broadcast video (Phase 8):** only the standard side-on camera, and only the players in view. It is evaluated on one hand-labelled clip so far, and the settings were tuned on it. The ball is shown only when confirmed (~20–26% of frames). The referee can be coloured as a team. Clips made from TV footage get ids starting with `local-` and are not committed.
 - **Drone video (Phase 7):** tested on one match and one ground (plus edited copies: rotated, cropped, darker, 1080p, 25 fps). It needs a hovering, top-down camera with the whole pitch visible and at least 10 px per metre. A keeper who barely moves can fade into the background. No player names or goals are detected from video.
 
 ## Data and attribution

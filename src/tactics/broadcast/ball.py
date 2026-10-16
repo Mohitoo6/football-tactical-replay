@@ -27,7 +27,6 @@ GATE_GROWTH_PX = 25.0  # ... plus this much per frame the ball has been missing
 MAX_LOST_FRAMES = 12  # after ~0.5 s without the ball, search afresh
 MAX_GAP_FRAMES = 12  # gaps up to this long are filled by interpolation
 AGREE_PX = 15.0  # forward and backward passes must agree this closely
-CONFIRM_NEIGHBOUR_FRAMES = 4  # a one-pass detection is confirmed by another detection this close in time
 MAX_BALL_SPEED_MPS = 40.0  # faster than any shot: a jump implying more is a wrong detection
 CONFIRMED_GAP_FRAMES = 5  # gaps up to 0.2 s between confirmed points are still shown
 HEAD_SHARE = 0.6  # a candidate in the top 60% of a person's box is a head or shirt, not the ball
@@ -170,15 +169,15 @@ def link_ball(candidates: pd.DataFrame, frames: int) -> pd.DataFrame:
 def confirm_ball(track: pd.DataFrame, fps: float) -> pd.Series:
     """Frames where we are sure enough to show the ball and use it in the analysis.
 
-    `track`: link_ball's output plus x_m, y_m (the ball on the pitch). A detected frame is a seed if both
-    passes agreed on it or another detection lies within CONFIRM_NEIGHBOUR_FRAMES; a seed that would need
+    `track`: link_ball's output plus x_m, y_m (the ball on the pitch). A detected frame is a seed only if
+    the forward and the backward pass agreed on it (strict: on Mohit's labels the shown ball was right
+    8 times in 8, against 18 in 24 when one pass plus a nearby detection was enough); a seed that would need
     the ball to fly faster than MAX_BALL_SPEED_MPS to or from both neighbouring seeds is dropped; gaps of
     up to CONFIRMED_GAP_FRAMES between seeds are filled. Everything else is hidden, rather than drawing a
     marker that wanders while the ball is lost.
     """
     detected = track.loc[track["detected"] & track["x_m"].notna(), "frame"].to_numpy()
-    seeds = [f for f in detected
-             if track.at[f, "both_passes"] or np.any((np.abs(detected - f) <= CONFIRM_NEIGHBOUR_FRAMES) & (detected != f))]
+    seeds = [f for f in detected if track.at[f, "both_passes"]]
     xy = track.set_index("frame")[["x_m", "y_m"]]
 
     def speed(a: int, b: int) -> float:
