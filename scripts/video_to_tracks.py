@@ -4,6 +4,7 @@
     uv run --group video python scripts/video_to_tracks.py all              # every downloaded segment
     uv run --group video python scripts/video_to_tracks.py all --rescore    # score saved runs again (no video work)
     uv run --group video python scripts/video_to_tracks.py all --dataset-truth   # the dataset's one calibration
+    uv run --group video python scripts/video_to_tracks.py 0360_0390 --process-only  # run and save, no ground truth needed
 
 Runs `tactics.video.pipeline` (detection with automatic calibration, tracking,
 teams, ball) and only then compares with the SoccerTrack ground truth via
@@ -74,7 +75,8 @@ def load_run(segment: str):
 
 
 def evaluate(segment: str, video: Path | None = None, pixel_map: np.ndarray | None = None,
-             frame_map: np.ndarray | None = None, rescore: bool = False, dataset_truth: bool = False) -> dict:
+             frame_map: np.ndarray | None = None, rescore: bool = False, dataset_truth: bool = False,
+             process_only: bool = False) -> dict:
     """Run the pipeline on a segment (or on an edited copy of it, `video`) and score it against the truth.
 
     For an edited copy (rotated, cropped, resized, re-timed), `pixel_map` is the 2x3 affine map from the
@@ -82,16 +84,6 @@ def evaluate(segment: str, video: Path | None = None, pixel_map: np.ndarray | No
     Both are applied to the ground truth only, never to what the pipeline sees.
     """
     name = f"{PREFIX}{segment}"
-    dataset = truth_calibration(segment, dataset_truth)  # scoring only
-    boxes = load_boxes(DATA / "top_view" / "annotations" / f"{name}.csv")
-    if pixel_map is not None:
-        moved = lambda xy: np.asarray(xy, dtype=float) @ pixel_map[:, :2].T + pixel_map[:, 2]
-        dataset = PitchCalibration(dataset.pitch_m + [PITCH_LENGTH_M / 2, PITCH_WIDTH_M / 2], moved(dataset.other))
-        boxes[["cx", "cy"]] = moved(boxes[["cx", "cy"]].to_numpy())
-    if frame_map is not None:  # annotation frames start at 1
-        frames = pd.DataFrame({"frame": np.asarray(frame_map) + 1, "copy_frame": np.arange(len(frame_map)) + 1})
-        boxes = boxes.merge(frames, on="frame").drop(columns="frame").rename(columns={"copy_frame": "frame"})
-
     start = time.perf_counter()
     if rescore:
         run, detections, tracks, teams, ball = load_run(segment)
@@ -107,6 +99,19 @@ def evaluate(segment: str, video: Path | None = None, pixel_map: np.ndarray | No
         tracks, teams, ball = track_everything(detections)
         if video is None:  # only the original segment, not edited copies
             save_run(segment, report, detections, tracks, teams, ball)
+        if process_only:  # the ground truth is not even read
+            return {"segment": segment, "quality": status, "failed_checks": failed, "seconds": round(time.perf_counter() - start)}
+
+    # Ground truth: read only now, after the pipeline has finished (scoring only).
+    dataset = truth_calibration(segment, dataset_truth)
+    boxes = load_boxes(DATA / "top_view" / "annotations" / f"{name}.csv")
+    if pixel_map is not None:
+        moved = lambda xy: np.asarray(xy, dtype=float) @ pixel_map[:, :2].T + pixel_map[:, 2]
+        dataset = PitchCalibration(dataset.pitch_m + [PITCH_LENGTH_M / 2, PITCH_WIDTH_M / 2], moved(dataset.other))
+        boxes[["cx", "cy"]] = moved(boxes[["cx", "cy"]].to_numpy())
+    if frame_map is not None:  # annotation frames start at 1
+        frames = pd.DataFrame({"frame": np.asarray(frame_map) + 1, "copy_frame": np.arange(len(frame_map)) + 1})
+        boxes = boxes.merge(frames, on="frame").drop(columns="frame").rename(columns={"copy_frame": "frame"})
     truth = truth_in_dataset_metres(boxes, detections.warps, dataset)
     ball_truth = truth[truth["truth_id"] == "BALL-BALL"]
     truth = truth[truth["truth_id"] != "BALL-BALL"]
@@ -145,4 +150,8 @@ if __name__ == "__main__":
     dataset_truth = "--dataset-truth" in flags
     results = RESULTS.with_name("segments_dataset_truth.csv") if dataset_truth else RESULTS
     for seg in args:
-        save_row(evaluate(seg, rescore="--rescore" in flags, dataset_truth=dataset_truth), results)
+        row = evaluate(seg, rescore="--rescore" in flags, dataset_truth=dataset_truth, process_only="--process-only" in flags)
+        if "--process-only" in flags:
+            print(f"{seg}: processed and saved ({row['quality']}); not scored", flush=True)
+        else:
+            save_row(row, results)

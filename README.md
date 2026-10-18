@@ -86,15 +86,17 @@ Before any tracking, the pipeline prints a **quality report**:
 
 If a check fails, it refuses the clip instead of producing wrong positions.
 
-Measured on **15 × 30 s SoccerTrack segments** of one match (13 used while building, 2 never seen). The dataset's ground truth is used **only for scoring**, with its calibration corrected per segment because the drone drifts ([evals/video](evals/video/README.md), [D19–D30](DECISIONS.md)):
+Measured on **20 × 30 s SoccerTrack segments** of one match (13 used while building, 7 never seen; five of these were processed before their ground truth was downloaded). The dataset's ground truth is used **only for scoring**, with its calibration corrected per segment because the drone drifts ([evals/video](evals/video/README.md), [D19–D30](DECISIONS.md)):
 
-| What | Median (worst) over the 13 tuned segments | 2 unseen segments |
+| What | 13 tuned segments: median (worst) | 6 accepted unseen segments: median (worst) |
 |---|---|---|
-| Players found (recall) | 98.6% (97.7%) | 96.3%, 99.1% |
-| Position error, automatic calibration (no hand-marked points) | 0.35 m (0.52 m) | 0.55 m, 0.44 m |
-| Identity kept (purity) | 97.4% (91.4%) | 91.4%, 96.6% |
-| Correct team | 98.2% (94.3%) | 91.9%, 92.7% |
-| Ball correct, all frames | 63% (34%) | 42%, 68% |
+| Players found (recall) | 98.6% (97.7%) | 96.9% (80.0%) |
+| Position error, automatic calibration (no hand-marked points) | 0.35 m (0.52 m) | 0.44 m (0.55 m) |
+| Identity kept (purity) | 97.4% (91.4%) | 92.5% (84.6%) |
+| Correct team | 98.2% (94.3%) | 92.5% (89.5%) |
+| Ball correct, all frames | 63% (34%) | 55% (22%) |
+
+On unseen data the pipeline is clearly weaker than on the segments it was tuned on; that gap is the honest number. One unseen segment was refused by the quality report (11:00), although its positions were good. Another (16:00) was accepted with only 80% of players found.
 
 The ball is often hidden at players' feet. A full-resolution ball detector raises this on 5 of 6 test segments, but it is not adopted yet (D25).
 

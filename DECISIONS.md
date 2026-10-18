@@ -652,3 +652,9 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Still one match and one ground; the unseen segments differ only in time.
   - The corrected truth inherits the dataset's own keypoint precision (88% on paint).
   - The "on paint" check favours our calibration, because ours is fitted to the same paint. That is why it is not used as the truth.
+- **Addendum: 5 more unseen segments** (6:00, 11:00, 16:00, 21:00, 26:00), processed before their ground truth was downloaded.
+  - **The 6 accepted unseen segments, median:** 96.9% found, 0.44 m, purity 92.5%, team 92.5%, ball 54.5%. On the 13 tuned segments: 98.6%, 0.35 m, 97.4%, 98.2%, 63.4%. **That gap is the honest generalisation cost.**
+  - **The quality report missed twice:**
+    - 16:00 was accepted at 80.0% found.
+    - 11:00 was refused (37 blobs per frame, limit 30), although it reached 96.7% found and 0.27 m.
+  - Both are next to investigate.

@@ -2,7 +2,7 @@
 
 Generated from `segments.csv`, which `scripts/video_to_tracks.py all` writes. The script runs **the same `process_video` pipeline that builds clips** (`src/tactics/video/pipeline.py`) on SoccerTrack top-view segments of 30 s each from one university match:
 - **13 tuned segments:** spread over the 30 minutes and used while building the pipeline.
-- **2 unseen segments (0:00 and 18:30):** never used for tuning.
+- **7 unseen segments (0:00, 6:00, 11:00, 16:00, 18:30, 21:00, 26:00):** never used for tuning. Five of them were processed before their ground-truth files were even downloaded (`video_to_tracks.py --process-only`, then `--rescore`).
 
 - **Positions** come only from the video. Frame rate and length are read from the file, and the pitch is calibrated from its lines (D20, D23, D24, D26, D27). During processing the unseen segment's ground-truth file was moved out of the data folder.
 - **The ground truth is used only afterwards**, for scoring (`src/tactics/video/scoring.py`). A detection counts as matched within 1.5 m.
@@ -18,24 +18,34 @@ Generated from `segments.csv`, which `scripts/video_to_tracks.py all` writes. Th
 | 0:30 | ok | 98.4% | 0.52 m | 95.1% | 99.0% | 69.9% |
 | 2:30 | ok | 98.9% | 0.49 m | 99.2% | 95.0% | 59.8% |
 | 5:00 | ok | 99.6% | 0.45 m | 99.7% | 99.7% | 40.8% |
+| 6:00 (unseen) | ok | 97.0% | 0.49 m | 91.6% | 93.2% | 21.5% |
 | 7:30 | ok | 98.1% | 0.25 m | 98.7% | 94.3% | 57.7% |
 | 10:00 | ok | 98.2% | 0.28 m | 96.4% | 98.2% | 63.4% |
+| 11:00 (unseen) | rejected | 96.7% | 0.27 m | 90.8% | 96.7% | 19.1% |
 | 12:30 | ok | 99.7% | 0.30 m | 99.9% | 99.9% | 67.4% |
 | 15:00 | ok | 97.7% | 0.32 m | 91.5% | 97.4% | 61.7% |
+| 16:00 (unseen) | ok | 80.0% | 0.25 m | 84.6% | 89.5% | 55.7% |
 | 17:30 | ok | 99.0% | 0.32 m | 97.8% | 99.6% | 73.4% |
 | 18:30 (unseen) | ok | 99.1% | 0.44 m | 96.7% | 92.7% | 67.7% |
 | 20:00 | ok | 100.0% | 0.34 m | 100.0% | 100.0% | 33.9% |
+| 21:00 (unseen) | ok | 99.7% | 0.42 m | 99.8% | 99.8% | 84.6% |
 | 22:30 | ok | 99.5% | 0.35 m | 96.5% | 97.2% | 70.2% |
 | 25:00 | ok | 98.1% | 0.39 m | 95.6% | 98.5% | 59.0% |
+| 26:00 (unseen) | ok | 96.8% | 0.44 m | 93.3% | 92.3% | 53.4% |
 | 27:30 | ok | 98.1% | 0.35 m | 96.3% | 97.0% | 67.1% |
 | 29:30 | ok | 98.6% | 0.36 m | 97.4% | 97.5% | 71.9% |
 | **median, 13 tuned segments** | | **98.6%** | **0.35 m** | **97.4%** | **98.2%** | **63.4%** |
 | worst, 13 tuned segments | | 97.7% | 0.52 m | 91.5% | 94.3% | 33.9% |
+| **median, 6 accepted unseen segments** | | **96.9%** | **0.44 m** | **92.5%** | **92.5%** | **54.5%** |
+| worst, 6 accepted unseen segments | | 80.0% | 0.55 m | 84.6% | 89.5% | 21.5% |
 
 **What changed with the corrected ground truth:**
 - The tuned median position error falls from 0.49 m to 0.35 m.
 - The unseen 18:30 segment goes from 68.5% found and 0.82 m to 99.1% and 0.44 m: most of the earlier error was the drifted ground-truth calibration, not the pipeline.
-- The weakest segment is unseen 0:00: 96.3% found, 0.55 m, teams 91.9%.
+- **On unseen segments the pipeline is clearly weaker than on the tuned ones.** Medians: 96.9% found against 98.6%; purity 92.5% against 97.4%; teams 92.5% against 98.2%; ball 54.5% against 63.4%. The settings were tuned on the 13; this gap is the honest cost.
+- **Two quality-report misses:**
+  - **16:00 was accepted with only 80.0% of players found.** The report did not catch it.
+  - **11:00 was refused** (37 player blobs per frame, limit 30) although it scored 96.7% found and 0.27 m. Extra blobs lowered precision to 59%, but positions were good.
 
 ## Ball: full-resolution detector (D25)
 
