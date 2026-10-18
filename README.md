@@ -86,16 +86,19 @@ Before any tracking, the pipeline prints a **quality report**:
 
 If a check fails, it refuses the clip instead of producing wrong positions.
 
-Measured on **13 × 30 s SoccerTrack segments** spread over one match. The dataset's ground truth is used **only for scoring** ([evals/video](evals/video/README.md), [D19–D25](DECISIONS.md)):
+Measured on **15 × 30 s SoccerTrack segments** of one match (13 used while building, 2 never seen). The dataset's ground truth is used **only for scoring**, with its calibration corrected per segment because the drone drifts ([evals/video](evals/video/README.md), [D19–D30](DECISIONS.md)):
 
-| What | Median (worst) over 13 segments |
-|---|---|
-| Players found (recall) | 98.4% (91.0%) |
-| Position error, automatic calibration (no hand-marked points) | 0.49 m (0.81 m) |
-| Identity kept (purity) | 97.4% (90.2%) |
-| Correct team | 98.5% (94.3%) |
-| Ball correct, all frames | 62% (14%) — the ball is often hidden at players' feet; a full-resolution ball detector raises this on 5 of 6 test segments but is not adopted yet (D25) |
-| Speed | ~2 min per 30 s of 4K video on an Apple M2 (offline) |
+| What | Median (worst) over the 13 tuned segments | 2 unseen segments |
+|---|---|---|
+| Players found (recall) | 98.6% (97.7%) | 96.3%, 99.1% |
+| Position error, automatic calibration (no hand-marked points) | 0.35 m (0.52 m) | 0.55 m, 0.44 m |
+| Identity kept (purity) | 97.4% (91.4%) | 91.4%, 96.6% |
+| Correct team | 98.2% (94.3%) | 91.9%, 92.7% |
+| Ball correct, all frames | 63% (34%) | 42%, 68% |
+
+The ball is often hidden at players' feet. A full-resolution ball detector raises this on 5 of 6 test segments, but it is not adopted yet (D25).
+
+Speed: ~2 min per 30 s of 4K video on an Apple M2 (offline).
 
 A pretrained deep detector (RF-DETR, tiled) found only 43% of players from straight above, at 100× the cost. The classical method won here.
 

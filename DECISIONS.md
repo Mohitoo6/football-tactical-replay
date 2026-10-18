@@ -621,3 +621,34 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - The ball is confirmed in only ~26% of frames, so the coach analyses ~11 s of a 40 s clip.
   - The referee can still be coloured as a team.
   - A specialised football-ball detector would be the real fix for the ball, but it needs training (heavy on a laptop).
+
+## D30. Correct the ground truth per segment: the drone drifts, the dataset's calibration does not
+*2026-10-18 · `scripts/truth_calibration.py`, `scripts/video_to_tracks.py`, `evals/video/`*
+
+- **What we saw:**
+  - The first truly unseen segment (18:30) scored 68.5% of players found and a 0.82 m error, against a tuned median of 98.4% and 0.49 m.
+  - Players were tracked fine in pixels (coverage 99%, purity 97%). Only positions in metres disagreed.
+  - Drawing both calibrations on that segment settled it: ours sat on the painted lines; the dataset's penalty boxes were visibly shifted.
+- **Cause:**
+  - SoccerTrack gives one set of pitch keypoints for the whole match, but the hovering drone slowly moves and turns over 30 minutes.
+  - The share of the dataset's pitch lines landing on paint varies from 37% to 88% across segments. The ground-truth boxes are turned into metres with it, so the "truth" itself was off by up to ~2 m.
+  - Within a segment the drone barely moves (5 px), so this is drift between segments, not shake.
+- **Decision:**
+  - Move the dataset's keypoints to each segment by image registration: ORB features and a RANSAC homography from the best-fitting segment (0:30, 88% on paint) to each other segment, over the whole image.
+  - This does not use our pitch-line calibration, so we are not grading ourselves with our own map.
+  - The moved calibrations land on the paint 87–89% of the time in every segment. That is the dataset's own precision; even at the reference it is 88%.
+  - Scoring uses them by default. `--dataset-truth` and `segments_dataset_truth.csv` keep the original for comparison.
+- **Alternatives rejected:**
+  - Score with our own calibration: circular.
+  - Keep the single calibration: it punishes the pipeline for the drone's drift, and the error grows with time.
+- **Results (all 15 segments, after-D27 code):**
+  - **13 tuned segments, median:** 98.6% found, 0.35 m error (0.49 m with the old truth), purity 97.4%, team 98.2%, ball 63%.
+  - **2 unseen segments:**
+    - 18:30: 99.1% found, 0.44 m;
+    - 0:00: 96.3% found, 0.55 m, team 91.9%.
+  - The unseen segment's ground-truth file was moved out of the data folder while it was processed.
+  - Runs are now saved, so re-scoring needs no video processing (`--rescore`).
+- **Limits:**
+  - Still one match and one ground; the unseen segments differ only in time.
+  - The corrected truth inherits the dataset's own keypoint precision (88% on paint).
+  - The "on paint" check favours our calibration, because ours is fitted to the same paint. That is why it is not used as the truth.
