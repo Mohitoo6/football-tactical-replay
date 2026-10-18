@@ -29,17 +29,19 @@ Example output for the clip above (abridged):
 
 ```mermaid
 flowchart LR
-    A[DFL tracking XML<br/>25 fps, ~400 MB per match] -->|kloppy, once, offline| B[Clean tables<br/>frame · team · player · x · y · ball]
-    B --> C[Clips<br/>~100 KB parquet each]
+    U1[Your tracking data<br/>CSV / Excel template,<br/>Metrica · SkillCorner · DFL] --> Q{Quality report}
+    U2[Top-view drone video] -->|stabilise · calibrate from lines ·<br/>detect · track · teams · ball| Q
+    Q -->|refused: the reasons| R[Message to the user]
+    Q -->|accepted| C[Clip<br/>frame · team · player · x · y · ball]
     C --> D[Geometry<br/>hull · width · depth · back line ·<br/>players behind ball · shape estimate]
-    D --> E[Video with overlays<br/>matplotlib + mplsoccer]
     D --> F[Facts JSON<br/>~4 KB per clip]
     F --> G[LLM<br/>Gemini → Gemini → Groq → OpenRouter<br/>free tiers, cached]
     G --> H{Grounding + format check}
     H -->|problems| G
     H -->|pass| I[Explanation]
-    E --> J[Streamlit app]
-    I --> J
+    D --> API[FastAPI backend<br/>clips · uploads · jobs]
+    I --> API
+    API --> FE[Frontend]
 ```
 
 **Core design principle:** positions come from real tracking data, so there is no computer-vision guesswork at the bottom of the stack. The geometry is deterministic, tested code. The LLM sits only at the top and narrates facts it is given. It never computes or invents numbers, and a checker enforces that.
@@ -55,7 +57,7 @@ Key decisions, with alternatives and evidence, are in [`DECISIONS.md`](DECISIONS
 | Generalisation | Ran the pipeline on a second match it was not built on | Worked after fixing 5 issues the first match never showed (D14) |
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | LLM grounding | 4 clips, prompt v3 | 4 / 4 pass; a naive prompt on the same facts invented a number and two names (caught) |
-| Tests | `uv run pytest` | 78 passing (+25 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
+| Tests | `uv run pytest` | 92 passing (+26 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md).
 
@@ -117,6 +119,54 @@ We also tried the usual TV camera, which pans and zooms:
 
 On one hand-labelled Euro 2020 clip it found 90% of players. The ball, though, could be confirmed in only ~20% of frames. It works only on the main camera of professional stadiums, and free TV footage to test it on does not exist (broadcast rights). We kept the drone pipeline as the product and moved this experiment to its own branch. The measurements and the reasons are in [D28, D29 and D31](DECISIONS.md) and [evals/broadcast](evals/broadcast/README.md).
 
+## Use your own data
+
+Two ways in, one analysis. Both go through a quality report that refuses data it cannot analyse, and says why.
+
+1. **Tracking (coordinate) data:**
+   - **Our template**, CSV or Excel ([`templates/tracking_template.csv`](templates/tracking_template.csv)), with one row per player (and the ball) per moment:
+
+     | Column | Meaning |
+     |---|---|
+     | `time_s` | seconds from the start of the clip |
+     | `team` | `home`, `away` or `ball` |
+     | `player` | name or number |
+     | `x`, `y` | position |
+     | `jersey`, `position` | optional; `GK` marks a keeper, otherwise the deepest player in front of goal is taken |
+
+     Positions can be in metres from the centre spot, metres from a corner, or 0–1 along each side. A full example is [`templates/example_musiala_winner.csv`](templates/example_musiala_winner.csv).
+   - **Provider formats** through [kloppy](https://kloppy.pysport.org): Metrica, SkillCorner or Sportec/DFL files, cut to a window of up to 120 s.
+   - **Tested on:**
+     - the example file, which reproduces the bundled clip to 0.01 m;
+     - Metrica open data (game 1);
+     - SkillCorner open data (Brisbane v Perth, 10 fps).
+2. **A top-view drone video:** see [above](#from-drone-video-to-coaching-phase-7). It runs locally (minutes of processing), not on a free server.
+
+**Accepted data needs:**
+- 3–120 s at 5–60 frames per second;
+- at least 7 players per team;
+- positions on the pitch (otherwise the units are probably wrong).
+
+**Ball:** without the ball the shapes are still measured, but there are no ball-based facts.
+
+## Backend API
+
+```bash
+uv run uvicorn tactics.api:app --reload     # interactive docs at http://localhost:8000/docs
+```
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/clips` | every clip (bundled and uploaded) |
+| `GET /api/clips/{id}?step=2` | frames, players, ball, team shapes (hull, width, depth, area, back line), facts, explanation; ~76 KB gzipped |
+| `POST /api/clips/{id}/explanation` | the coach's explanation (cached; one LLM call on a miss) |
+| `POST /api/uploads/tracking` | template CSV/Excel → clip, or the reasons it was refused |
+| `POST /api/uploads/provider` | Metrica / SkillCorner / Sportec files + time window → clip |
+| `POST /api/uploads/drone`, `GET /api/jobs/{id}` | drone video as a background job with progress (local, needs `--group video`) |
+| `GET /api/template`, `GET /api/template/example` | the template and the example file |
+
+Uploaded clips are stored in `data/user_clips/` (git-ignored).
+
 ## Run it
 
 Requirements: macOS or Linux, Python 3.11+, [uv](https://docs.astral.sh/uv/). The four clips, their videos and explanations are in the repo, so **the app needs no data download and no API keys**.
@@ -125,8 +175,9 @@ Requirements: macOS or Linux, Python 3.11+, [uv](https://docs.astral.sh/uv/). Th
 git clone https://github.com/Mohitoo6/football-tactical-replay.git
 cd football-tactical-replay
 uv sync
-uv run streamlit run app/streamlit_app.py      # opens http://localhost:8501
-uv run pytest                                  # 78 tests (video tests skip without --group video)
+uv run uvicorn tactics.api:app --reload        # backend API: http://localhost:8000/docs
+uv run streamlit run app/streamlit_app.py      # quick test viewer: http://localhost:8501
+uv run pytest                                  # 92 tests (video tests skip without --group video)
 ```
 
 ### Rebuild everything from raw data (optional)
@@ -147,16 +198,19 @@ uv run python scripts/evaluate_formations.py J03WMX
 
 ```
 src/tactics/
-  data/      load DFL tracking with kloppy, orient, validate, build/save clips
+  service.py the backend in one place: list, read, create (template, provider, drone video) and explain clips
+  api.py     FastAPI app over service.py
+  data/      load DFL tracking with kloppy, orient, validate, build/save clips; upload.py reads user data
   video/     drone video to tracking: stabilise, calibrate from lines, detect, track, teams, ball (Phase 7)
   geometry/  shape metrics, formation template matching, formation-line links
   viz/       pitch drawing and animation (one FramePainter for stills and video)
   ai/        facts summary, prompt, LLM client with fallbacks/cache/repair, grounding check
-app/         Streamlit app
+templates/   upload template and a full example file
+app/         Streamlit test viewer
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate_explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation and LLM evaluations
-tests/       78 tests + 25 video tests
+tests/       92 tests + 26 video tests
 ```
 
 ## Limitations
@@ -173,7 +227,7 @@ tests/       78 tests + 25 video tests
 
 - Tracking and event data: **Sportec Open DFL Tracking and Event Data**. Bassek, M., Rein, R., Weber, H. & Memmert, D. *An integrated dataset of spatiotemporal and event data in elite soccer.* Scientific Data 12, 195 (2025). doi:[10.1038/s41597-025-04505-y](https://doi.org/10.1038/s41597-025-04505-y). Licensed **CC-BY 4.0**.
 - Drone video and ground truth for Phase 7: **SoccerTrack**, Scott et al., CVPR Workshops 2022 ([Kaggle](https://www.kaggle.com/datasets/atomscott/soccertrack)), LGPL-3.0. Raw videos are not redistributed; `clips/drone-0600-0630` contains positions we computed and a rendered video.
-- Metrica Sports sample data ([github.com/metrica-sports/sample-data](https://github.com/metrica-sports/sample-data)) was used in early tests.
+- Metrica Sports sample data ([github.com/metrica-sports/sample-data](https://github.com/metrica-sports/sample-data)) and SkillCorner open data ([github.com/SkillCorner/opendata](https://github.com/SkillCorner/opendata)) were used to test the upload path (not redistributed).
 - Built with kloppy, mplsoccer, numpy, scipy, pandas, matplotlib, Streamlit and the OpenAI-compatible APIs of Google Gemini, Groq and OpenRouter.
 
 ## License

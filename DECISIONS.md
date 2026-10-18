@@ -679,3 +679,46 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - `geometry/pressure.py`;
   - D28–D29 and `evals/broadcast/`, as the record of what was tried and measured.
 - **Alternative:** delete it outright. That would lose a measured experiment that is useful to show in interviews ("what we tried, how we measured it, why we stopped").
+
+## D32. The backend product: coordinate data or drone video in, one analysis out, behind an HTTP API
+*2026-10-18 · `src/tactics/data/upload.py`, `src/tactics/service.py`, `src/tactics/api.py`, `templates/`*
+
+- **Decision:** two ways in, both ending in the same standard clip and the same geometry, facts and coach.
+  1. **Coordinate data (the main way in):**
+     - our long template (`time_s, team, player, x, y`, optional `jersey, position`), as CSV or Excel;
+     - or a provider format through kloppy (Metrica, SkillCorner, Sportec/DFL), cut to a window of up to 120 s.
+  2. **A top-view drone video (the side way in):** the Phase 7 pipeline, run as a background job.
+- **Why tracking data is the main way in:**
+  - No computer-vision error.
+  - Instant, and light enough for a free server.
+  - Most people with real tracking data are analysts and clubs.
+  - The drone path shows the vision work, but needs footage few people have and minutes of processing on a laptop.
+- **The quality report decides for uploads too** (`data/report.py`, moved out of the video module so the upload path needs no OpenCV). It refuses:
+  - unreadable files or missing columns;
+  - unknown team values;
+  - wrong units (more than 2% of positions over 5 m outside the pitch);
+  - fewer than 7 players per team;
+  - clips outside 3–120 s or 5–60 fps.
+
+  It warns about a missing ball and unmarked keepers.
+- **Keepers when not marked:** the deepest regular player whose average position is in front of goal (within the penalty area's width). On Metrica data the plain "deepest player" picked a winger taking a corner.
+- **API (FastAPI, uvicorn):**
+  - Endpoints: clips, the per-clip payload, video, explanation, template downloads, tracking and provider uploads, and drone jobs with progress.
+  - The payload is frames, players, ball and per-team hull and metrics, so the frontend can animate without the backend rendering video. It is gzipped to ~76 KB per clip at 12.5 fps.
+  - Uploads go to git-ignored `data/user_clips/`.
+- **Alternatives:**
+  - Streamlit only: no real API for a React frontend.
+  - Flask: FastAPI gives typed forms, file uploads and interactive docs for free.
+  - Rendering every upload to MP4: slower, and the frontend would lose interactivity.
+- **Evidence:**
+  - The example file reproduces the bundled clip to 0.01 m.
+  - Real Metrica (game 1) and SkillCorner open data pass the report and produce shapes and ball carriers.
+  - 15 new tests:
+    - 8 for upload;
+    - 7 for the API, run in-process with a fake LLM and temporary storage, including a drone job on a synthetic video.
+  - The API was also called over real HTTP.
+- **Limits:**
+  - Drone video runs only where the video dependencies are installed (locally).
+  - Jobs live in one process's memory.
+  - Provider uploads are tested through kloppy on open data, not through the API with real files.
+  - A free deployment would serve the tracking-data path only.
