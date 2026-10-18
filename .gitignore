@@ -24,3 +24,4 @@ outputs/
 # Clips made from broadcast footage we may not redistribute (Phase 8)
 clips/local-*/
 evals/llm/local-*
+data/user_clips/

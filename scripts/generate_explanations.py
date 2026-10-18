@@ -10,15 +10,12 @@ and an evaluation sheet evals/llm/<clip_id>.md with the grounding report and a
 checklist for a human reviewer. Needs API keys in .env (see .env.example) on a cache miss.
 """
 
-import json
 import sys
 from pathlib import Path
 
-from tactics.ai.grounding import check_grounding
-from tactics.ai.llm import AllProvidersFailed, explain
+from tactics.ai.coach import coach_explanation
+from tactics.ai.llm import AllProvidersFailed
 from tactics.ai.prompt import format_problems
-from tactics.ai.summary import build_summary
-from tactics.data.clips import load_clip
 
 ROOT = Path(__file__).resolve().parents[1]
 CLIPS_DIR = ROOT / "clips"
@@ -65,17 +62,13 @@ def main(only: list[str]) -> int:
         folder = meta_path.parent
         if only and folder.name not in only:
             continue
-        summary = build_summary(load_clip(folder))
-        (folder / "summary.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False) + "\n")
         try:
-            result = explain(summary, folder / "explanation.json",
-                             check=lambda text: check_grounding(text, summary).problems + format_problems(text))
+            result, report, _ = coach_explanation(folder)
         except AllProvidersFailed as error:
             print(f"{folder.name}: no explanation ({error})")
             failures += 1
             continue
 
-        report = check_grounding(result["text"], summary)
         sheet = EVALS_DIR / f"{folder.name}.md"
         if not result["from_cache"] or not sheet.exists():
             sheet.write_text(evaluation_sheet(folder.name, result, report) + "\n")
