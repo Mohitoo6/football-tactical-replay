@@ -55,7 +55,7 @@ Key decisions, with alternatives and evidence, are in [`DECISIONS.md`](DECISIONS
 | Generalisation | Ran the pipeline on a second match it was not built on | Worked after fixing 5 issues the first match never showed (D14) |
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | LLM grounding | 4 clips, prompt v3 | 4 / 4 pass; a naive prompt on the same facts invented a number and two names (caught) |
-| Tests | `uv run pytest` | 73 passing (+32 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
+| Tests | `uv run pytest` | 78 passing (+25 video tests with `--group video`), including the app and LLM layer with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md).
 
@@ -108,30 +108,14 @@ A pretrained deep detector (RF-DETR, tiled) found only 43% of players from strai
 
 Limits: hovering top-down camera, whole pitch outline visible, one ground tested so far.
 
-## From TV broadcast footage (Phase 8)
+## Experiment: TV broadcast footage (branch `broadcast-experiment`)
 
-Most football video online comes from the TV camera, which pans and zooms. For these clips the camera is calibrated **in every frame**:
-- [PnLCalib](https://github.com/mguti97/PnLCalib) finds pitch keypoints and lines.
-- Our own check draws the calibrated lines back into the frame and refuses frames where they miss the paint.
-- RF-DETR finds the players and the ball, and their feet are placed on the pitch.
+We also tried the usual TV camera, which pans and zooms:
+- the camera calibrated in every frame;
+- players and ball found with RF-DETR;
+- the analysis drawn on the footage.
 
-The analysis is then **drawn on the footage itself**: each team's shape on the grass, rings at the players' feet, the ball, and a corner map showing what the camera sees.
-
-```bash
-sh tools/pnlcalib/setup.sh        # once: PnLCalib (GPL-2.0) in its own environment, outside this repo's code
-uv run --group video python scripts/process_video.py my_tv_clip.mp4 --render --explain
-```
-
-First results ([evals/broadcast](evals/broadcast/README.md), [D28](DECISIONS.md)):
-- **A 40 s Euro 2020 clip, scored against hand labels:**
-  - 90% of players found;
-  - the ball is shown only when confirmed: in 20% of frames, right every time.
-  - The coach reads possession, pressure on the ball and numbers around it, and says the camera showed only part of the pitch.
-- **High "tactical camera" clips, filmed along the pitch:** refused.
-- **Caveats:**
-  - No ground-truth score yet.
-  - Only players in view are tracked.
-  - The referee was coloured as one team.
+On one hand-labelled Euro 2020 clip it found 90% of players. The ball, though, could be confirmed in only ~20% of frames. It works only on the main camera of professional stadiums, and free TV footage to test it on does not exist (broadcast rights). We kept the drone pipeline as the product and moved this experiment to its own branch. The measurements and the reasons are in [D28, D29 and D31](DECISIONS.md) and [evals/broadcast](evals/broadcast/README.md).
 
 ## Run it
 
@@ -142,7 +126,7 @@ git clone https://github.com/Mohitoo6/football-tactical-replay.git
 cd football-tactical-replay
 uv sync
 uv run streamlit run app/streamlit_app.py      # opens http://localhost:8501
-uv run pytest                                  # 73 tests (video tests skip without --group video)
+uv run pytest                                  # 78 tests (video tests skip without --group video)
 ```
 
 ### Rebuild everything from raw data (optional)
@@ -165,15 +149,14 @@ uv run python scripts/evaluate_formations.py J03WMX
 src/tactics/
   data/      load DFL tracking with kloppy, orient, validate, build/save clips
   video/     drone video to tracking: stabilise, calibrate from lines, detect, track, teams, ball (Phase 7)
-  broadcast/ TV video to tracking: per-frame camera calibration, RF-DETR players, colour-split teams (Phase 8)
   geometry/  shape metrics, formation template matching, formation-line links
-  viz/       pitch drawing and animation (one FramePainter for stills and video); overlay.py draws on TV footage
+  viz/       pitch drawing and animation (one FramePainter for stills and video)
   ai/        facts summary, prompt, LLM client with fallbacks/cache/repair, grounding check
 app/         Streamlit app
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate_explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation and LLM evaluations
-tests/       73 tests + 32 video tests
+tests/       78 tests + 25 video tests
 ```
 
 ## Limitations
@@ -184,7 +167,6 @@ tests/       73 tests + 32 video tests
 - **"Ball carrier"** means the nearest player to the ball, not confirmed possession.
 - **Grounding check:** it confirms each number, time and formation exists in the facts, but not that it is attached to the right team or metric. It cannot judge the soundness of coaching reasoning. Both need human review (`evals/llm/`).
 - **Free tiers:** Gemini allowed 20 requests per day per model when measured (2026-10-11). Explanations are generated offline and cached; the app makes no LLM calls.
-- **TV broadcast video (Phase 8):** only the standard side-on camera, and only the players in view. It is evaluated on one hand-labelled clip so far, and the settings were tuned on it. The ball is shown only when confirmed (~20–26% of frames). The referee can be coloured as a team. Clips made from TV footage get ids starting with `local-` and are not committed.
 - **Drone video (Phase 7):** tested on one match and one ground (plus edited copies: rotated, cropped, darker, 1080p, 25 fps). It needs a hovering, top-down camera with the whole pitch visible and at least 10 px per metre. A keeper who barely moves can fade into the background. No player names or goals are detected from video.
 
 ## Data and attribution
@@ -192,12 +174,11 @@ tests/       73 tests + 32 video tests
 - Tracking and event data: **Sportec Open DFL Tracking and Event Data**. Bassek, M., Rein, R., Weber, H. & Memmert, D. *An integrated dataset of spatiotemporal and event data in elite soccer.* Scientific Data 12, 195 (2025). doi:[10.1038/s41597-025-04505-y](https://doi.org/10.1038/s41597-025-04505-y). Licensed **CC-BY 4.0**.
 - Drone video and ground truth for Phase 7: **SoccerTrack**, Scott et al., CVPR Workshops 2022 ([Kaggle](https://www.kaggle.com/datasets/atomscott/soccertrack)), LGPL-3.0. Raw videos are not redistributed; `clips/drone-0600-0630` contains positions we computed and a rendered video.
 - Metrica Sports sample data ([github.com/metrica-sports/sample-data](https://github.com/metrica-sports/sample-data)) was used in early tests.
-- Broadcast camera calibration: **PnLCalib**, Gutiérrez-Pérez & Agudo, arXiv:2404.08401 (GPL-2.0; installed separately, see `tools/pnlcalib/README.md`). Player and ball detection: **RF-DETR** (Roboflow, Apache-2.0).
 - Built with kloppy, mplsoccer, numpy, scipy, pandas, matplotlib, Streamlit and the OpenAI-compatible APIs of Google Gemini, Groq and OpenRouter.
 
 ## License
 
-- **Code:** [MIT](LICENSE), except `tools/pnlcalib/run_pnlcalib.py`, a separate program under GPL-2.0-or-later because it imports PnLCalib (our code only runs it as a subprocess).
+- **Code:** [MIT](LICENSE).
 - **Data:** the tracking-derived files in `clips/` (positions, summaries, videos) come from the Sportec Open DFL dataset and remain under **CC-BY 4.0**. If you reuse them, credit Bassek et al. (2025) as above.
 
 ## Authors
@@ -205,6 +186,6 @@ tests/       73 tests + 32 video tests
 Co-built by two brothers:
 
 - **Rohit** ([@Rohit-0612](https://github.com/Rohit-0612)): data pipeline, orientation and validation, geometry and formation detection, visualisation (Phases 1–4).
-- **Mohit** ([@Mohitoo6](https://github.com/Mohitoo6)): AI explanation layer (facts summary, prompts, fallbacks, caching, grounding and repair), evaluation, Streamlit app (Phases 5–6); video-to-tracking from drone and TV footage (Phases 7–8).
+- **Mohit** ([@Mohitoo6](https://github.com/Mohitoo6)): AI explanation layer (facts summary, prompts, fallbacks, caching, grounding and repair), evaluation, Streamlit app (Phases 5–6); video-to-tracking from drone footage (Phase 7) and the TV-footage experiment (Phase 8).
 
 Developed with Claude Code as a pair programmer; every decision and its evidence is recorded in `DECISIONS.md`.

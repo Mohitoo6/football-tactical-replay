@@ -195,3 +195,25 @@ def outline_ratio_error(corners: np.ndarray, length_m: float = PITCH_LENGTH_M, w
     side_1, side_2 = (sides[0] + sides[2]) / 2, (sides[1] + sides[3]) / 2  # mean of opposite sides
     ratio = max(side_1, side_2) / max(min(side_1, side_2), 1e-6)
     return float(abs(ratio / (length_m / width_m) - 1))
+
+
+def pitch_line_points(step_m: float = 0.25) -> list[np.ndarray]:
+    """The painted lines as dense point lists in pitch metres (centre origin, x along the length)."""
+    half_l, half_w = PITCH_LENGTH_M / 2, PITCH_WIDTH_M / 2
+    segments = [((-half_l, -half_w), (half_l, -half_w)), ((-half_l, half_w), (half_l, half_w)),
+                ((-half_l, -half_w), (-half_l, half_w)), ((half_l, -half_w), (half_l, half_w)),
+                ((0, -half_w), (0, half_w))]
+    for side in (-1, 1):  # penalty and goal areas
+        goal_x = side * half_l
+        for depth, half_width in ((16.5, 20.16), (5.5, 9.16)):
+            box_x = goal_x - side * depth
+            segments += [((goal_x, -half_width), (box_x, -half_width)), ((box_x, -half_width), (box_x, half_width)),
+                         ((box_x, half_width), (goal_x, half_width))]
+    lines = [np.linspace(a, b, int(np.hypot(b[0] - a[0], b[1] - a[1]) / step_m) + 2) for a, b in segments]
+    angle = np.linspace(0, 2 * np.pi, 400)
+    circle = np.column_stack([9.15 * np.cos(angle), 9.15 * np.sin(angle)])
+    lines.append(circle)
+    for side in (-1, 1):  # penalty arcs: the part of the circle around the spot outside the box
+        arc = circle + [side * (half_l - 11), 0]
+        lines.append(arc[side * arc[:, 0] < half_l - 16.5])
+    return lines

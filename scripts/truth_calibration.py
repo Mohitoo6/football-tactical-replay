@@ -26,11 +26,10 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from tactics.broadcast.calibrate import pitch_line_points
 from tactics.video.calibration import PITCH_LENGTH_M, PITCH_WIDTH_M, PitchCalibration
 from tactics.video.detect import BackgroundDetector, Stabilizer, read_frames
 from tactics.video.pipeline import BACKGROUND_SAMPLES, video_info
-from tactics.video.pitch_lines import auto_calibrate, line_pixels
+from tactics.video.pitch_lines import auto_calibrate, line_pixels, pitch_line_points
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "raw" / "soccertrack"

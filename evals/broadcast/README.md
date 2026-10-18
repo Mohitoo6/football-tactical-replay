@@ -1,5 +1,7 @@
 # Broadcast video → tracking: first evaluation (Phase 8)
 
+> The code for this experiment lives on the branch `broadcast-experiment` (DECISIONS.md, D31). These notes record what it measured.
+
 **No ground truth yet.** These numbers come from the pipeline's own checks and from looking at the output, not from true player positions. A ground-truth evaluation on SoccerNet-GSR is still to do (DECISIONS.md, D28). The clips are local screen recordings of TV footage, so they are not in the repository.
 
 ## Which cameras work

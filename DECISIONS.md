@@ -658,3 +658,24 @@ Entries marked *(pending spike)* still need evidence from a test run.
     - 16:00 was accepted at 80.0% found.
     - 11:00 was refused (37 blobs per frame, limit 30), although it reached 96.7% found and 0.27 m.
   - Both are next to investigate.
+
+## D31. Keep `main` focused on drone footage; the TV-broadcast experiment moves to a branch
+*2026-10-18 · branch `broadcast-experiment`*
+
+- **Decision:** remove the broadcast pipeline from `main` and keep it, complete, on the branch `broadcast-experiment`. That covers:
+  - `src/tactics/broadcast/`, the on-video overlay;
+  - the PnLCalib tool setup;
+  - the hand-label tool and its evaluation script;
+  - its tests;
+  - the broadcast mode of `process_video.py`.
+
+  The pitch-line model it shared moved to `video/pitch_lines.pitch_line_points`.
+- **Why:**
+  - The drone pipeline is the product, measured on 20 segments (D30).
+  - The broadcast path works only on the main camera of professional stadiums. It confirms the ball in only ~20% of frames, and free footage to test it on does not exist.
+  - Keeping it on `main` meant a GPL tool to install, ~1.4 GB of models, extra code to explain, and a weaker story.
+- **Kept on `main`:**
+  - the partial-view support in the facts and prompt (inactive for drone clips, whose facts are unchanged);
+  - `geometry/pressure.py`;
+  - D28–D29 and `evals/broadcast/`, as the record of what was tried and measured.
+- **Alternative:** delete it outright. That would lose a measured experiment that is useful to show in interviews ("what we tried, how we measured it, why we stopped").
