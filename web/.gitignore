@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# Mixamo files may not be redistributed: keep them local
+assets-local/
+public/assets-local/
+capture-frames/
