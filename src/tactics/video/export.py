@@ -24,7 +24,7 @@ def shirt_names(lab_by_team: pd.DataFrame) -> dict[str, str]:
 
 
 def tracks_to_clip(tracks: pd.DataFrame, teams: pd.Series, ball: pd.DataFrame, fps: float, clip_id: str,
-                   title: str, start_s: float, min_track_frames: int = 30) -> Clip:
+                   title: str, start_s: float, min_track_frames: int = 30, view_rotation: int = 0) -> Clip:
     """Build a Clip from tracks (frame, track_id, x_m, y_m, b, g, r) and a followed ball (frame, x_m, y_m).
 
     - Only the two teams' tracks of at least `min_track_frames` are kept, at most 11 per team per frame.
@@ -94,6 +94,8 @@ def tracks_to_clip(tracks: pd.DataFrame, teams: pd.Series, ball: pd.DataFrame, f
         "end_clock": match_clock(1, end_s),
         "frame_rate": fps,
         "rotated": rotated,  # positions were turned 180 degrees from the video's pitch coordinates
+        # turn the drawn pitch by this much (degrees, counter-clockwise) to see it as the video shows it
+        "video_rotation": (view_rotation + (180 if rotated else 0)) % 360,
         "direction_known": bool(np.isfinite(home_keeper_x)),  # which goal each team attacks comes from its keeper
         "teams": {side[t]: {"name": f"Team {t} ({shades[t]} shirts)", "formation": None}
                   for t in ("A", "B")},

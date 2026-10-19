@@ -139,6 +139,21 @@ def test_auto_calibration_finds_the_outline_not_the_text():
     np.testing.assert_allclose(np.abs(centre), [[0, 0]], atol=0.5)  # the centre spot maps to (0, 0)
 
 
+def test_auto_calibration_is_never_mirrored():
+    """Seen from above, the pitch keeps its handedness: image rows go down while pitch y goes up, for any view."""
+    from tactics.video.pitch_lines import auto_calibrate, view_rotation
+
+    image, _ = drawn_pitch()
+    for view in (image, cv2.flip(image, 1), cv2.flip(image, 0), cv2.rotate(image, cv2.ROTATE_180)):
+        calibration = auto_calibrate(view)
+        h, w = view.shape[:2]
+        centre = np.array([[w / 2, h / 2]])
+        right = calibration.to_pitch(centre + [10, 0]) - calibration.to_pitch(centre)
+        down = calibration.to_pitch(centre + [0, 10]) - calibration.to_pitch(centre)
+        assert np.cross(right[0], down[0]) < 0          # a right-handed view: not a mirror image
+        assert view_rotation(calibration) in (0, 90, 180, 270)
+
+
 def test_auto_calibration_when_touchlines_are_not_quite_parallel():
     """Lens or perspective tilts one touchline ~0.8 degrees; the other is broken into pieces (players on it)."""
     from tactics.video.pitch_lines import pitch_corners

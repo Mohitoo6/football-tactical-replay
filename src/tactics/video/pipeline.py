@@ -27,7 +27,7 @@ from tactics.video.ball import follow_ball_both_ways, is_white
 from tactics.video.calibration import PITCH_LENGTH_M, PITCH_WIDTH_M, PitchCalibration
 from tactics.video.detect import BackgroundDetector, Stabilizer, pitch_mask, read_frames
 from tactics.video.export import tracks_to_clip
-from tactics.video.pitch_lines import auto_calibrate, outline_ratio_error, pitch_corners
+from tactics.video.pitch_lines import auto_calibrate, outline_ratio_error, pitch_corners, view_rotation
 from tactics.video.track import PointTracker, assign_teams, fix_goalkeepers, officials, stitch_tracks, track_points
 
 BACKGROUND_SAMPLES = 60
@@ -195,7 +195,8 @@ def process_video(path: Path, clip_id: str, title: str, length_m: float = PITCH_
     tracks, teams, ball = track_everything(detections)
     fps = detections.fps
 
-    clip = tracks_to_clip(tracks, teams, ball, fps, clip_id, title, start_s=start_s, min_track_frames=round(fps))
+    clip = tracks_to_clip(tracks, teams, ball, fps, clip_id, title, start_s=start_s, min_track_frames=round(fps),
+                          view_rotation=view_rotation(detections.calibration))
     visible = float(clip.ball["alive"].mean())
     report.add("ball visible", visible >= MIN_BALL_VISIBLE, f"{visible:.0%} of frames", f">= {MIN_BALL_VISIBLE:.0%}",
                blocking=False)

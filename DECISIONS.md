@@ -722,3 +722,28 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Jobs live in one process's memory.
   - Provider uploads are tested through kloppy on open data, not through the API with real files.
   - A free deployment would serve the tracking-data path only.
+
+## D33. Drone clips: never mirrored, and the original video plays under the 2D pitch
+*2026-10-19 · `src/tactics/video/pitch_lines.py`, `src/tactics/video/export.py`, `src/tactics/service.py`, `src/tactics/api.py`, `web/src/app/Replay.tsx`, `scripts/fix_drone_orientation.py`, `scripts/add_source_video.py`*
+
+- **Bug found:** while building the "original video under the replay" view, the dots did not sit on the players.
+  - The pitch outline alone does not say which corner is which. The old corner assignment could give the **mirror image** of the real pitch, depending on which corner `pitch_corners` returned first.
+  - The evaluation hid this: `scoring.py` scores against the truth under the best of the four pitch symmetries, so recall and error were unaffected.
+  - For a user, a mirror swaps left and right: in the map, and in the facts the AI coach reads ("attacking third, left" became "right").
+  - Measured on the four drone clips we had: three of them were mirrored.
+- **Fix:**
+  - **Calibration:** a camera looking down never sees the pitch mirrored. Pitch y points up (as every clip is drawn) while image rows go down, so the pitch corners and their image positions must wind opposite ways (shoelace sign). If they don't, the pitch's y is flipped. The 180° ambiguity (which end is which) stays; it is still resolved by where the keepers stand.
+  - **Test:** a drawn pitch, as is and flipped or turned, never calibrates to a mirror image.
+  - **Existing clips:** `scripts/fix_drone_orientation.py` places a clip's positions on a few video frames in each of the four symmetries and keeps the one that lands on the moving players. The right one scores 0.97–1.0, the others ~0.2. Mirrored clips were reflected, their facts rebuilt, and the two bundled drone explanations regenerated from the corrected facts (both still pass the grounding check).
+- **Original video beside the replay:**
+  - **Kept, not deleted:** a drone upload now keeps its video next to the clip, re-encoded for browsers with ffmpeg (H.264, at most 1920 px wide, no sound, ~3.5 MB for 30 s), served at `/api/clips/{id}/source` with range requests so it can be seeked.
+  - **Bundled clips:** `scripts/add_source_video.py` attaches the video to the bundled clips (SoccerTrack, LGPL-3.0).
+  - **One clock:** in the replay, the video sits under the pitch. While it plays, the video is the clock and the pitch follows it, so the two cannot drift (measured gap ≤ 0.06 s); seeks, speed and the coach's clickable clocks move both.
+  - **Same orientation:** `meta.video_rotation` records how the video shows the pitch, so the map can be turned to match it.
+- **Alternatives:**
+  - Burn the dots into the video: no interactivity, and a second render per upload.
+  - Sync two independent clocks: drifts and stutters when the video buffers.
+  - Keep the original upload as is: 4K files of hundreds of MB, and not every codec plays in a browser.
+- **Limits:**
+  - Without ffmpeg the clip still works, just without the video.
+  - A video turned 90° (portrait) keeps the usual landscape map, with a note.

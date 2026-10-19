@@ -12,7 +12,8 @@ Steps, on an image of the empty pitch (the median background):
 
 Limits: assumes a near top-down view where the whole pitch outline is visible,
 and a known pitch size. Lines alone cannot tell which goal is which, so the
-result is correct up to the pitch's mirror symmetries.
+result is correct up to the pitch's symmetries: which end is which is not known (a 180-degree turn, fixed later from
+where the keepers stand), but the view is never mirrored (see `auto_calibrate`).
 """
 
 from dataclasses import dataclass
@@ -183,10 +184,28 @@ def auto_calibrate(image: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m:
     side_01 = np.linalg.norm(corners[1] - corners[0])
     side_12 = np.linalg.norm(corners[2] - corners[1])
     if side_01 >= side_12:  # corners 0 -> 1 run along a touchline
-        pitch = [[0, 0], [length_m, 0], [length_m, width_m], [0, width_m]]
+        pitch = np.array([[0, 0], [length_m, 0], [length_m, width_m], [0, width_m]], dtype=float)
     else:
-        pitch = [[0, 0], [0, width_m], [length_m, width_m], [length_m, 0]]
-    return PitchCalibration(np.array(pitch, dtype=float), corners)
+        pitch = np.array([[0, 0], [0, width_m], [length_m, width_m], [length_m, 0]], dtype=float)
+    # A camera looking down never sees the pitch mirrored. Pitch y points "up" (as every clip is drawn) while image
+    # rows go down, so the corners must wind opposite ways in the image and on the pitch; if not, flip the pitch's y.
+    if np.sign(signed_area(corners)) == np.sign(signed_area(pitch)):
+        pitch[:, 1] = width_m - pitch[:, 1]
+    return PitchCalibration(pitch, corners)
+
+
+def signed_area(points: np.ndarray) -> float:
+    """Shoelace area of a polygon; its sign says which way round the points go."""
+    x, y = np.asarray(points, dtype=float).T
+    return 0.5 * float(np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y))
+
+
+def view_rotation(calibration) -> int:
+    """How far (degrees, counter-clockwise, a multiple of 90) the video shows the pitch turned: the direction of the
+    pitch's +x axis in the image. 0 = +x points right, as a clip is drawn; 180 = the video shows it the other way round."""
+    p0, p1 = calibration.from_pitch(np.array([[0.0, 0.0], [10.0, 0.0]]))
+    angle = np.degrees(np.arctan2(-(p1[1] - p0[1]), p1[0] - p0[0]))
+    return int(round(angle / 90.0)) * 90 % 360
 
 
 def outline_ratio_error(corners: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m: float = PITCH_WIDTH_M) -> float:

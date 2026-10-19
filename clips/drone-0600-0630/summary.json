@@ -93,7 +93,7 @@
  "timeline": [
   {
    "clock": "10:00",
-   "ball_zone": "defensive third, left",
+   "ball_zone": "defensive third, right",
    "Team B (lighter shirts)": {
     "width_m": 40,
     "depth_m": 39,
@@ -111,7 +111,7 @@
   },
   {
    "clock": "10:02",
-   "ball_zone": "defensive third, left",
+   "ball_zone": "defensive third, right",
    "Team B (lighter shirts)": {
     "width_m": 35,
     "depth_m": 32,
@@ -165,7 +165,7 @@
   },
   {
    "clock": "10:08",
-   "ball_zone": "middle third, right",
+   "ball_zone": "middle third, left",
    "Team B (lighter shirts)": {
     "width_m": 41,
     "depth_m": 30,
@@ -183,7 +183,7 @@
   },
   {
    "clock": "10:10",
-   "ball_zone": "middle third, right",
+   "ball_zone": "middle third, left",
    "Team B (lighter shirts)": {
     "width_m": 45,
     "depth_m": 37,
@@ -201,7 +201,7 @@
   },
   {
    "clock": "10:12",
-   "ball_zone": "middle third, right",
+   "ball_zone": "middle third, left",
    "Team B (lighter shirts)": {
     "width_m": 49,
     "depth_m": 37,
@@ -219,7 +219,7 @@
   },
   {
    "clock": "10:14",
-   "ball_zone": "defensive third, right",
+   "ball_zone": "defensive third, left",
    "Team B (lighter shirts)": {
     "width_m": 53,
     "depth_m": 39,
@@ -237,7 +237,7 @@
   },
   {
    "clock": "10:16",
-   "ball_zone": "defensive third, right",
+   "ball_zone": "defensive third, left",
    "Team B (lighter shirts)": {
     "width_m": 55,
     "depth_m": 39,
@@ -273,7 +273,7 @@
   },
   {
    "clock": "10:20",
-   "ball_zone": "defensive third, left",
+   "ball_zone": "defensive third, right",
    "Team B (lighter shirts)": {
     "width_m": 56,
     "depth_m": 28,
@@ -291,7 +291,7 @@
   },
   {
    "clock": "10:22",
-   "ball_zone": "middle third, left",
+   "ball_zone": "middle third, right",
    "Team B (lighter shirts)": {
     "width_m": 55,
     "depth_m": 35,
@@ -309,7 +309,7 @@
   },
   {
    "clock": "10:24",
-   "ball_zone": "attacking third, left",
+   "ball_zone": "attacking third, right",
    "Team B (lighter shirts)": {
     "width_m": 52,
     "depth_m": 40,
@@ -327,7 +327,7 @@
   },
   {
    "clock": "10:26",
-   "ball_zone": "attacking third, left",
+   "ball_zone": "attacking third, right",
    "Team B (lighter shirts)": {
     "width_m": 51,
     "depth_m": 35,
@@ -345,7 +345,7 @@
   },
   {
    "clock": "10:28",
-   "ball_zone": "middle third, left",
+   "ball_zone": "middle third, right",
    "Team B (lighter shirts)": {
     "width_m": 50,
     "depth_m": 32,

@@ -26,5 +26,6 @@
   "ball_hidden_text": "Ball not visible",
   "coordinates": "metres, origin at pitch centre; from drone video via automatic calibration",
   "source": "Scott, A., Uchida, I., Onishi, M., Kameda, Y., Fukui, K. & Fujii, K. SoccerTrack: A Dataset and Tracking Algorithm for Soccer with Fish-eye and Drone Videos. CVPR Workshops (2022). Data: LGPL-3.0.",
-  "credit": "Video & ground truth: SoccerTrack (Scott et al. 2022), LGPL-3.0 · positions computed by this project"
+  "credit": "Video & ground truth: SoccerTrack (Scott et al. 2022), LGPL-3.0 · positions computed by this project",
+  "video_rotation": 180
 }
