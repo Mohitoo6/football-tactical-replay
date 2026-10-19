@@ -7,12 +7,6 @@ import './intro.css';
 
 const LOGO_TIME = 2600;             // ms the logo stays before the site appears
 
-export function shouldPlayIntro(): boolean {
-  try {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    return sessionStorage.getItem('intro-seen') !== '1';
-  } catch { return true; }
-}
 
 export default function Intro({ onDone }: { onDone: () => void }) {
   const [stage, setStage] = useState<'video' | 'logo' | 'out'>('video');

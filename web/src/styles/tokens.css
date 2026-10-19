@@ -1,34 +1,40 @@
-/* Design tokens: one place for colour, type, space and motion. */
+/* Design tokens: one place for colour, type, space and motion. Theme: "Pitch". */
 :root {
-  --black: #000;
-  --surface-1: #0a0d10;
-  --surface-2: #11161b;
-  --surface-3: #182027;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  --bg: #0b1f14;          /* deep pitch green */
+  --surface-1: #10281b;
+  --surface-2: #163423;
+  --surface-3: #1d4230;
+  --grass: #1f4a2e;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.24);
+  --glass: rgba(255, 255, 255, 0.11);
+  --glass-strong: rgba(255, 255, 255, 0.18);
 
-  --text: #f2f5f7;
-  --text-2: #9da9b5;
-  --text-3: #6f7b87;
+  --text: #ffffff;
+  --text-2: rgba(240, 244, 236, 0.8);
+  --text-3: rgba(240, 244, 236, 0.58);
+  --cream: #f3f1e8;
+  --ink: #0b1f14;         /* dark text on white pills */
 
   --mint: #7ff0c6;
-  --mint-soft: rgba(127, 240, 198, 0.14);
-  --team-a: #4cc3ff;   /* the focus team */
+  --mint-soft: rgba(127, 240, 198, 0.16);
+  --team-a: #3db4ff;      /* the focus team */
   --team-b: #ff8a3d;
   --ball: #ffe14d;
   --warn: #ffe14d;
   --fail: #ff6b6b;
 
-  --font-display: 'Manrope', system-ui, sans-serif;
-  --font-brand: 'Barlow Condensed', 'Manrope', sans-serif;
+  --font-display: 'Cabin', 'Manrope', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-brand: 'Cabin', 'Manrope', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --step--1: clamp(0.8rem, 0.78rem + 0.1vw, 0.875rem);
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
-  --step-1: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
+  --step-1: clamp(1.15rem, 1.05rem + 0.5vw, 1.45rem);
   --step-2: clamp(1.6rem, 1.3rem + 1.4vw, 2.6rem);
   --step-3: clamp(2.2rem, 1.6rem + 3vw, 4.4rem);
-  --step-4: clamp(2.8rem, 1.6rem + 6vw, 7.5rem);
+  --step-4: clamp(2.8rem, 1.4rem + 5.2vw, 6.2rem);
 
   --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px;
   --space-6: 48px; --space-8: 64px; --space-12: 96px; --space-16: 128px;

@@ -4,7 +4,7 @@
 .lr-outline { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lr-draw 0.75s var(--ease-in-out) 0.2s forwards; }
 .lr-inner { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lr-draw 0.6s var(--ease-in-out) 0.5s forwards; }
 .lr-title-mask { overflow: hidden; padding: 0 0.2em; }
-.lr-title { margin: 0; font-family: var(--font-brand); font-weight: 700; font-size: clamp(40px, 6.4vw, 84px); line-height: 1.05; letter-spacing: 0.16em; color: var(--text); animation: lr-rise 0.9s var(--ease-out) 0.7s both; }
+.lr-title { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: clamp(40px, 6.4vw, 84px); line-height: 1.05; letter-spacing: 0.16em; color: var(--text); animation: lr-rise 0.9s var(--ease-out) 0.7s both; }
 .lr-tagline { margin: 0; color: var(--text-2); font-size: clamp(16px, 1.5vw, 20px); animation: lr-fade 0.7s var(--ease-out) 1.25s both; }
 @keyframes lr-pop { 0% { transform: scale(0); } 65% { transform: scale(1.35); } 100% { transform: scale(1); } }
 @keyframes lr-draw { to { stroke-dashoffset: 0; } }

@@ -6,7 +6,7 @@ import { duration, hull, sampleAt, type ClipPayload, type Side } from '../lib/cl
 export interface Layers { players: boolean; shapes: boolean; lines: boolean; ball: boolean }
 const ALL: Layers = { players: true, shapes: true, lines: false, ball: true };
 
-const COLOURS: Record<'focus' | 'other', string> = { focus: '#4cc3ff', other: '#ff8a3d' };
+const COLOURS: Record<'focus' | 'other', string> = { focus: '#3db4ff', other: '#ff8a3d' };
 
 interface Props {
   clip: ClipPayload | null;
@@ -16,9 +16,11 @@ interface Props {
   time?: number;
   className?: string;
   label?: string;
+  /** 'grass': a mown pitch with white lines (tactics-board look); 'dark': lines only. */
+  theme?: 'grass' | 'dark';
 }
 
-export default function MiniReplay({ clip, layers, speed = 1, time, className, label }: Props) {
+export default function MiniReplay({ clip, layers, speed = 1, time, className, label, theme = 'dark' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const opts = useRef<Layers>({ ...ALL, ...layers });
   const controlled = useRef<number | undefined>(time);
@@ -57,8 +59,17 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
       // layers fade in and out smoothly instead of popping
       for (const k of Object.keys(fade) as (keyof Layers)[]) fade[k] += ((opts.current[k] ? 1 : 0) - fade[k]) * 0.08;
 
+      // grass: the whole canvas in dark turf, the pitch in mown stripes (12 bands along its length)
+      if (theme === 'grass') {
+        ctx.fillStyle = '#1b4329'; ctx.fillRect(0, 0, w, h);
+        for (let i = 0; i < 12; i++) {
+          ctx.fillStyle = i % 2 ? '#2a6a3c' : '#2f7543';
+          ctx.fillRect(X(-52.5 + i * 8.75), Y(34), 8.75 * scale + 0.5, 68 * scale);
+        }
+      }
       // pitch markings
-      ctx.strokeStyle = 'rgba(242,245,247,0.16)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = theme === 'grass' ? 'rgba(255,255,255,0.78)' : 'rgba(242,245,247,0.16)';
+      ctx.lineWidth = theme === 'grass' ? 1.4 : 1;
       ctx.strokeRect(X(-52.5), Y(34), 105 * scale, 68 * scale);
       ctx.beginPath(); ctx.moveTo(X(0), Y(34)); ctx.lineTo(X(0), Y(-34)); ctx.stroke();
       ctx.beginPath(); ctx.arc(X(0), Y(0), 9.15 * scale, 0, Math.PI * 2); ctx.stroke();
@@ -80,18 +91,18 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
           ctx.beginPath();
           poly.forEach(([x, y], i) => (i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))));
           ctx.closePath();
-          ctx.globalAlpha = 0.14 * fade.shapes; ctx.fillStyle = colour(team); ctx.fill();
+          ctx.globalAlpha = (theme === 'grass' ? 0.22 : 0.14) * fade.shapes; ctx.fillStyle = colour(team); ctx.fill();
           ctx.globalAlpha = 0.85 * fade.shapes; ctx.strokeStyle = colour(team); ctx.lineWidth = 1.5; ctx.stroke();
           if (fade.lines > 0.01) {
             // width and depth of the focus team's shape
             if (team === focus) {
               const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
               const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-              ctx.globalAlpha = 0.9 * fade.lines; ctx.setLineDash([4, 5]); ctx.strokeStyle = '#7ff0c6'; ctx.lineWidth = 1.2;
+              ctx.globalAlpha = 0.95 * fade.lines; ctx.setLineDash([4, 5]); ctx.strokeStyle = theme === 'grass' ? '#ffffff' : '#7ff0c6'; ctx.lineWidth = 1.4;
               ctx.beginPath(); ctx.moveTo(X(x0), Y(y0) + 14); ctx.lineTo(X(x1), Y(y0) + 14); ctx.stroke();
               ctx.beginPath(); ctx.moveTo(X(x1) + 14, Y(y0)); ctx.lineTo(X(x1) + 14, Y(y1)); ctx.stroke();
               ctx.setLineDash([]);
-              ctx.fillStyle = '#7ff0c6'; ctx.font = '600 11px JetBrains Mono, monospace';
+              ctx.fillStyle = theme === 'grass' ? '#ffffff' : '#7ff0c6'; ctx.font = '600 12px JetBrains Mono, monospace';
               ctx.fillText(`width ${(y1 - y0).toFixed(0)} m`, X(x1) + 20, Y((y0 + y1) / 2));
               ctx.fillText(`depth ${(x1 - x0).toFixed(0)} m`, X((x0 + x1) / 2) - 30, Y(y0) + 28);
             }
@@ -106,10 +117,10 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
       for (const p of s.players) {
         ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r, 0, Math.PI * 2);
         ctx.fillStyle = colour(p.team);
-        ctx.shadowColor = colour(p.team); ctx.shadowBlur = 10;
+        ctx.shadowColor = theme === 'grass' ? 'rgba(0,0,0,0.45)' : colour(p.team); ctx.shadowBlur = theme === 'grass' ? 4 : 10;
         ctx.fill();
         ctx.shadowBlur = 0;
-        if (p.keeper) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#f2f5f7'; ctx.stroke(); }
+        if (theme === 'grass' || p.keeper) { ctx.lineWidth = p.keeper ? 2 : 1.5; ctx.strokeStyle = p.keeper ? '#ffe14d' : '#ffffff'; ctx.stroke(); }
       }
       ctx.globalAlpha = 1;
 
@@ -117,13 +128,14 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
       if (s.ball && fade.ball > 0.01) {
         ctx.globalAlpha = fade.ball;
         ctx.beginPath(); ctx.arc(X(s.ball[0]), Y(s.ball[1]), r * 0.7, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffe14d'; ctx.shadowColor = '#ffe14d'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.fillStyle = theme === 'grass' ? '#ffffff' : '#ffe14d'; ctx.shadowColor = theme === 'grass' ? 'rgba(0,0,0,0.6)' : '#ffe14d'; ctx.shadowBlur = theme === 'grass' ? 6 : 16; ctx.fill(); ctx.shadowBlur = 0;
+        if (theme === 'grass') { ctx.lineWidth = 1.2; ctx.strokeStyle = '#0b1f14'; ctx.stroke(); }
         ctx.globalAlpha = 1;
       }
     };
     raf = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(raf); io.disconnect(); start = 0; };
-  }, [clip, speed]);
+  }, [clip, speed, theme]);
 
   return <canvas ref={canvasRef} className={className} role="img" aria-label={label ?? 'Live replay of a real football clip'} />;
 }
