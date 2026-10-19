@@ -40,6 +40,8 @@ def test_clip_payload_has_frames_shapes_and_facts(client):
     assert payload["frame_rate"] == 5.0 and len(frame["players"]) == 22
     assert {"hull", "width_m", "area_m2", "back_line_m"} <= set(frame["shapes"]["home"])
     assert payload["facts"]["timeline"] and payload["explanation"]["text"]
+    # the cached explanation is re-checked against the facts without calling an LLM
+    assert payload["grounding"]["passed"] and payload["grounding"]["numbers_checked"] > 10
 
 
 def test_unknown_or_unsafe_clip_ids_are_404(client):

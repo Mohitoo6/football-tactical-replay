@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 
+from tactics.ai.grounding import check_grounding
 from tactics.data.clips import Clip, load_clip, save_clip
 from tactics.data.report import QualityReport
 from tactics.data.upload import (check_input, from_kloppy, from_template, load_provider, read_table,
@@ -99,13 +100,17 @@ def clip_payload(clip_id: str, step: int = 1) -> dict:
             "shapes": shapes,
         })
     summary_path, explanation_path = folder / "summary.json", folder / "explanation.json"
+    facts = json.loads(summary_path.read_text()) if summary_path.exists() else None
+    explained = json.loads(explanation_path.read_text()) if explanation_path.exists() else None
     return {
         "meta": meta,
         "pitch": {"length_m": 105.0, "width_m": 68.0, "origin": "centre"},
         "frame_rate": meta["frame_rate"] / max(step, 1),
         "frames": frames,
-        "facts": json.loads(summary_path.read_text()) if summary_path.exists() else None,
-        "explanation": json.loads(explanation_path.read_text()) if explanation_path.exists() else None,
+        "facts": facts,
+        "explanation": explained,
+        # the cached explanation checked against the facts again (pure Python, no LLM call)
+        "grounding": grounding_json(check_grounding(explained["text"], facts)) if facts and explained else None,
         "has_video": (folder / "video.mp4").exists(),
     }
 
@@ -115,7 +120,12 @@ def explanation(clip_id: str, providers=None, complete_fn=None) -> dict:
     from tactics.ai.coach import coach_explanation
 
     result, report, _ = coach_explanation(clip_folder(clip_id), providers=providers, complete_fn=complete_fn)
-    return {**result, "grounding": {"passed": report.passed, "problems": report.problems}}
+    return {**result, "grounding": grounding_json(report)}
+
+
+def grounding_json(report) -> dict:
+    """A grounding report as JSON: did every number, clock and formation come from the facts?"""
+    return {"passed": report.passed, "numbers_checked": report.numbers_checked, "problems": report.problems}
 
 
 # --- creating clips ----------------------------------------------------------------------------
