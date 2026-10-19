@@ -14,7 +14,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log('[page]', m.type(), m.text()); });
 page.on('pageerror', (e) => console.log('[page error]', e.message));
-await page.goto(`http://localhost:5173/?t=${times[0]}`, { waitUntil: 'networkidle0' });
+await page.goto(`http://localhost:5173/?intro=1&t=${times[0]}`, { waitUntil: 'networkidle0' });
 await page.waitForFunction(() => typeof window.__setTime === 'function', { timeout: 20000 });
 const frames = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 for (const t of times) {
