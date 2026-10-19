@@ -3,8 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { duration, hull, sampleAt, type ClipPayload, type Side } from '../lib/clip';
 
-export interface Layers { players: boolean; shapes: boolean; lines: boolean; ball: boolean }
-const ALL: Layers = { players: true, shapes: true, lines: false, ball: true };
+export interface Layers { players: boolean; shapes: boolean; lines: boolean; ball: boolean; labels: boolean; trail: boolean }
+const ALL: Layers = { players: true, shapes: true, lines: false, ball: true, labels: false, trail: false };
 
 const COLOURS: Record<'focus' | 'other', string> = { focus: '#3db4ff', other: '#ff8a3d' };
 
@@ -14,18 +14,22 @@ interface Props {
   speed?: number;
   /** Controlled time in seconds; when given, the replay does not run its own clock. */
   time?: number;
+  /** Or a function read on every drawn frame (smooth playback driven by the parent). */
+  timeSource?: () => number;
   className?: string;
   label?: string;
   /** 'grass': a mown pitch with white lines (tactics-board look); 'dark': lines only. */
   theme?: 'grass' | 'dark';
 }
 
-export default function MiniReplay({ clip, layers, speed = 1, time, className, label, theme = 'dark' }: Props) {
+export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, className, label, theme = 'dark' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const opts = useRef<Layers>({ ...ALL, ...layers });
   const controlled = useRef<number | undefined>(time);
+  const source = useRef(timeSource);
   opts.current = { ...ALL, ...layers };
   controlled.current = time;
+  source.current = timeSource;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -34,7 +38,7 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
     const total = duration(clip);
     const focus: Side = clip.meta.focus_team;
     let raf = 0, start = performance.now(), visible = true;
-    const fade = { shapes: 0, lines: 0, ball: 0, players: 0 };
+    const fade = { shapes: 0, lines: 0, ball: 0, players: 0, labels: 0, trail: 0 };
 
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; });
     io.observe(canvas);
@@ -78,7 +82,7 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
         ctx.strokeRect(s < 0 ? X(-52.5) : X(52.5 - 5.5), Y(9.16), 5.5 * scale, 18.32 * scale);
       }
 
-      const t = controlled.current ?? (((now - start) / 1000) * speed) % total;
+      const t = source.current ? source.current() : controlled.current ?? (((now - start) / 1000) * speed) % total;
       const s = sampleAt(clip, t);
       const colour = (team: Side) => (team === focus ? COLOURS.focus : COLOURS.other);
 
@@ -111,8 +115,21 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
         }
       }
 
+      // the ball's path over the last 1.2 s
+      if (fade.trail > 0.01) {
+        ctx.lineCap = 'round';
+        for (let k = 0; k < 24; k++) {
+          const a = sampleAt(clip, t - 1.2 + k * 0.05), b = sampleAt(clip, t - 1.2 + (k + 1) * 0.05);
+          if (!a.ball || !b.ball || t - 1.2 + k * 0.05 < 0) continue;
+          ctx.globalAlpha = fade.trail * (k / 24) * 0.8;
+          ctx.strokeStyle = theme === 'grass' ? '#ffffff' : '#ffe14d'; ctx.lineWidth = 1 + (k / 24) * 2.5;
+          ctx.beginPath(); ctx.moveTo(X(a.ball[0]), Y(a.ball[1])); ctx.lineTo(X(b.ball[0]), Y(b.ball[1])); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
       // players
-      const r = Math.max(3.5, scale * 0.9);
+      const r = Math.max(3.5, scale * (opts.current.labels ? 1.15 : 0.9));
       ctx.globalAlpha = fade.players;
       for (const p of s.players) {
         ctx.beginPath(); ctx.arc(X(p.x), Y(p.y), r, 0, Math.PI * 2);
@@ -121,6 +138,12 @@ export default function MiniReplay({ clip, layers, speed = 1, time, className, l
         ctx.fill();
         ctx.shadowBlur = 0;
         if (theme === 'grass' || p.keeper) { ctx.lineWidth = p.keeper ? 2 : 1.5; ctx.strokeStyle = p.keeper ? '#ffe14d' : '#ffffff'; ctx.stroke(); }
+        if (fade.labels > 0.01 && p.number != null && r >= 5.5) {
+          ctx.globalAlpha = fade.players * fade.labels;
+          ctx.fillStyle = '#0b1f14'; ctx.font = `700 ${Math.max(8, Math.round(r * 1.1))}px Manrope, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(String(p.number), X(p.x), Y(p.y) + 0.5);
+          ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = fade.players;
+        }
       }
       ctx.globalAlpha = 1;
 

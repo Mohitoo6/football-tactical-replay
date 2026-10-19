@@ -11,13 +11,26 @@ export interface ClipMeta {
   goals?: { time_s: number; clock: string; team: Side; player: string }[];
   source?: string;
 }
+export interface TeamMetrics { width_m: number; depth_m: number; area_m2: number; back_line_m: number; players_behind_ball?: number }
+export interface Facts {
+  clip: { title: string; from_clock: string; to_clock: string; clip_seconds: number; seconds_ball_in_play: number };
+  teams: { name: string; role: string; players_on_pitch: number; official_formation: string | null; shape_in_clip: string }[];
+  goals: { clock: string; player: string; team: string }[];
+  ball_carriers: { clock: string; player: string; team: string }[];
+  /** every few seconds: the ball's zone and each team's metrics, keyed by team name */
+  timeline: ({ clock: string; ball_zone?: string } & Record<string, TeamMetrics | string | undefined>)[];
+  notable_changes: { team: string; metric: string; from: number; to: number; from_clock: string; to_clock: string }[];
+}
+export interface Grounding { passed: boolean; numbers_checked: number; problems: string[] }
+export interface Explanation { text: string; provider?: string; model?: string; prompt_version?: string; created_utc?: string; grounding?: Grounding }
 export interface ClipPayload {
-  meta: ClipMeta;
+  meta: ClipMeta & { data_kind?: string; teams: Record<Side, { name: string; formation?: string }> };
   pitch: { length_m: number; width_m: number };
   frame_rate: number;
   frames: ClipFrame[];
-  facts: unknown;
-  explanation: { text: string; provider?: string; model?: string } | null;
+  facts: Facts | null;
+  explanation: Explanation | null;
+  grounding?: Grounding | null;
   has_video: boolean;
 }
 

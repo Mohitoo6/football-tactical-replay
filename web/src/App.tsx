@@ -4,7 +4,9 @@ import { shouldPlayIntro } from './intro/shouldPlay';
 import Landing from './landing/Landing';
 // the intro and the app screens load only when needed, so the landing page starts faster
 const Intro = lazy(() => import('./intro/Intro'));
-const AppPlaceholder = lazy(() => import('./app/AppPlaceholder'));
+const Library = lazy(() => import('./app/Library'));
+const Replay = lazy(() => import('./app/Replay'));
+const Upload = lazy(() => import('./app/Upload'));
 
 export default function App() {
   // ?intro=1 forces the intro (for review), ?intro=0 skips it; otherwise it plays once per visit
@@ -16,7 +18,10 @@ export default function App() {
       <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/app/*" element={<AppPlaceholder />} />
+        <Route path="/app" element={<Library />} />
+        <Route path="/app/clip/:id" element={<Replay />} />
+        <Route path="/app/upload" element={<Upload />} />
+        <Route path="*" element={<Library />} />
       </Routes>
       </Suspense>
     </BrowserRouter>

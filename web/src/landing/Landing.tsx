@@ -55,7 +55,7 @@ function Hero({ clip }: { clip: ClipPayload | null }) {
             <a href="#how" className="btn btn-ghost">See how it works</a>
           </div>
           <ul className="proof hero-in" style={{ animationDelay: '0.65s' }}>
-            <li><strong>7</strong> real match clips</li>
+            <li><strong>6</strong> real match clips</li>
             <li><strong>DFL</strong> open tracking data</li>
             <li><strong>0</strong> invented numbers</li>
           </ul>
