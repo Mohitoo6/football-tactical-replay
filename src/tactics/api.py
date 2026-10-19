@@ -7,6 +7,7 @@ Endpoints:
     GET  /api/clips                       every clip (bundled and uploaded)
     GET  /api/clips/{id}?step=2           frames, players, ball, team shapes, facts and explanation
     GET  /api/clips/{id}/video            the rendered replay, if there is one
+    GET  /api/clips/{id}/source           the original video the clip was made from (drone clips), if kept
     POST /api/clips/{id}/explanation      the coach's explanation (cached; one LLM call on a miss)
     GET  /api/template, /api/template/example   the upload template and a full example file
     POST /api/uploads/tracking            our CSV/Excel template -> clip (or the reasons it was refused)
@@ -75,6 +76,17 @@ def clip_video(clip_id: str) -> FileResponse:
         raise HTTPException(404, f"no clip {clip_id!r}")
     if not video.exists():
         raise HTTPException(404, "this clip has no rendered video")
+    return FileResponse(video, media_type="video/mp4")
+
+
+@app.get("/api/clips/{clip_id}/source")
+def clip_source(clip_id: str) -> FileResponse:
+    try:
+        video = service.clip_folder(clip_id) / service.SOURCE_VIDEO
+    except service.ClipNotFound:
+        raise HTTPException(404, f"no clip {clip_id!r}")
+    if not video.exists():
+        raise HTTPException(404, "this clip has no original video")
     return FileResponse(video, media_type="video/mp4")
 
 

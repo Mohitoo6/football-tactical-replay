@@ -36,6 +36,9 @@ export default function Replay() {
   const [grounding, setGrounding] = useState<Grounding | null>(null);
   const [asking, setAsking] = useState<'idle' | 'busy' | string>('idle');
   const tRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [showVideo, setShowVideo] = useState(true);
+  const [likeVideo, setLikeVideo] = useState(true);   // draw the pitch the way the video shows it
 
   useEffect(() => {
     setClip(null); setError(null); tRef.current = 0; setNow(0);
@@ -54,6 +57,10 @@ export default function Replay() {
   const other: Side = focus === 'home' ? 'away' : 'home';
   const names = clip ? { home: clip.meta.teams.home.name, away: clip.meta.teams.away.name } : { home: '', away: '' };
   const series = useMemo(() => (clip ? metricSeries(clip) : null), [clip]);
+  // seconds into the original video at clip time 0 (drone clips number frames from the video's start)
+  const videoOffset = clip ? clip.frames[0].time_s - (clip.meta.start_s ?? clip.frames[0].time_s) : 0;
+  const hasVideo = !!clip?.has_source && showVideo;
+  const turned = hasVideo && likeVideo && clip?.meta.video_rotation === 180;
   const evts = useMemo(() => (clip ? clipEvents(clip) : []), [clip]);
 
   // the clock: advance while playing; the UI re-renders ~15 times a second, the pitch every frame
@@ -63,17 +70,30 @@ export default function Replay() {
     const loop = (ts: number) => {
       raf = requestAnimationFrame(loop);
       const dt = (ts - last) / 1000; last = ts;
+      const video = videoRef.current;
       if (playing) {
-        tRef.current += dt * speed;
+        // while the original video plays it is the clock, so the dots never drift from the footage
+        if (video && !video.paused && video.readyState >= 2) tRef.current = video.currentTime - videoOffset;
+        else if (!video) tRef.current += dt * speed;
         if (tRef.current >= total) { tRef.current = total; setPlaying(false); }
       }
       if (ts - lastUi > 66) { lastUi = ts; setNow(tRef.current); }
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [clip, playing, speed, total]);
+  }, [clip, playing, speed, total, videoOffset]);
 
-  const seek = useCallback((t: number) => { tRef.current = Math.max(0, Math.min(total, t)); setNow(tRef.current); }, [total]);
+  const seek = useCallback((t: number) => {
+    tRef.current = Math.max(0, Math.min(total, t)); setNow(tRef.current);
+    if (videoRef.current) videoRef.current.currentTime = videoOffset + tRef.current;
+  }, [total, videoOffset]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.playbackRate = speed;
+    if (playing) { video.currentTime = videoOffset + tRef.current; video.play().catch(() => {}); } else video.pause();
+  }, [playing, speed, hasVideo, videoOffset]);
   const seekClock = useCallback((clock: string) => { if (startClock != null) seek(clockSeconds(clock) - startClock); }, [seek, startClock]);
   const toggle = useCallback(() => {
     if (tRef.current >= total) seek(0);
@@ -143,7 +163,7 @@ export default function Replay() {
         <div className="replay-grid">
           <section className="stage" aria-label="Replay">
             <div className="pitch-wrap">
-              <MiniReplay clip={clip} theme="grass" layers={layers} timeSource={() => tRef.current} className="pitch-canvas" label={`Replay of ${clip.meta.title}`} />
+              <MiniReplay clip={clip} theme="grass" layers={layers} turned={turned} timeSource={() => tRef.current} className="pitch-canvas" label={`Replay of ${clip.meta.title}`} />
               <div className="layer-pills" role="group" aria-label="Overlays">
                 {LAYER_BUTTONS.map(([k, label]) => (
                   <button key={k} type="button" aria-pressed={!!layers[k]} className={`pill ${layers[k] ? 'is-on' : ''}`} onClick={() => setLayers({ ...layers, [k]: !layers[k] })}>{label}</button>
@@ -170,6 +190,30 @@ export default function Replay() {
                 {SPEEDS.map((s) => <button key={s} type="button" aria-pressed={speed === s} className={speed === s ? 'is-on' : ''} onClick={() => setSpeed(s)}>{s}×</button>)}
               </div>
             </div>
+            {clip.has_source && (
+              <section className={`source-card glass ${showVideo ? '' : 'is-closed'}`} aria-label="Original video">
+                <div className="source-head">
+                  <div>
+                    <p className="source-title">Original video</p>
+                    <p className="source-sub">Plays on the same clock as the pitch above: check any dot against the player under it.</p>
+                  </div>
+                  <div className="source-actions">
+                    {clip.meta.video_rotation === 180 && showVideo && (
+                      <button type="button" aria-pressed={likeVideo} className={`pill ${likeVideo ? 'is-on' : ''}`} onClick={() => setLikeVideo(!likeVideo)}>Turn the pitch like the video</button>
+                    )}
+                    {showVideo && <button type="button" className="pill" onClick={() => videoRef.current?.requestFullscreen?.().catch(() => {})}>Full screen</button>}
+                    <button type="button" className="pill" onClick={() => setShowVideo(!showVideo)}>{showVideo ? 'Hide video' : 'Show video'}</button>
+                  </div>
+                </div>
+                {showVideo && (
+                  <video ref={videoRef} className="source-video" src={`/api/clips/${encodeURIComponent(id)}/source`} muted playsInline preload="auto"
+                    onEnded={() => setPlaying(false)} onLoadedData={() => { if (videoRef.current) videoRef.current.currentTime = videoOffset + tRef.current; }} />
+                )}
+                {showVideo && clip.meta.video_rotation != null && clip.meta.video_rotation % 180 !== 0 && (
+                  <p className="source-sub">This video shows the pitch turned 90°; the pitch above keeps the usual landscape view.</p>
+                )}
+              </section>
+            )}
             <div className="below-stage">
               <p className="hint">Space to play or pause · ← → to step 2 s · click any time in the coach's text to jump there</p>
               <button type="button" className="link-btn" onClick={share}>{copied ? 'Link copied ✓' : 'Share this moment'}</button>

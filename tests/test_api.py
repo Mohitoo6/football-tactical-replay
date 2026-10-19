@@ -1,5 +1,6 @@
 """The HTTP API, end to end with FastAPI's test client: no network, a fake LLM, uploads in a temporary folder."""
 
+import shutil
 import time
 from pathlib import Path
 
@@ -87,4 +88,9 @@ def test_drone_video_upload_runs_as_a_job(client, tmp_path):
             break
         time.sleep(0.2)
     assert job["state"] == "done", job
-    assert client.get(f"/api/clips/{job['clip_id']}").json()["meta"]["title"] == "Synthetic drone"
+    payload = client.get(f"/api/clips/{job['clip_id']}").json()
+    assert payload["meta"]["title"] == "Synthetic drone"
+    if shutil.which("ffmpeg"):  # the original video is kept to play beside the replay, and can be seeked
+        assert payload["has_source"]
+        source = client.get(f"/api/clips/{job['clip_id']}/source", headers={"Range": "bytes=0-99"})
+        assert source.status_code == 206 and source.headers["content-type"] == "video/mp4"

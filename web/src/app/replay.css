@@ -121,3 +121,12 @@
   .scrub { order: 3; flex-basis: 100%; }
   .layer-pills { position: static; padding: 10px; background: rgba(11, 31, 20, 0.9); }
 }
+
+/* the original video under the pitch, on the same clock */
+.source-card { margin-top: 14px; padding: 14px; border-radius: 22px; background: rgba(16, 40, 27, 0.7); }
+.source-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin: 2px 4px 12px; }
+.source-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.source-sub { margin: 2px 0 0; color: var(--text-3); font-size: 13px; }
+.source-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.source-video { display: block; width: 100%; border-radius: 14px; background: #000; aspect-ratio: 16 / 9; }
+.source-card.is-closed .source-head { margin-bottom: 2px; }

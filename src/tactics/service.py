@@ -10,6 +10,8 @@ Bundled clips live in clips/ (committed); clips made from uploads live in data/u
 
 import json
 import re
+import shutil
+import subprocess
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict
@@ -112,6 +114,7 @@ def clip_payload(clip_id: str, step: int = 1) -> dict:
         # the cached explanation checked against the facts again (pure Python, no LLM call)
         "grounding": grounding_json(check_grounding(explained["text"], facts)) if facts and explained else None,
         "has_video": (folder / "video.mp4").exists(),
+        "has_source": (folder / SOURCE_VIDEO).exists(),  # the original (drone) video, to play beside the replay
     }
 
 
@@ -170,7 +173,32 @@ def create_from_drone_video(path: Path, title: str, start_s: float = 0.0, pitch_
     if clip is None:
         return None, report_json(report)
     save_clip(clip, USER)
+    if progress:
+        progress(0.99, "preparing the original video to play beside the replay")
+    save_source_video(Path(path), USER / clip_id)
     return clip_id, report_json(report)
+
+
+SOURCE_VIDEO = "source.mp4"
+
+
+def save_source_video(video: Path, folder: Path, max_width: int = 1920) -> bool:
+    """Keep the original video next to its clip, re-encoded for browsers (H.264, at most 1920 px wide so players stay
+    visible, no sound), so the replay can play it under the 2D pitch. Needs ffmpeg; without it the clip simply has no
+    video (returns False)."""
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        return False
+    out = Path(folder) / SOURCE_VIDEO
+    command = [ffmpeg, "-y", "-loglevel", "error", "-i", str(video), "-an",
+               "-vf", f"scale='min({max_width},iw)':-2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "24",
+               "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out)]
+    try:
+        subprocess.run(command, check=True, timeout=1800)
+    except (subprocess.SubprocessError, OSError):
+        out.unlink(missing_ok=True)
+        return False
+    return True
 
 
 def new_clip_id(title: str) -> str:

@@ -24,7 +24,7 @@ export interface Facts {
 export interface Grounding { passed: boolean; numbers_checked: number; problems: string[] }
 export interface Explanation { text: string; provider?: string; model?: string; prompt_version?: string; created_utc?: string; grounding?: Grounding }
 export interface ClipPayload {
-  meta: ClipMeta & { data_kind?: string; teams: Record<Side, { name: string; formation?: string }> };
+  meta: ClipMeta & { data_kind?: string; start_s?: number; rotated?: boolean; video_rotation?: number; teams: Record<Side, { name: string; formation?: string }> };
   pitch: { length_m: number; width_m: number };
   frame_rate: number;
   frames: ClipFrame[];
@@ -32,6 +32,8 @@ export interface ClipPayload {
   explanation: Explanation | null;
   grounding?: Grounding | null;
   has_video: boolean;
+  /** the original (drone) video is kept and can play beside the replay */
+  has_source?: boolean;
 }
 
 export async function loadClip(url: string): Promise<ClipPayload> {

@@ -20,9 +20,11 @@ interface Props {
   label?: string;
   /** 'grass': a mown pitch with white lines (tactics-board look); 'dark': lines only. */
   theme?: 'grass' | 'dark';
+  /** draw the pitch turned 180 degrees (to match a video that shows it the other way round) */
+  turned?: boolean;
 }
 
-export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, className, label, theme = 'dark' }: Props) {
+export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, className, label, theme = 'dark', turned = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const opts = useRef<Layers>({ ...ALL, ...layers });
   const controlled = useRef<number | undefined>(time);
@@ -58,7 +60,10 @@ export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, 
       const pad = Math.min(w, h) * 0.06;
       const scale = Math.min((w - 2 * pad) / 105, (h - 2 * pad) / 68);
       const ox = w / 2, oy = h / 2;
-      const X = (x: number) => ox + x * scale, Y = (y: number) => oy - y * scale;
+      // the markings look the same turned 180 degrees, so only the data (players, ball, shapes) is turned
+      const X0 = (x: number) => ox + x * scale, Y0 = (y: number) => oy - y * scale;
+      const k = turned ? -1 : 1;
+      const X = (x: number) => ox + k * x * scale, Y = (y: number) => oy - k * y * scale;
 
       // layers fade in and out smoothly instead of popping
       for (const k of Object.keys(fade) as (keyof Layers)[]) fade[k] += ((opts.current[k] ? 1 : 0) - fade[k]) * 0.08;
@@ -68,18 +73,18 @@ export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, 
         ctx.fillStyle = '#1b4329'; ctx.fillRect(0, 0, w, h);
         for (let i = 0; i < 12; i++) {
           ctx.fillStyle = i % 2 ? '#2a6a3c' : '#2f7543';
-          ctx.fillRect(X(-52.5 + i * 8.75), Y(34), 8.75 * scale + 0.5, 68 * scale);
+          ctx.fillRect(X0(-52.5 + i * 8.75), Y0(34), 8.75 * scale + 0.5, 68 * scale);
         }
       }
       // pitch markings
       ctx.strokeStyle = theme === 'grass' ? 'rgba(255,255,255,0.78)' : 'rgba(242,245,247,0.16)';
       ctx.lineWidth = theme === 'grass' ? 1.4 : 1;
-      ctx.strokeRect(X(-52.5), Y(34), 105 * scale, 68 * scale);
-      ctx.beginPath(); ctx.moveTo(X(0), Y(34)); ctx.lineTo(X(0), Y(-34)); ctx.stroke();
-      ctx.beginPath(); ctx.arc(X(0), Y(0), 9.15 * scale, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeRect(X0(-52.5), Y0(34), 105 * scale, 68 * scale);
+      ctx.beginPath(); ctx.moveTo(X0(0), Y0(34)); ctx.lineTo(X0(0), Y0(-34)); ctx.stroke();
+      ctx.beginPath(); ctx.arc(X0(0), Y0(0), 9.15 * scale, 0, Math.PI * 2); ctx.stroke();
       for (const s of [-1, 1]) {
-        ctx.strokeRect(s < 0 ? X(-52.5) : X(52.5 - 16.5), Y(20.16), 16.5 * scale, 40.32 * scale);
-        ctx.strokeRect(s < 0 ? X(-52.5) : X(52.5 - 5.5), Y(9.16), 5.5 * scale, 18.32 * scale);
+        ctx.strokeRect(s < 0 ? X0(-52.5) : X0(52.5 - 16.5), Y0(20.16), 16.5 * scale, 40.32 * scale);
+        ctx.strokeRect(s < 0 ? X0(-52.5) : X0(52.5 - 5.5), Y0(9.16), 5.5 * scale, 18.32 * scale);
       }
 
       const t = source.current ? source.current() : controlled.current ?? (((now - start) / 1000) * speed) % total;
@@ -158,7 +163,7 @@ export default function MiniReplay({ clip, layers, speed = 1, time, timeSource, 
     };
     raf = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(raf); io.disconnect(); start = 0; };
-  }, [clip, speed, theme]);
+  }, [clip, speed, theme, turned]);
 
   return <canvas ref={canvasRef} className={className} role="img" aria-label={label ?? 'Live replay of a real football clip'} />;
 }
