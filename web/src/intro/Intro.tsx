@@ -1,40 +1,43 @@
-// The intro screen: the 3D penalty, a black cover at the end, and a skip button.
-// ?t=2.5 freezes the scene at that wall time (used to render and check single frames).
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import IntroScene from './IntroScene';
-import { WALL_END } from './timeline';
+// The intro: the penalty video (keeper's view) plays full screen; on black, the logo reveals;
+// then the site fades in. Plays once per visit, can be skipped, and respects reduced motion.
+import { useEffect, useRef, useState } from 'react';
+import LogoReveal from './LogoReveal';
+import './intro.css';
 
-declare global {
-  interface Window { __setTime?: (t: number) => void }
+const VIDEO = '/intro/intro.mp4';   // rendered by the intro lab (Part A); until then only the logo plays
+const LOGO_TIME = 2600;             // ms the logo stays before the site appears
+
+export function shouldPlayIntro(): boolean {
+  try {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    return sessionStorage.getItem('intro-seen') !== '1';
+  } catch { return true; }
 }
 
 export default function Intro({ onDone }: { onDone: () => void }) {
-  const frozen = useMemo(() => {
-    const q = new URLSearchParams(window.location.search).get('t');
-    return q === null ? null : parseFloat(q);
-  }, []);
-  const start = useRef(performance.now());
-  const forced = useRef<number | null>(frozen);
-  const [black, setBlack] = useState(0);
+  const [stage, setStage] = useState<'video' | 'logo' | 'out'>('video');
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const finish = () => {
+    try { sessionStorage.setItem('intro-seen', '1'); } catch { /* private mode */ }
+    setStage('out');
+    window.setTimeout(onDone, 700);
+  };
 
   useEffect(() => {
-    window.__setTime = (t: number) => { forced.current = t; };
-    return () => { delete window.__setTime; };
-  }, []);
-
-  const time = useCallback(() => forced.current ?? (performance.now() - start.current) / 1000, []);
-  const onFrame = useCallback((b: number) => {
-    setBlack((prev) => (Math.abs(prev - b) > 0.01 || (b === 1 && prev !== 1) ? b : prev));
-    if (forced.current === null && time() > WALL_END) onDone();
-  }, [onDone, time]);
+    if (stage !== 'logo') return;
+    const id = window.setTimeout(finish, LOGO_TIME);
+    return () => window.clearTimeout(id);
+  }, [stage]);
 
   return (
-    <div className="intro">
-      <IntroScene time={time} onFrame={onFrame} />
-      <div className="intro-black" style={{ opacity: black }} />
-      {frozen === null && (
-        <button type="button" className="intro-skip" onClick={onDone}>Skip intro</button>
+    <div className={`intro intro-${stage}`}>
+      {stage === 'video' && (
+        <video ref={videoRef} className="intro-video" src={VIDEO} autoPlay muted playsInline
+          onEnded={() => setStage('logo')} onError={() => setStage('logo')} />
       )}
+      {stage !== 'video' && <LogoReveal />}
+      <button type="button" className="intro-skip" onClick={finish}>Skip intro</button>
     </div>
   );
 }

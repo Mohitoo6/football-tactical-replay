@@ -1,13 +1,20 @@
 import { useState } from 'react';
-import Intro from './intro/Intro';
+import { BrowserRouter, Route, Routes } from 'react-router';
+import Intro, { shouldPlayIntro } from './intro/Intro';
+import Landing from './landing/Landing';
+import AppPlaceholder from './app/AppPlaceholder';
 
 export default function App() {
-  const [introDone, setIntroDone] = useState(false);
-  if (!introDone) return <Intro onDone={() => setIntroDone(true)} />;
+  // ?intro=1 forces the intro (for review); otherwise it plays once per visit
+  const force = new URLSearchParams(window.location.search).has('intro');
+  const [intro, setIntro] = useState(() => window.location.pathname === '/' && (force || shouldPlayIntro()));
   return (
-    <main className="placeholder">
-      <h1>TACTICAL REPLAY</h1>
-      <p>Read any football moment like a coach</p>
-    </main>
+    <BrowserRouter>
+      {intro && <Intro onDone={() => setIntro(false)} />}
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/app/*" element={<AppPlaceholder />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
