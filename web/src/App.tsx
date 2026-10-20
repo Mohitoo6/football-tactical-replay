@@ -11,7 +11,7 @@ const Upload = lazy(() => import('./app/Upload'));
 export default function App() {
   // ?intro=1 forces the intro (for review), ?intro=0 skips it; otherwise it plays once per visit
   const param = new URLSearchParams(window.location.search).get('intro');
-  const [intro, setIntro] = useState(() => window.location.pathname === '/' && param !== '0' && (param === '1' || param === 'photo' || shouldPlayIntro()));
+  const [intro, setIntro] = useState(() => window.location.pathname === '/' && param !== '0' && (param === '1' || shouldPlayIntro()));
   return (
     <BrowserRouter>
       {intro && <Suspense fallback={<div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000" }} />}><Intro onDone={() => setIntro(false)} /></Suspense>}
