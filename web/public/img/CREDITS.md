@@ -9,7 +9,8 @@ crowd photo is cropped.
 | `hero-pitch.webp`, `hero-pitch-1200.webp` | [Boot on the ball by the line](https://unsplash.com/photos/xolF3QDYQqA) | Paul McWilliam |
 | `aerial-pitch.webp` | [Aerial photo of a soccer field](https://unsplash.com/photos/21Cg_fsFBGc) | Willian Justen de Vasconcellos |
 | `stadium-crowd.webp` | [A crowd of people in a stadium](https://unsplash.com/photos/ZItxALG5_pk) | James Kirkup |
-| `players-action.webp` | [Soccer players in action](https://unsplash.com/photos/aEOtR5sITRA) | jebin ephrimraj |
+| `stadium-match.webp` | [Football match in a brightly lit stadium at night](https://unsplash.com/photos/E3t3uruO_nY) | Maryam Tello |
+| `goal-net.webp` | [A soccer ball flying towards a white goal net](https://unsplash.com/photos/8Pgk0Q_EjGE) | Bohdan Hyrovych |
 | `stadium-night.webp` | [A soccer stadium at night](https://unsplash.com/photos/Q1nOuKleRoc) | Mark mc neill |
 
 The intro photos in `../intro/` were made by Mohit with ChatGPT (image 2 has its ball removed with LaMa).

@@ -137,7 +137,7 @@ function Inputs({ clip }: { clip: ClipPayload | null }) {
       <div className="input-grid">
         <article className="input-card reveal">
           <div className="input-visual photo-band" aria-hidden="true">
-            <img className="photo" src="/img/players-action.webp" alt="" loading="lazy" />
+            <img className="photo" src="/img/stadium-match.webp" alt="" loading="lazy" />
             <table className="mono data-table glass">
               <tbody>
                 {[['0.00', 'away', 'Kimmich', '−4.1', '−11.3'], ['0.00', 'home', 'Chabot', '12.5', '−7.9'], ['0.04', 'away', 'Musiala', '21.7', '13.3'], ['0.04', 'ball', '', '27.7', '−26.8']].map((r, i) => (
@@ -241,7 +241,7 @@ export default function Landing() {
         <Accuracy />
         <CoachQuote clip={clip} />
         <section className="final photo-band">
-          <img className="photo" src="/img/players-action.webp" alt="" loading="lazy" />
+          <img className="photo" src="/img/goal-net.webp" alt="" loading="lazy" />
           <div className="container final-inner">
             <h2 className="headline final-title reveal">See it on a <em>real goal.</em></h2>
             <Link to="/app/clip/musiala-winner" className="btn btn-primary reveal">Open the replay<span className="btn-arrow"><ArrowUpRight /></span></Link>
@@ -253,7 +253,7 @@ export default function Landing() {
           <div><Wordmark /></div>
           <div className="footer-small">
             <p>Tracking data: DFL / Bassek et al., Scientific Data 2025 (CC BY 4.0); Metrica Sports sample data; SoccerTrack.</p>
-            <p>Photos: Paul McWilliam, Willian Justen de Vasconcellos, James Kirkup, jebin ephrimraj and Mark mc neill on Unsplash.</p>
+            <p>Photos: Paul McWilliam, Willian Justen de Vasconcellos, James Kirkup, Maryam Tello, Bohdan Hyrovych and Mark mc neill on Unsplash.</p>
             <p>An AI Engineer portfolio project.</p>
           </div>
         </div>
