@@ -1,4 +1,4 @@
-"""Football Tactical Replay: pick a clip, watch the shapes move, read the coach's explanation.
+"""Vyuh (football tactical replay): pick a clip, watch the shapes move, read the coach's explanation.
 
     uv run streamlit run app/streamlit_app.py
 
@@ -63,8 +63,8 @@ def metric_table(summary: dict, metric: str) -> pd.DataFrame:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Football Tactical Replay", page_icon="⚽", layout="wide")
-    st.title("⚽ Football Tactical Replay")
+    st.set_page_config(page_title="Vyuh · football tactical replay", page_icon="⚽", layout="wide")
+    st.title("⚽ Vyuh · football tactical replay")
     st.caption("Real player-tracking data → team-shape geometry → a coach's explanation that only uses the measured facts.")
 
     clips = available_clips()

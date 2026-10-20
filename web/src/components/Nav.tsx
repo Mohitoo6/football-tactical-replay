@@ -13,7 +13,7 @@ export function BallIcon({ size = 26 }: { size?: number }) {
 }
 
 export function Wordmark() {
-  return <span className="wordmark"><BallIcon />Tactical Replay</span>;
+  return <span className="wordmark"><BallIcon />Vyuh</span>;
 }
 
 export function ArrowUpRight() {
@@ -28,7 +28,7 @@ export default function Nav({ variant = 'site' }: { variant?: 'site' | 'app' }) 
   return (
     <header className="nav">
       <div className={`nav-pill glass ${open ? 'is-open' : ''}`}>
-        <Link to="/" className="nav-home" aria-label="Tactical Replay home"><Wordmark /></Link>
+        <Link to="/" className="nav-home" aria-label="Vyuh home"><Wordmark /></Link>
         <nav className="nav-links" aria-label="Sections">
           {variant === 'site'
             ? links.map(([href, label]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)

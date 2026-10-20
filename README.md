@@ -1,4 +1,6 @@
-# ⚽ Football Tactical Replay
+# ⚽ Vyuh (व्यूह) · football tactical replay
+
+*Vyuh* is Sanskrit for a battle formation (the Mahabharata's Chakravyuh is the famous one); a football formation is the same idea.
 
 [![tests](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml/badge.svg)](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml)
 

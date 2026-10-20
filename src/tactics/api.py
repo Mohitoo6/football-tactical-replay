@@ -38,7 +38,7 @@ MAX_TABLE_MB = 50
 MAX_VIDEO_MB = 1500
 COMPLETE_FN = None  # tests replace this with a fake LLM
 
-app = FastAPI(title="Football Tactical Replay API", version="1.0")
+app = FastAPI(title="Vyuh API (football tactical replay)", version="1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # clip payloads shrink ~6x
 app.add_middleware(CORSMiddleware, allow_methods=["*"], allow_headers=["*"],
                    allow_origins=os.environ.get("FRONTEND_ORIGINS", "http://localhost:5173").split(","))
