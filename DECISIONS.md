@@ -770,3 +770,20 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Limits:**
   - The claims check reads "from X to Y" sentences only.
   - Coverage is a quality signal, not a failure: the 220-word limit forces choices.
+
+## D35. The calibration-stability check asks whether the same outline holds, not what each half's best outline is
+*2026-10-20 · `src/tactics/video/pipeline.py`, `src/tactics/video/pitch_lines.py`*
+
+- **Found by the first video from another match** (the NASK top-view dataset, Poland, CC BY 4.0, Zenodo 14867795): it was refused on "calibration stable over the clip".
+  - The whole clip calibrated correctly.
+  - The check searched each half of the sample frames for its own best pitch outline. In the first half, players near one goal hid part of the goal line (only 56% of it showed white), so the halfway line was taken as the pitch end, and the halves "disagreed" by 52 m.
+  - The drone itself moved 58 px, well within limits.
+- **Fix:**
+  - Each half is checked against the outline found for the whole clip. Every side is searched a few pixels either way, and the move is measured in metres; the limit is unchanged at 2 m.
+  - The offset is taken at the middle of the plateau of near-equal fits, so the widened line does not bias it.
+  - A side counts as lost only when less than 40% of it lies on painted line.
+- **Evidence:**
+  - NASK preview: moved 0.04 m (was a false 52 m).
+  - SoccerTrack 18:30 and 16:00: 0.04 and 0.03 m, as before.
+  - New tests: a partly hidden side is still found, a 6 px camera shift is measured, an erased side is lost.
+- **Honest note:** this fix was made after seeing this video, so its preview clip is no longer a blind test. The dataset's other videos (10 GB, not yet downloaded) can serve as one.

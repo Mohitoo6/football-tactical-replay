@@ -208,6 +208,33 @@ def view_rotation(calibration) -> int:
     return int(round(angle / 90.0)) * 90 % 360
 
 
+def outline_support(image: np.ndarray, corners: np.ndarray, max_offset_px: int = 24) -> list[tuple[float, float]]:
+    """For each side of a known outline: how much of it lies on painted line, and how far it has moved.
+
+    Each side is tried at offsets of up to `max_offset_px` across itself; returns (support, offset) per side, where
+    support is the share of the side (ends trimmed) that has line pixels within 2 px at the best offset. Used to check
+    that the outline found for the whole clip still holds in part of it, even where players hide a stretch of line.
+    """
+    mask = cv2.dilate(line_pixels(image), np.ones((5, 5), np.uint8)) > 0
+    h, w = mask.shape
+    out = []
+    for k in range(4):
+        a, b = np.asarray(corners[k], float), np.asarray(corners[(k + 1) % 4], float)
+        direction = (b - a) / max(np.linalg.norm(b - a), 1e-6)
+        normal = np.array([-direction[1], direction[0]])
+        points = np.linspace(a, b, 240)[12:-12]
+        supports = []
+        for offset in range(-max_offset_px, max_offset_px + 1):
+            p = np.rint(points + offset * normal).astype(int)
+            inside = (p[:, 0] >= 0) & (p[:, 0] < w) & (p[:, 1] >= 0) & (p[:, 1] < h)
+            supports.append((float(mask[p[inside, 1], p[inside, 0]].sum()) / len(p), offset))
+        best = max(s for s, _ in supports)
+        # the widened line gives a plateau of near-equal offsets: its middle is where the line is
+        plateau = [o for s, o in supports if s >= best - 0.03]
+        out.append((best, float(np.median(plateau))))
+    return out
+
+
 def outline_ratio_error(corners: np.ndarray, length_m: float = PITCH_LENGTH_M, width_m: float = PITCH_WIDTH_M) -> float:
     """How far the found outline's length/width ratio is from the real pitch's, as a fraction (0.03 = 3%)."""
     sides = np.linalg.norm(corners - np.roll(corners, -1, axis=0), axis=1)

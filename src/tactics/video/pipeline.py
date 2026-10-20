@@ -27,7 +27,7 @@ from tactics.video.ball import follow_ball_both_ways, is_white
 from tactics.video.calibration import PITCH_LENGTH_M, PITCH_WIDTH_M, PitchCalibration
 from tactics.video.detect import BackgroundDetector, Stabilizer, pitch_mask, read_frames
 from tactics.video.export import tracks_to_clip
-from tactics.video.pitch_lines import auto_calibrate, outline_ratio_error, pitch_corners, view_rotation
+from tactics.video.pitch_lines import auto_calibrate, outline_ratio_error, outline_support, pitch_corners, view_rotation
 from tactics.video.track import PointTracker, assign_teams, fix_goalkeepers, officials, stitch_tracks, track_points
 
 BACKGROUND_SAMPLES = 60
@@ -106,7 +106,7 @@ def detect_video(path: Path, report: QualityReport, length_m: float = PITCH_LENG
     if abs(scale - detector.scale) > 0.02:
         detector = BackgroundDetector(aligned, no_mask, scale=scale)
     report.add("pitch resolution", px_per_m >= MIN_PX_PER_M, f"{px_per_m:.1f} px per metre", f">= {MIN_PX_PER_M:.0f}")
-    report.add("calibration stable over the clip", *_calibration_agreement(aligned, detector, calibration, length_m, width_m))
+    report.add("calibration stable over the clip", *_calibration_agreement(aligned, detector, calibration, corners))
     detector.mask = detector._resize(pitch_mask((height, width), calibration))
     del aligned, sample
     if report.status == "rejected":
@@ -145,22 +145,36 @@ def detect_video(path: Path, report: QualityReport, length_m: float = PITCH_LENG
     return Detections(players, small, warps, calibration, fps, index)
 
 
+MIN_SIDE_SUPPORT = 0.4  # a side of the outline counts as found when at least 40% of it lies on painted line
+
+
 def _calibration_agreement(aligned: list[np.ndarray], detector: BackgroundDetector, calibration: PitchCalibration,
-                           length_m: float, width_m: float) -> tuple[bool, str, str]:
-    """Calibrate again from the first and second half of the sample frames and compare pitch corners in metres."""
+                           corners: np.ndarray) -> tuple[bool, str, str]:
+    """Does the outline found for the whole clip still hold, in the same place, in each half of the sample frames?
+
+    Each half gets its own empty-pitch image; every side of the outline is searched a little either way, and how far
+    it moved is measured in metres. (Searching each half for its own best outline mistook the halfway line for a goal
+    line when players hid part of the real one, D35.)
+    """
     half = len(aligned) // 2
-    corners_m = []
+    need = f"each side found (>= {MIN_SIDE_SUPPORT:.0%} on line) and moved <= {MAX_CALIBRATION_DISAGREEMENT_M} m"
+    worst_m, weakest = 0.0, 1.0
     for part in (aligned[:half], aligned[half:]):
         if len(part) < 5:
-            return True, "too few frames to compare", "two halves agree"
+            return True, "too few frames to compare", need
         background = np.median(np.stack([detector._resize(f) for f in part]), axis=0).astype(np.uint8)
-        try:
-            corners = pitch_corners(background, aspect=length_m / width_m) / detector.scale
-        except ValueError:
-            return False, "outline lost in one half of the clip", f"halves agree within {MAX_CALIBRATION_DISAGREEMENT_M} m"
-        corners_m.append(np.sort(calibration.to_pitch(corners), axis=0))
-    gap = float(np.abs(corners_m[0] - corners_m[1]).max())
-    return gap <= MAX_CALIBRATION_DISAGREEMENT_M, f"halves differ by {gap:.2f} m", f"<= {MAX_CALIBRATION_DISAGREEMENT_M} m"
+        scaled = corners * detector.scale
+        for k, (support, offset) in enumerate(outline_support(background, scaled)):
+            weakest = min(weakest, support)
+            a, b = scaled[k], scaled[(k + 1) % 4]
+            direction = (b - a) / max(np.linalg.norm(b - a), 1e-6)
+            normal = np.array([-direction[1], direction[0]])
+            middle = (a + b) / 2
+            moved = calibration.to_pitch(np.array([middle, middle + offset * normal]) / detector.scale)
+            worst_m = max(worst_m, float(np.linalg.norm(moved[1] - moved[0])))
+    if weakest < MIN_SIDE_SUPPORT:
+        return False, f"a side of the outline is lost in one half ({weakest:.0%} on line)", need
+    return worst_m <= MAX_CALIBRATION_DISAGREEMENT_M, f"outline moved up to {worst_m:.2f} m between halves", need
 
 
 def track_everything(detections: Detections) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame]:

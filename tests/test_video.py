@@ -310,3 +310,23 @@ def test_auto_calibration_ignores_a_row_of_goals_beyond_the_pitch():
     found = pitch_corners(image)
     distances = np.linalg.norm(found[:, None] - true_corners[None], axis=2)
     assert distances.min(axis=1).max() < 2.0
+
+
+def test_outline_support_finds_a_partly_hidden_side_and_measures_a_shift():
+    """Players hiding half of a goal line do not lose it; a moved outline is measured; a missing side is not found."""
+    from tactics.video.pitch_lines import outline_support
+
+    image, corners = drawn_pitch()
+    hidden = image.copy()
+    left = corners[[0, 3]].astype(int)
+    cv2.rectangle(hidden, (left[0][0] - 4, left[0][1] + 10), (left[1][0] + 4, (left[0][1] + left[1][1]) // 2), (40, 110, 40), -1)
+    support = outline_support(hidden, corners)
+    assert min(s for s, _ in support) >= 0.4 and all(abs(o) <= 1 for _, o in support)
+
+    shifted = np.roll(image, 6, axis=1)                    # the camera moved 6 px to the right
+    offsets = [abs(o) for _, o in outline_support(shifted, corners)]
+    assert max(offsets) == pytest.approx(6, abs=1) and min(offsets) <= 1   # the vertical sides moved, the others not
+
+    erased = image.copy()
+    cv2.line(erased, tuple(left[0]), tuple(left[1]), (40, 110, 40), 9)
+    assert min(s for s, _ in outline_support(erased, corners)) < 0.4
