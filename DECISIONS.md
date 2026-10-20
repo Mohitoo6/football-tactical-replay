@@ -747,3 +747,26 @@ Entries marked *(pending spike)* still need evidence from a test run.
 - **Limits:**
   - Without ffmpeg the clip still works, just without the video.
   - A video turned 90° (portrait) keeps the usual landscape map, with a note.
+
+## D34. Evaluating the AI coach: four layers, from free automatic checks to human review
+*2026-10-20 · `src/tactics/ai/evaluate.py`, `scripts/evaluate_explanations.py`, `evals/llm/`*
+
+- **Problem:** grounding only proves each number exists *somewhere* in the facts. A number can still be given to the wrong team, read the wrong way round ("dropped from 42 to 72"), or the answer can skip the goal entirely.
+- **Decision:** four layers, cheapest first.
+  1. **Grounding** (unchanged): every number, clock and formation is in the facts. It runs on every answer, and a failure triggers one rewrite.
+  2. **Claims, coverage, invented events** (new, pure Python, no LLM):
+     - each "from X to Y" is checked against that team's own changes, in order, and against the direction of the wording;
+     - key facts must be said (goal and scorer, shapes, each team's biggest change);
+     - event words (passes, shots...) are flagged in the facts section.
+  3. **Trap tests** (new, 5 LLM calls, then cached): one fact of a real clip is changed, and the coach must follow it: no goal, too little play, unknown shape, partial camera, mirrored numbers.
+  4. **Human review**: the checklist on each sheet, for meaning that is not a number.
+- **Results:**
+  - 6/6 grounded; 24/24 claims right; key-fact coverage 96%.
+  - 5/5 traps passed.
+  - Reading the traps by hand found an unsupported zone word ("final third" with an empty timeline): a known limit of layers 1–3.
+- **Alternatives:**
+  - An LLM judge (a second model scoring faithfulness): useful as a signal, but it can be wrong in the same ways and costs free-tier calls on every run. Kept as a possible fifth layer.
+  - Exact-match tests: impossible for free text.
+- **Limits:**
+  - The claims check reads "from X to Y" sentences only.
+  - Coverage is a quality signal, not a failure: the 220-word limit forces choices.

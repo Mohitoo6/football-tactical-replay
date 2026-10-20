@@ -1,0 +1,15 @@
+{
+  "cache_key": "af6125fec8423bc1e55d2513c74f8dd06c4b82edc0a038aa715f252b1d256cdb",
+  "prompt_version": "v5",
+  "provider": "llm",
+  "model": "gemini-3.8-flash",
+  "created_utc": "2026-10-20T06:17:42+00:00",
+  "text": "**What happened**  \nIn this clip, FC Bayern München showed a 4-1-4-1 shape and 1. FC Köln showed a 3-5-2 shape. The ball moved from Leroy Sané at 87:57 to M. Schwäbe at 88:00, Jeff Chabot at 88:03, Joshua Kimmich at 88:03, Joao Cancelo at 88:07, Serge Gnabry at 88:09, and J. Musiala at 88:12. Bayern pushed their back line (the average distance of the four deepest outfield defenders from their goal line) from 42 metres at 87:57 up to 72 metres at 88:13, while Köln’s back line retreated from 25 metres to 10 metres.\n\n**Coach's view**  \n* Bayern pushing their back line up to 72 metres while reducing team depth from 49 to 32 metres suggests high pressure that helped regain possession in midfield through Joshua Kimmich.  \n* Köln’s shape compressed to 388 m² and 26 metres depth at 88:13; typically, this deep block protects the central box but gives away space on the flanks, allowing Bayern to reach 51 metres width at 88:09.\n\n**Key numbers**  \n* Bayern's back line advanced from 42 m to 72 m.  \n* Köln's area decreased from 757 m² to 388 m².  \n* Bayern expanded their width from 35 m to 51 m.",
+  "repair": {
+    "first_text": "**What happened**  \nIn this clip, FC Bayern München showed a 4-1-4-1 shape, while 1. FC Köln displayed a 3-5-2 shape. The ball moved across several players: starting with Leroy Sané at 87:57, it went to M. Schwäbe at 88:00, Jeff Chabot at 88:03, Joshua Kimmich also at 88:03, Joao Cancelo at 88:07, Serge Gnabry at 88:09, and finally J. Musiala at 88:12. As play advanced into the attacking third left, Bayern pushed their back line (the average position of their four deepest outfield defenders from their goal line) forward from 42 metres at 87:57 to 72 metres at 88:13, while Köln’s back line dropped from 25 metres to 10 metres.\n\n**Coach's view**  \n* Bayern’s back line moving up to 72 metres while their area compressed from 1398 m² to 898 m² suggests an aggressive counter-press that helped win the ball back in the middle third through Joshua Kimmich.  \n* Köln retreated into a very compact low block, shrinking to an area of 388 m² and 26 metres depth by 88:13; a coach would note this protects the central box but gives away wide space, allowing Bayern's width to stretch up to 51 metres.\n\n**Key numbers**  \n* Bayern's back line pushed from 42 m to 72 m.  \n* Köln's shape compressed from 757 m² down to 388 m².  \n* Bayern widened their structure from 35 m to 51 m before Musiala took possession.",
+    "first_model": "gemini-3.8-flash",
+    "first_problems": [
+      "too long: 232 words (limit 220)"
+    ]
+  }
+}

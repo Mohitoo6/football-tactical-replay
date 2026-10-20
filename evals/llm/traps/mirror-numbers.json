@@ -1,0 +1,15 @@
+{
+  "cache_key": "3f7bd11302c01ba1b43f989987ad5068a4907b9d9b441d9a803691af0687803e",
+  "prompt_version": "v5",
+  "provider": "llm",
+  "model": "gemini-3.8-flash",
+  "created_utc": "2026-10-20T06:21:43+00:00",
+  "text": "**What happened**  \nFrom 87:57 to 88:20, FC Bayern München showed a 4-1-4-1 shape, and 1. FC Köln showed a 3-5-2 shape. The ball moved through Leroy Sané, M. Schwäbe, Jeff Chabot, Joshua Kimmich, Joao Cancelo, Serge Gnabry, and J. Musiala, who scored a goal at 88:15. FC Bayern München moved their back line—the average distance of the four deepest outfield players from their own goal line—from 42 m at 87:57 up to 72 m at 88:13, while 1. FC Köln's back line dropped from 25 m to 10 m.\n\n**Coach's view**  \n* FC Bayern München expanding their width from 35 m to 44 m typically stretches defensive coverage across the pitch, creating room to attack.  \n* Pushing the back line up to 72 m suggests FC Bayern München committed players forward to keep 1. FC Köln pinned deep.  \n* 1. FC Köln retreated into a compact 388 m² area with a back line at 10 m by 88:13; defending so deep typically surrenders central control and leaves little margin for error around the box.\n\n**Key numbers**  \n* Goal: J. Musiala at 88:15.  \n* FC Bayern München width: 35 m to 44 m.  \n* Back line distance at 88:13: FC Bayern München 72 m, 1. FC Köln 10 m.",
+  "repair": {
+    "first_text": "**What happened**  \nIn this clip from 87:57 to 88:20, FC Bayern München showed a 4-1-4-1 shape, while 1. FC Köln showed a 3-5-2 shape. The ball moved from Leroy Sané to M. Schwäbe, Jeff Chabot, Joshua Kimmich, Joao Cancelo, Serge Gnabry, and finally J. Musiala, who scored a goal at 88:15. As the sequence developed, FC Bayern München pushed their back line—the average distance of the deepest four outfield players from their own goal line—from 42 m up to 72 m by 88:13, while 1. FC Köln's back line dropped from 25 m down to 10 m.\n\n**Coach's view**  \n* FC Bayern München expanded their width from 35 m to 44 m, which typically stretches the opponent's structure across the pitch and creates space to advance the ball.  \n* Pushing the back line up to 72 m suggests FC Bayern München kept their team high to pin 1. FC Köln deep in their own territory.  \n* 1. FC Köln dropped into a compact block with an area of 388 m² and a back line at 10 m by 88:13; a coach might note that defending so close to goal limits recovery room once the ball enters the box.\n\n**Key numbers**  \n* Goal scored: J. Musiala at 88:15.  \n* FC Bayern München width change: 35 m to 44 m.  \n* FC Bayern München back line at 88:13: 72 m (compared to 1. FC Köln at 10 m).",
+    "first_model": "gemini-3.8-flash",
+    "first_problems": [
+      "too long: 236 words (limit 220)"
+    ]
+  }
+}

@@ -19,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
+from tactics.ai.evaluate import evaluate
 from tactics.ai.grounding import check_grounding
 from tactics.data.clips import Clip, load_clip, save_clip
 from tactics.data.report import QualityReport
@@ -113,6 +114,8 @@ def clip_payload(clip_id: str, step: int = 1) -> dict:
         "explanation": explained,
         # the cached explanation checked against the facts again (pure Python, no LLM call)
         "grounding": grounding_json(check_grounding(explained["text"], facts)) if facts and explained else None,
+        # claims (right team, order, direction), key facts said, invented events (tactics/ai/evaluate.py, D34)
+        "checks": evaluate(explained["text"], facts).as_json() if facts and explained else None,
         "has_video": (folder / "video.mp4").exists(),
         "has_source": (folder / SOURCE_VIDEO).exists(),  # the original (drone) video, to play beside the replay
     }
@@ -122,8 +125,8 @@ def explanation(clip_id: str, providers=None, complete_fn=None) -> dict:
     """The coach's explanation (cached per facts and prompt), with its grounding result."""
     from tactics.ai.coach import coach_explanation
 
-    result, report, _ = coach_explanation(clip_folder(clip_id), providers=providers, complete_fn=complete_fn)
-    return {**result, "grounding": grounding_json(report)}
+    result, report, facts = coach_explanation(clip_folder(clip_id), providers=providers, complete_fn=complete_fn)
+    return {**result, "grounding": grounding_json(report), "checks": evaluate(result["text"], facts).as_json()}
 
 
 def grounding_json(report) -> dict:

@@ -22,6 +22,8 @@ export interface Facts {
   notable_changes: { team: string; metric: string; from: number; to: number; from_clock: string; to_clock: string }[];
 }
 export interface Grounding { passed: boolean; numbers_checked: number; problems: string[] }
+/** claims (right team, order, direction), key facts said, invented events: see tactics/ai/evaluate.py */
+export interface Checks { claims_checked: number; claims_ok: number; claim_problems: string[]; coverage: number; covered: string[]; missing: string[]; invented_events: string[] }
 export interface Explanation { text: string; provider?: string; model?: string; prompt_version?: string; created_utc?: string; grounding?: Grounding }
 export interface ClipPayload {
   meta: ClipMeta & { data_kind?: string; start_s?: number; rotated?: boolean; video_rotation?: number; teams: Record<Side, { name: string; formation?: string }> };
@@ -31,6 +33,7 @@ export interface ClipPayload {
   facts: Facts | null;
   explanation: Explanation | null;
   grounding?: Grounding | null;
+  checks?: Checks | null;
   has_video: boolean;
   /** the original (drone) video is kept and can play beside the replay */
   has_source?: boolean;

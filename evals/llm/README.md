@@ -25,7 +25,7 @@ How we got here (each step was found by reading real outputs):
   - With too little open play, the model must say so instead of speculating.
   - The definition of `players_behind_ball` now says what 0 means.
 
-Known limit: the automatic check confirms each number exists in the facts, **not** that it is attached to the right team or metric. We checked the Coman claims by hand.
+Known limit (until D34): the automatic check confirmed each number exists in the facts, **not** that it is attached to the right team or metric. We checked the Coman claims by hand. The claims check below now does this automatically.
 
 ## Why the rules matter: naive prompt vs strict prompt
 
@@ -47,3 +47,19 @@ After Köln try to relieve pressure, Joshua Kimmich snuffs out the clearance at 
 Bayern stay patient, stretching play wide through João Cancelo before feeding Serge Gnabry. Then comes the magic. Gnabry slips it to Jamal Musiala on the edge of the box. With virtually no space against Köln’s crowded defense, Musiala creates half a yard of separation and arrows a clinical finish into the bottom corner at 88:15. Pure ice in his veins—a championship-defining moment!
 
 </details>
+
+## Four layers of evaluation (D34, prompt v5)
+
+Run `uv run python scripts/evaluate_explanations.py --traps`.
+
+1. **Grounding** (`tactics/ai/grounding.py`, every answer, also before it is cached): every number, clock and formation in the text appears in the facts.
+2. **Claims, coverage, invented events** (`tactics/ai/evaluate.py`, no LLM call):
+   - every "from X to Y" change is in the facts *for the team the sentence names*, in that order, and the wording (pushed up / dropped) goes the same way as the numbers;
+   - the key facts are said (goal and scorer, each team's shape, each team's biggest change);
+   - no invented events (passes, shots, tackles...) in "What happened".
+
+   Results in [`scoreboard.md`](scoreboard.md): 6/6 grounded, 24/24 claims right, key-fact coverage 96% (Forster's clip leaves out Bochum's area growing from 384 to 1226 m²).
+3. **Traps** ([`traps.md`](traps.md)): the facts of Musiala's winner with one thing changed (no goal; 3 s of play; unknown shape; partial camera; both teams' width moving 35 ↔ 44 m in opposite directions). A faithful coach follows the changed facts. **5/5 passed** with gemini-3.8-flash.
+4. **Human review** (the checklist on each clip sheet): still needed for words that are not numbers. Reading the traps by hand found one: with an empty timeline, the "too little play" answer still says the ball reached "the final third", which no fact supports. A zone word is not a number, so no automatic check catches it.
+
+The checker itself was checked on the real answers before trusting it: it first flagged "17m" (no space) as missing and "can invite late shots" in the coach's view as an invented event. Both were checker bugs, fixed and covered by tests (`tests/test_ai_eval.py`).

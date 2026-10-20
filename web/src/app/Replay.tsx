@@ -7,7 +7,7 @@ import MiniReplay, { type Layers } from '../components/MiniReplay';
 import MetricCharts from './MetricCharts';
 import CoachText from './CoachText';
 import { api, clockSeconds, formatClock, ApiError } from '../lib/api';
-import { duration as clipDuration, type ClipPayload, type Explanation, type Grounding, type Side } from '../lib/clip';
+import { duration as clipDuration, type Checks, type ClipPayload, type Explanation, type Grounding, type Side } from '../lib/clip';
 import { METRICS, events as clipEvents, metricSeries } from '../lib/replay';
 import './replay.css';
 
@@ -34,6 +34,7 @@ export default function Replay() {
   const [now, setNow] = useState(0);
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [grounding, setGrounding] = useState<Grounding | null>(null);
+  const [checks, setChecks] = useState<Checks | null>(null);
   const [asking, setAsking] = useState<'idle' | 'busy' | string>('idle');
   const tRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,7 +46,7 @@ export default function Replay() {
     // a shared link (?t=18) opens paused at that moment; otherwise the clip plays from the start
     const at = parseFloat(params.get('t') ?? '');
     api.clip(id, 1).then((c) => {
-      setClip(c); setExplanation(c.explanation); setGrounding(c.grounding ?? null);
+      setClip(c); setExplanation(c.explanation); setGrounding(c.grounding ?? null); setChecks(c.checks ?? null);
       if (Number.isFinite(at)) { tRef.current = Math.max(0, Math.min(clipDuration(c), at)); setNow(tRef.current); } else setPlaying(true);
     })
       .catch((e: ApiError) => setError(e.status === 404 ? 'This clip does not exist.' : e.message));
@@ -122,7 +123,7 @@ export default function Replay() {
     setAsking('busy');
     try {
       const r = await api.explain(id);
-      setExplanation(r); setGrounding(r.grounding); setAsking('idle');
+      setExplanation(r); setGrounding(r.grounding); setChecks(r.checks); setAsking('idle');
     } catch (e) {
       setAsking(e instanceof ApiError && e.status === 503 ? 'No free AI model is available right now. Try again in a minute.' : (e as Error).message);
     }
@@ -236,6 +237,13 @@ export default function Replay() {
                       <div>
                         <strong>{grounding.passed ? 'Grounded in the data' : 'Some statements need checking'}</strong>
                         <p>{grounding.passed ? `All ${grounding.numbers_checked} numbers, clocks and shapes in this text were found in the computed facts.` : grounding.problems.join('; ')}</p>
+                        {checks && (
+                          <p className="checks-line mono">
+                            {checks.claims_checked > 0 && <span>{checks.claims_ok}/{checks.claims_checked} changes on the right team</span>}
+                            <span>key facts said {Math.round(checks.coverage * 100)}%</span>
+                            {checks.invented_events.length > 0 && <span className="warn-text">invented: {checks.invented_events.join(', ')}</span>}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

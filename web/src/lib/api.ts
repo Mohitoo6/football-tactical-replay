@@ -1,5 +1,5 @@
 // The backend API (FastAPI, see src/tactics/api.py). In development Vite proxies /api to port 8000.
-import type { ClipPayload, Explanation, Grounding } from './clip';
+import type { Checks, ClipPayload, Explanation, Grounding } from './clip';
 
 export interface ClipSummary {
   clip_id: string; title: string; origin: 'bundled' | 'user'; data_kind: 'tracking' | 'video' | 'uploaded' | string;
@@ -30,7 +30,7 @@ export const api = {
   health: () => call<{ status: string; drone_video: boolean }>('/api/health'),
   clips: () => call<ClipSummary[]>('/api/clips'),
   clip: (id: string, step = 1) => call<ClipPayload>(`/api/clips/${encodeURIComponent(id)}?step=${step}`),
-  explain: (id: string) => call<Explanation & { grounding: Grounding; from_cache?: boolean }>(`/api/clips/${encodeURIComponent(id)}/explanation`, { method: 'POST' }),
+  explain: (id: string) => call<Explanation & { grounding: Grounding; checks: Checks; from_cache?: boolean }>(`/api/clips/${encodeURIComponent(id)}/explanation`, { method: 'POST' }),
   uploadTracking: (form: FormData) => call<UploadResult>('/api/uploads/tracking', { method: 'POST', body: form }),
   uploadProvider: (form: FormData) => call<UploadResult>('/api/uploads/provider', { method: 'POST', body: form }),
   uploadDrone: (form: FormData) => call<{ job_id: string }>('/api/uploads/drone', { method: 'POST', body: form }),

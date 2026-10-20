@@ -130,3 +130,6 @@
 .source-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .source-video { display: block; width: 100%; border-radius: 14px; background: #000; aspect-ratio: 16 / 9; }
 .source-card.is-closed .source-head { margin-bottom: 2px; }
+
+.checks-line { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px !important; font-size: 12px !important; color: var(--text-2); }
+.warn-text { color: var(--warn); }

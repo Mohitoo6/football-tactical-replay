@@ -1,0 +1,127 @@
+[
+ {
+  "clip": "coman-opener",
+  "model": "gemini-3.6-flash",
+  "grounding_ok": true,
+  "numbers_checked": 38,
+  "grounding_problems": [],
+  "claims_checked": 5,
+  "claims_ok": 5,
+  "claim_problems": [],
+  "coverage": 1.0,
+  "covered": [
+   "goal by Kingsley Coman at 7:49",
+   "FC Bayern München shape 4-1-4-1",
+   "1. FC Köln shape 4-4-2",
+   "FC Bayern München back_line_m 17 -> 54",
+   "1. FC Köln back_line_m 58 -> 13"
+  ],
+  "missing": [],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 207
+ },
+ {
+  "clip": "drone-0600-0630",
+  "model": "gemini-3.8-flash",
+  "grounding_ok": true,
+  "numbers_checked": 31,
+  "grounding_problems": [],
+  "claims_checked": 4,
+  "claims_ok": 4,
+  "claim_problems": [],
+  "coverage": 1.0,
+  "covered": [
+   "Team B (lighter shirts) shape 3-5-2",
+   "Team A (darker shirts) shape 4-4-2",
+   "Team B (lighter shirts) back_line_m 11 -> 50",
+   "Team A (darker shirts) back_line_m 63 -> 26"
+  ],
+  "missing": [],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 224
+ },
+ {
+  "clip": "drone-1110-1140",
+  "model": "gemini-3.8-flash",
+  "grounding_ok": true,
+  "numbers_checked": 27,
+  "grounding_problems": [],
+  "claims_checked": 5,
+  "claims_ok": 5,
+  "claim_problems": [],
+  "coverage": 1.0,
+  "covered": [
+   "Team B (darker shirts) shape 3-4-3",
+   "Team A (lighter shirts) back_line_m 20 -> 57",
+   "Team B (darker shirts) back_line_m 74 -> 34"
+  ],
+  "missing": [],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 216
+ },
+ {
+  "clip": "forster-opener",
+  "model": "gemini-3.8-flash",
+  "grounding_ok": true,
+  "numbers_checked": 36,
+  "grounding_problems": [],
+  "claims_checked": 5,
+  "claims_ok": 5,
+  "claim_problems": [],
+  "coverage": 0.75,
+  "covered": [
+   "goal by P. Förster at 18:03",
+   "VfL Bochum 1848 shape 4-4-2",
+   "Bayer 04 Leverkusen back_line_m 44 -> 9"
+  ],
+  "missing": [
+   "VfL Bochum 1848 area_m2 384 -> 1226"
+  ],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 212
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "model": "gemini-3.8-flash",
+  "grounding_ok": true,
+  "numbers_checked": 18,
+  "grounding_problems": [],
+  "claims_checked": 0,
+  "claims_ok": 0,
+  "claim_problems": [],
+  "coverage": 1.0,
+  "covered": [
+   "goal by D. Ljubicic at 80:04"
+  ],
+  "missing": [],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 196
+ },
+ {
+  "clip": "musiala-winner",
+  "model": "gemini-3.8-flash",
+  "grounding_ok": true,
+  "numbers_checked": 26,
+  "grounding_problems": [],
+  "claims_checked": 5,
+  "claims_ok": 5,
+  "claim_problems": [],
+  "coverage": 1.0,
+  "covered": [
+   "goal by J. Musiala at 88:15",
+   "FC Bayern München shape 4-1-4-1",
+   "1. FC Köln shape 3-5-2",
+   "FC Bayern München back_line_m 42 -> 72",
+   "1. FC Köln back_line_m 25 -> 10"
+  ],
+  "missing": [],
+  "invented_events": [],
+  "format_problems": [],
+  "words": 217
+ }
+]
