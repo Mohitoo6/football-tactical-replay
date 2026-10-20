@@ -250,7 +250,7 @@ export default function Landing() {
       </main>
       <footer className="footer">
         <div className="container footer-grid">
-          <div><Wordmark /><p className="footer-small">Built by Mohit (AI, app, video) and Rohit (data, geometry).</p></div>
+          <div><Wordmark /></div>
           <div className="footer-small">
             <p>Tracking data: DFL / Bassek et al., Scientific Data 2025 (CC BY 4.0); Metrica Sports sample data; SoccerTrack.</p>
             <p>Photos: Paul McWilliam, Willian Justen de Vasconcellos, James Kirkup, jebin ephrimraj and Mark mc neill on Unsplash.</p>

@@ -1,19 +1,10 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router';
+import LogoMark from './LogoMark';
 import './nav.css';
 
-export function BallIcon({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="14.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M16 9.5l5.6 4.1-2.1 6.6h-7l-2.1-6.6z" fill="currentColor" />
-      <path d="M16 9.5V2M21.6 13.6l7-2.3M19.5 20.2l4.3 6M12.5 20.2l-4.3 6M10.4 13.6l-7-2.3" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
 export function Wordmark() {
-  return <span className="wordmark"><BallIcon />Vyuh</span>;
+  return <span className="wordmark"><LogoMark size={30} />Vyuh</span>;
 }
 
 export function ArrowUpRight() {
