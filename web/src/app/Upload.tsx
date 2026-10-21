@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import AppLayout, { PageHeader } from './AppLayout';
 import MiniReplay from '../components/MiniReplay';
 import { ArrowUpRight } from '../components/Nav';
-import { api, ApiError, type Job, type Report, type UploadResult } from '../lib/api';
+import { api, ApiError, STATIC, STATIC_NOTE, urls, type Job, type Report, type UploadResult } from '../lib/api';
 import { previewCsv, type CsvPreview, type Units } from '../lib/csvPreview';
 import type { ClipPayload } from '../lib/clip';
 import './upload.css';
@@ -43,6 +43,14 @@ const CHECKS_AHEAD = [
   ['Ball present', 'in at least half of the moments (warning only)'],
   ['Goalkeepers', 'given for both teams (warning only)'],
 ];
+
+function StaticNote() {
+  return (
+    <p className="static-note">{STATIC_NOTE}{' '}
+      <a href="https://github.com/Mohitoo6/football-tactical-replay#run-it" target="_blank" rel="noreferrer">Three commands, in the README</a>.
+    </p>
+  );
+}
 
 function FileDrop({ label, accept, files, onFiles, multiple = false }:
   { label: string; accept: string; files: File[]; onFiles: (f: File[]) => void; multiple?: boolean }) {
@@ -151,7 +159,7 @@ export default function Upload() {
   const reset = (s: Source | null) => { setSource(s); setFiles([]); setFilesB([]); setPreview(null); setResult(null); setJob(null); setError(null); };
 
   const tryExample = async () => {
-    const res = await fetch('/api/template/example');
+    const res = await fetch(urls.example);
     if (!res.ok) { setError('The example file is served by the analysis server; is it running?'); return; }
     const blob = await res.blob();
     setFiles([new File([blob], 'example_musiala_winner.csv', { type: 'text/csv' })]);
@@ -197,16 +205,17 @@ export default function Upload() {
         {!source && (
           <div className="chooser glass">
             <h2 className="chooser-head">Where does your clip come from?</h2>
+            {STATIC && <StaticNote />}
             {SOURCES.map((s, i) => (
               <button key={s.key} type="button" className="choice" style={{ animationDelay: `${i * 0.06}s` }} onClick={() => reset(s.key)}
                 disabled={s.key === 'drone' && droneOk === false}>
                 <span className="choice-icon">{s.icon}</span>
-                <span className="choice-text"><strong>{s.title}</strong><small>{s.key === 'drone' && droneOk === false ? 'Needs the video tools on the server (uv sync --group video).' : s.text}</small></span>
+                <span className="choice-text"><strong>{s.title}</strong><small>{s.key === 'drone' && droneOk === false ? (STATIC ? 'Processed on your machine (minutes of computing).' : 'Needs the video tools on the server (uv sync --group video).') : s.text}</small></span>
                 <span className={`choice-tag ${s.tag === 'Recommended' ? 'is-rec' : ''}`}>{s.tag}</span>
                 <span className="choice-arrow" aria-hidden="true"><ArrowUpRight /></span>
               </button>
             ))}
-            <p className="chooser-foot">No file yet? <a href="/api/template">Download the template</a> or <a href="/api/template/example">a full example</a>.</p>
+            <p className="chooser-foot">No file yet? <a href={urls.template}>Download the template</a> or <a href={urls.example}>a full example</a>.</p>
           </div>
         )}
 
@@ -258,7 +267,8 @@ export default function Upload() {
                     </>
                   )}
                   {error && <p className="form-error" role="alert">{error}</p>}
-                  <button type="button" className="btn btn-primary submit" disabled={!ready || busy} onClick={submit}>
+                  {STATIC && <StaticNote />}
+                  <button type="button" className="btn btn-primary submit" disabled={!ready || busy || STATIC} onClick={submit}>
                     {busy ? 'Checking…' : source === 'drone' ? 'Upload and process' : 'Check and build the replay'}<span className="btn-arrow"><ArrowUpRight /></span>
                   </button>
                 </div>

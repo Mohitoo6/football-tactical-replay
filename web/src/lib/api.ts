@@ -1,5 +1,7 @@
 // The backend API (FastAPI, see src/tactics/api.py). In development Vite proxies /api to port 8000;
 // deployed, the same server serves this app and the API.
+// The online demo is a static site (VITE_STATIC=1, D38): the bundled clips are files made by
+// scripts/build_static_site.py, and there is no analysis server for uploads or new explanations.
 import type { Checks, ClipPayload, Explanation, Grounding } from './clip';
 
 export interface ClipSummary {
@@ -41,15 +43,34 @@ function remember(id: string | null) {
 }
 const remembered = <T extends { clip_id: string | null }>(r: T) => { remember(r.clip_id); return r; };
 
+export const STATIC = import.meta.env.VITE_STATIC === '1';
+export const STATIC_NOTE = 'This online demo has no analysis server, so uploads are off. Run Vyuh on your machine to analyse your own data.';
+const noServer = <T,>(): Promise<T> => Promise.reject(new ApiError(0, STATIC_NOTE));
+const enc = encodeURIComponent;
+
 export const api = {
-  health: () => call<{ status: string; drone_video: boolean }>('/api/health'),
-  clips: () => call<ClipSummary[]>(`/api/clips?mine=${encodeURIComponent(myUploads().join(','))}`),
-  clip: (id: string, step = 1) => call<ClipPayload>(`/api/clips/${encodeURIComponent(id)}?step=${step}`),
-  explain: (id: string) => call<Explanation & { grounding: Grounding; checks: Checks; from_cache?: boolean }>(`/api/clips/${encodeURIComponent(id)}/explanation`, { method: 'POST' }),
-  uploadTracking: (form: FormData) => call<UploadResult>('/api/uploads/tracking', { method: 'POST', body: form }).then(remembered),
-  uploadProvider: (form: FormData) => call<UploadResult>('/api/uploads/provider', { method: 'POST', body: form }).then(remembered),
-  uploadDrone: (form: FormData) => call<{ job_id: string }>('/api/uploads/drone', { method: 'POST', body: form }),
-  job: (id: string) => call<Job>(`/api/jobs/${encodeURIComponent(id)}`).then(remembered),
+  health: () => STATIC ? Promise.resolve({ status: 'static', drone_video: false })
+    : call<{ status: string; drone_video: boolean }>('/api/health'),
+  clips: () => STATIC ? call<ClipSummary[]>('/data/clips/index.json')
+    : call<ClipSummary[]>(`/api/clips?mine=${enc(myUploads().join(','))}`),
+  // static: a full replay file (12.5 per second, blended to 60 fps on screen) and a light preview for the library
+  clip: (id: string, step = 1) => STATIC ? call<ClipPayload>(`/data/clips/${enc(id)}${step >= 5 ? '.preview' : ''}.json`)
+    : call<ClipPayload>(`/api/clips/${enc(id)}?step=${step}`),
+  explain: (id: string) => STATIC ? noServer<Explanation & { grounding: Grounding; checks: Checks; from_cache?: boolean }>()
+    : call<Explanation & { grounding: Grounding; checks: Checks; from_cache?: boolean }>(`/api/clips/${enc(id)}/explanation`, { method: 'POST' }),
+  uploadTracking: (form: FormData) => STATIC ? noServer<UploadResult>()
+    : call<UploadResult>('/api/uploads/tracking', { method: 'POST', body: form }).then(remembered),
+  uploadProvider: (form: FormData) => STATIC ? noServer<UploadResult>()
+    : call<UploadResult>('/api/uploads/provider', { method: 'POST', body: form }).then(remembered),
+  uploadDrone: (form: FormData) => STATIC ? noServer<{ job_id: string }>()
+    : call<{ job_id: string }>('/api/uploads/drone', { method: 'POST', body: form }),
+  job: (id: string) => call<Job>(`/api/jobs/${enc(id)}`).then(remembered),
+};
+
+export const urls = {
+  source: (id: string) => STATIC ? `/data/clips/${enc(id)}/source.mp4` : `/api/clips/${enc(id)}/source`,
+  template: STATIC ? '/templates/tracking_template.csv' : '/api/template',
+  example: STATIC ? '/templates/example_musiala_winner.csv' : '/api/template/example',
 };
 
 /** "88:15" -> seconds. */

@@ -6,7 +6,7 @@ import AppLayout from './AppLayout';
 import MiniReplay, { type Layers } from '../components/MiniReplay';
 import MetricCharts from './MetricCharts';
 import CoachText from './CoachText';
-import { api, clockSeconds, formatClock, ApiError } from '../lib/api';
+import { api, clockSeconds, formatClock, ApiError, urls } from '../lib/api';
 import { duration as clipDuration, type Checks, type ClipPayload, type Explanation, type Grounding, type Side } from '../lib/clip';
 import { METRICS, events as clipEvents, metricSeries } from '../lib/replay';
 import './replay.css';
@@ -207,7 +207,7 @@ export default function Replay() {
                   </div>
                 </div>
                 {showVideo && (
-                  <video ref={videoRef} className="source-video" src={`/api/clips/${encodeURIComponent(id)}/source`} muted playsInline preload="auto"
+                  <video ref={videoRef} className="source-video" src={urls.source(id)} muted playsInline preload="auto"
                     onEnded={() => setPlaying(false)} onLoadedData={() => { if (videoRef.current) videoRef.current.currentTime = videoOffset + tRef.current; }} />
                 )}
                 {showVideo && clip.meta.video_rotation != null && clip.meta.video_rotation % 180 !== 0 && (

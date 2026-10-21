@@ -93,3 +93,5 @@
   .choice-tag, .choice-arrow { display: none; }
   .choice { padding: 14px 10px; }
 }
+.static-note { margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: rgba(127, 240, 198, 0.08); border: 1px solid rgba(127, 240, 198, 0.3); color: var(--text-2); }
+.static-note a { color: var(--mint); }
