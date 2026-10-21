@@ -6,3 +6,4 @@ public/assets-local/
 capture-frames/
 # AI-generated intro source clips stay local; only the final rendered intro is committed
 intro-src/
+*.tsbuildinfo
