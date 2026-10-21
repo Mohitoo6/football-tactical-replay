@@ -15,6 +15,22 @@ gsap.registerPlugin(ScrollTrigger);
 
 const HERO_CLIP = '/data/musiala-winner.json';
 
+/** Section links (#how) scroll the page and leave the address alone: in the online demo the address's # holds the page. */
+function useSectionLinks() {
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const link = (e.target as Element).closest?.('a[href^="#"]');
+      const id = link?.getAttribute('href')?.slice(1);
+      const target = id && !id.startsWith('/') ? document.getElementById(id) : null;
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, []);
+}
+
 /** Smooth scrolling (Lenis) driven by GSAP's ticker so ScrollTrigger stays in sync. */
 function useSmoothScroll() {
   useEffect(() => {
@@ -228,6 +244,7 @@ export default function Landing() {
   const [clip, setClip] = useState<ClipPayload | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useSmoothScroll();
+  useSectionLinks();
   useReveal(page);
   useEffect(() => { loadClip(HERO_CLIP).then(setClip).catch(() => setClip(null)); }, []);
   useEffect(() => { ScrollTrigger.refresh(); }, [clip]);

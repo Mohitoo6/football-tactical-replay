@@ -6,6 +6,8 @@
 
 Vyuh replays real football moments from player-tracking data, draws each team's shape as it moves, and has an LLM explain the tactics **using only facts the code has measured**. Every number in the explanation is checked automatically.
 
+**▶ Live demo: [huggingface.co/spaces/Mohitrks/vyuh](https://huggingface.co/spaces/Mohitrks/vyuh)**: the six clips with the replay, numbers and AI coach. Uploading your own data runs locally ([Run it](#run-it)).
+
 ![The replay screen: Musiala's winner with live team shapes and the AI coach's grounded explanation](docs/app-replay.jpg)
 
 *Musiala's 89th-minute winner (1. FC Köln 1–2 FC Bayern München, 27 May 2023). Shaded areas are each team's outfield shape. The coach's text is checked against the measured facts: 26 numbers, clocks and shapes found, 5/5 changes on the right team.*
@@ -27,6 +29,7 @@ Vyuh replays real football moments from player-tracking data, draws each team's 
   - FastAPI backend: clips, uploads, background jobs.
   - React web app.
   - 136 Python tests and 15 web tests, with CI.
+  - A live static demo on Hugging Face Spaces, and a Docker image that runs the full app with uploads.
   - Every decision, with alternatives and evidence, is in [`DECISIONS.md`](DECISIONS.md).
 
 ## The web app
@@ -238,6 +241,13 @@ uv run pytest                                  # 113 tests (video tests skip wit
 cd web && npm test                             # 15 tests
 ```
 
+**With Docker** (the full app with uploads, as one container: http://localhost:7860):
+
+```bash
+docker build -t vyuh .
+docker run -p 7860:7860 --env-file .env vyuh   # .env (free LLM keys) is only needed for new explanations
+```
+
 **Quick viewer without Node:** `uv run streamlit run app/streamlit_app.py` (http://localhost:8501).
 
 ### Rebuild everything from raw data (optional)
@@ -268,6 +278,7 @@ src/tactics/
   ai/        facts summary, prompt, LLM client with fallbacks/cache/repair, grounding check, evaluation
 web/         React + TypeScript web app (Vite): landing page, library, replay + AI coach, upload
 templates/   upload template and a full example file
+deploy/      the online demo's Space card (scripts/deploy_space.sh builds and uploads the demo; Dockerfile runs the full app)
 app/         Streamlit test viewer
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate/evaluate explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
@@ -287,7 +298,7 @@ tests/       113 tests + 23 video tests
 - **Drone video:**
   - It needs a hovering top-down camera with the whole pitch in view, and it was tuned on one ground.
   - A first test on another ground (NASK, Poland) found new failure modes: lighting changes, shadows, people on the touchline. That work is in progress.
-- **Free LLM tiers:** explanations are generated once and cached, so viewing a clip makes no LLM call. The app is not deployed yet.
+- **Free hosting:** the online demo is a static site (free Docker hosting now needs a paid plan). It shows the six clips with their cached explanations; uploads and new explanations run locally or in Docker.
 
 ## Data and attribution
 

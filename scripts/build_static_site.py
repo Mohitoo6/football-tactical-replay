@@ -8,7 +8,6 @@ Writes into the built app:
   data/clips/<id>.preview.json          a light copy for the library's hover preview (every 5th frame)
   data/clips/<id>/source.mp4            the original drone video, where the clip has one
   templates/                            the upload template and the example file
-  app/.../index.html                    a copy of the app for each page, so links to any page work on a static host
   README.md                             the Hugging Face Space card
 """
 
@@ -51,13 +50,8 @@ def main() -> None:
         print(f"  {clip_id}")
 
     shutil.copytree(ROOT / "templates", dist / "templates", dirs_exist_ok=True)
-    pages = ["app", "app/upload"] + [f"app/clip/{c['clip_id']}" for c in clips]
-    for page in pages:
-        (dist / page).mkdir(parents=True, exist_ok=True)
-        shutil.copy2(dist / "index.html", dist / page / "index.html")
-    shutil.copy2(dist / "index.html", dist / "404.html")  # any other address opens the app, which shows the library
     shutil.copy2(ROOT / "deploy" / "space" / "README.md", dist / "README.md")
-    print(f"{len(clips)} clips, {total / 1e6:.1f} MB of clip data, {len(pages)} pages -> {dist}")
+    print(f"{len(clips)} clips, {total / 1e6:.1f} MB of clip data -> {dist}")
 
 
 if __name__ == "__main__":

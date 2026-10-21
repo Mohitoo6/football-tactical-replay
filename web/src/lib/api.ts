@@ -68,6 +68,8 @@ export const api = {
 };
 
 export const urls = {
+  /** a shareable address of a page of this app */
+  page: (path: string) => `${window.location.origin}${STATIC ? '/#' : ''}${path}`,
   source: (id: string) => STATIC ? `/data/clips/${enc(id)}/source.mp4` : `/api/clips/${enc(id)}/source`,
   template: STATIC ? '/templates/tracking_template.csv' : '/api/template',
   example: STATIC ? '/templates/example_musiala_winner.csv' : '/api/template/example',

@@ -115,7 +115,7 @@ export default function Replay() {
   }, [toggle, seek]);
 
   const share = async () => {
-    const url = `${window.location.origin}/app/clip/${id}?t=${now.toFixed(1)}&tab=${tab}`;
+    const url = urls.page(`/app/clip/${id}?t=${now.toFixed(1)}&tab=${tab}`);
     try { await navigator.clipboard.writeText(url); setCopied(true); window.setTimeout(() => setCopied(false), 1800); } catch { window.prompt('Copy this link', url); }
   };
 

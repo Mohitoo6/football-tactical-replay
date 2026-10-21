@@ -807,3 +807,31 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - A full-match file is read whole on every upload (up to 500 MB per file). This works for a prototype; a product would load a match once and cut clips from it.
   - We use positions only. Ball height, player speeds and the limb points some systems give are not used.
 
+## D38. Deployment: a static demo on Hugging Face Spaces, and a Docker image for the full app
+
+*2026-10-21 · `scripts/build_static_site.py`, `scripts/deploy_space.sh`, `deploy/space/`, `Dockerfile`*
+
+- **Decision:**
+  - **Online demo:** a static Hugging Face Space at [huggingface.co/spaces/Mohitrks/vyuh](https://huggingface.co/spaces/Mohitrks/vyuh).
+    - The web app is built with `VITE_STATIC=1` and reads the six bundled clips as files. Each replay is stored at 12.5 frames per second and blended on screen.
+    - The cached explanations and their checks are part of each file, so there is no server and no LLM call.
+    - Pages use hash addresses (`/#/app/clip/...`), because the static host serves only real files.
+  - **Full app:** one Docker image runs the API and the built web app, uploads included, on port 7860.
+    - With `VYUH_PUBLIC=1`, the shared library lists only the bundled clips and the visitor's own uploads. The browser remembers their ids; the server keeps no accounts.
+  - **What gets deployed:** `deploy_space.sh` builds from the last commit (`git archive`), so `.env`, `data/` and local footage never leave the machine.
+- **Alternatives:**
+  - **A Hugging Face Docker Space (the first plan):** refused with "402 Payment Required". Docker and Gradio Spaces on free CPU now need a PRO plan; static Spaces stay free.
+  - **Vercel for the web app:** the Vercel CLI on this machine is logged in to Rohit's account, and Python with pandas, scipy and pyarrow is too large for its serverless functions.
+  - **Render, Fly.io, Railway or Cloud Run for the API:** each needs a card or a paid plan, or sleeps on a small free instance; we cannot pay foreign services.
+- **Why this fits:**
+  - The core demo (replay, shapes, numbers, the checked coach) loads instantly and never sleeps.
+  - No API key is deployed, so a public page cannot use up the free LLM quota.
+- **Evidence:**
+  - The static build was served by a plain file server and by the Space, and checked in a browser: library, deep links with `?t=`, the drone video in sync, section links on the landing page.
+  - The Docker image was built and run: health, a page, 6 clips, and an example upload accepted.
+  - New API tests: the public library filter, and the built app served with a page fallback that never serves a file outside the build.
+- **Limits:**
+  - Uploads need a local run or Docker.
+  - Clip files are served uncompressed (0.8–1.1 MB per replay).
+  - Explanations shown online are the cached ones from the evaluation (D34).
+
