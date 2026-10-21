@@ -122,20 +122,30 @@ def upload_tracking(file: UploadFile = File(...), title: str = Form("Uploaded cl
     return {"clip_id": clip_id, "report": report}
 
 
+# The two file boxes of each provider. Hawk-Eye writes one file per minute, so its boxes take several files.
+PROVIDER_FILES = {"metrica": ("home_data", "away_data"), "skillcorner": ("meta_data", "raw_data"),
+                  "sportec": ("meta_data", "raw_data"), "tracab": ("meta_data", "raw_data"),
+                  "secondspectrum": ("meta_data", "raw_data"), "hawkeye": ("ball_feeds", "player_centroid_feeds")}
+MULTI_FILE_PROVIDERS = {"hawkeye"}
+
+
 @app.post("/api/uploads/provider")
-def upload_provider(provider: str = Form(...), file_a: UploadFile = File(...), file_b: UploadFile = File(...),
+def upload_provider(provider: str = Form(...), file_a: list[UploadFile] = File(...), file_b: list[UploadFile] = File(...),
                     period: int = Form(1), start_s: float = Form(...), end_s: float = Form(...),
                     title: str = Form("Uploaded clip"), focus_team: str = Form("home")) -> dict:
-    """file_a / file_b: metrica = home CSV / away CSV; skillcorner and sportec = metadata / tracking data."""
-    names = {"metrica": ("home_data", "away_data"), "skillcorner": ("meta_data", "raw_data"),
-             "sportec": ("meta_data", "raw_data")}
-    if provider not in names:
-        raise HTTPException(422, f"provider must be one of {sorted(names)}")
+    """file_a / file_b: metrica = home CSV / away CSV; hawkeye = ball files / player centroid files (one per minute);
+    the others = metadata / tracking data."""
+    if provider not in PROVIDER_FILES:
+        raise HTTPException(422, f"provider must be one of {sorted(PROVIDER_FILES)}")
+    if provider not in MULTI_FILE_PROVIDERS and (len(file_a) != 1 or len(file_b) != 1):
+        raise HTTPException(422, f"{provider} takes one file in each box")
     if not 0 < end_s - start_s <= 120:
         raise HTTPException(422, "choose a window of up to 120 s (end_s > start_s)")
     with _saved(file_a, MAX_TABLE_MB * 10) as a, _saved(file_b, MAX_TABLE_MB * 10) as b:
-        clip_id, report = service.create_from_provider(provider, dict(zip(names[provider], (a, b))), title, period,
-                                                       start_s, end_s, focus_team)
+        if provider not in MULTI_FILE_PROVIDERS:
+            a, b = a[0], b[0]
+        clip_id, report = service.create_from_provider(provider, dict(zip(PROVIDER_FILES[provider], (a, b))), title,
+                                                       period, start_s, end_s, focus_team)
     return {"clip_id": clip_id, "report": report}
 
 
@@ -173,16 +183,23 @@ def job(job_id: str) -> dict:
 
 
 class _saved:
-    """Context manager: an uploaded file saved to a temporary path (size-limited), removed afterwards."""
+    """Context manager: uploaded file(s) saved to a temporary folder (each size-limited), removed afterwards.
 
-    def __init__(self, upload: UploadFile, max_mb: int):
+    One upload gives its path; a list of uploads gives a list of paths."""
+
+    def __init__(self, upload: UploadFile | list[UploadFile], max_mb: int):
         self.upload, self.max_mb = upload, max_mb
 
-    def __enter__(self) -> Path:
+    def __enter__(self) -> Path | list[Path]:
         self.folder = Path(tempfile.mkdtemp(prefix="upload-"))
-        path = self.folder / Path(self.upload.filename or "upload").name
-        _copy_limited(self.upload, path, self.max_mb)
-        return path
+        uploads = self.upload if isinstance(self.upload, list) else [self.upload]
+        paths = []
+        for i, upload in enumerate(uploads):
+            path = self.folder / str(i) / Path(upload.filename or "upload").name  # own folder: same names cannot clash
+            path.parent.mkdir()
+            _copy_limited(upload, path, self.max_mb)
+            paths.append(path)
+        return paths if isinstance(self.upload, list) else paths[0]
 
     def __exit__(self, *exc) -> None:
         shutil.rmtree(self.folder, ignore_errors=True)

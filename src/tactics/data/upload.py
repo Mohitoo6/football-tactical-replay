@@ -4,7 +4,8 @@ Two kinds of input:
 1. Our template: a CSV or Excel file with one row per object per moment,
        time_s, team, player, x, y        (+ optional jersey, position)
    where team is "home", "away" or "ball" (see templates/tracking_template.csv).
-2. A provider format read with kloppy (Metrica, SkillCorner, Sportec/DFL), cut to a time window.
+2. A provider format read with kloppy (Metrica, SkillCorner, Sportec/DFL, TRACAB, Second Spectrum, Hawk-Eye),
+   cut to a time window.
 
 Both become the same `TrackingInput`, are checked by `check_input` (a quality report that can refuse
 the data instead of guessing) and turned into a standard clip by `to_clip`. From there the system
@@ -128,16 +129,23 @@ def from_kloppy(dataset, period: int, start_s: float, end_s: float, source: str)
     return TrackingInput(players, ball, float(dataset.metadata.frame_rate), names, source)
 
 
-def load_provider(provider: str, files: dict[str, Path | str]):
+def load_provider(provider: str, files: dict[str, Path | str | list[Path]]):
     """Read a provider's files with kloppy, in metres with the origin at the centre spot.
 
-    metrica: home_data, away_data (CSV) · skillcorner: meta_data, raw_data · sportec (DFL): meta_data, raw_data
+    metrica: home_data, away_data (CSV) · skillcorner: meta_data, raw_data (JSON, JSONL)
+    sportec (DFL): meta_data, raw_data (XML) · tracab: meta_data (XML/JSON), raw_data (.dat/JSON)
+    secondspectrum: meta_data (XML/JSON), raw_data (JSONL)
+    hawkeye: ball_feeds, player_centroid_feeds (lists: Hawk-Eye writes one file per minute)
     """
-    from kloppy import metrica, skillcorner, sportec
+    from kloppy import hawkeye, metrica, secondspectrum, skillcorner, sportec, tracab
 
     readers = {"metrica": lambda f: metrica.load_tracking_csv(f["home_data"], f["away_data"], coordinates="secondspectrum"),
                "skillcorner": lambda f: skillcorner.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
-               "sportec": lambda f: sportec.load_tracking(f["meta_data"], f["raw_data"], coordinates="secondspectrum")}
+               "sportec": lambda f: sportec.load_tracking(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
+               "tracab": lambda f: tracab.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
+               "secondspectrum": lambda f: secondspectrum.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
+               "hawkeye": lambda f: hawkeye.load(f["ball_feeds"], f["player_centroid_feeds"],
+                                                 coordinates="secondspectrum")}  # names must keep "samples.ball" / "samples.centroids"
     if provider not in readers:
         raise ValueError(f"provider must be one of {sorted(readers)}, got {provider!r}")
     return readers[provider](files)

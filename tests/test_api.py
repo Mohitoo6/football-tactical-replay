@@ -74,6 +74,27 @@ def test_bad_uploads_are_refused_with_reasons(client):
     assert upload_example(client, units="feet").status_code == 422
 
 
+def test_hawkeye_minute_files_upload_to_a_clip(client):
+    folder = Path(__import__("kloppy").__file__).parent / "tests" / "files"
+    if not folder.exists():
+        pytest.skip("this kloppy install has no sample files")
+    names = ["hawkeye_2_46.football.samples.ball", "hawkeye_2_46.football.samples.centroids"]
+    with open(folder / names[0], "rb") as ball, open(folder / names[1], "rb") as players:
+        body = client.post("/api/uploads/provider", files=[("file_a", (names[0], ball)), ("file_b", (names[1], players))],
+                           data={"provider": "hawkeye", "period": 2, "start_s": 10, "end_s": 40}).json()
+    assert body["clip_id"], body["report"]
+    payload = client.get(f"/api/clips/{body['clip_id']}").json()
+    assert len(payload["frames"]) > 100 and {p["team"] for p in payload["frames"][0]["players"]} == {"home", "away"}
+    explained = client.post(f"/api/clips/{body['clip_id']}/explanation").json()
+    assert explained["grounding"]["passed"]
+
+
+def test_single_file_providers_refuse_extra_files(client):
+    files = [("file_a", ("a.xml", b"x")), ("file_a", ("b.xml", b"x")), ("file_b", ("c.dat", b"x"))]
+    response = client.post("/api/uploads/provider", files=files, data={"provider": "tracab", "start_s": 0, "end_s": 30})
+    assert response.status_code == 422 and "one file" in response.json()["detail"]
+
+
 def test_drone_video_upload_runs_as_a_job(client, tmp_path):
     pytest.importorskip("cv2")
     from test_pipeline import write_video  # a small synthetic top-view clip with known players

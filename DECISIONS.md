@@ -787,3 +787,23 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - SoccerTrack 18:30 and 16:00: 0.04 and 0.03 m, as before.
   - New tests: a partly hidden side is still found, a 6 px camera shift is measured, an erased side is lost.
 - **Honest note:** this fix was made after seeing this video, so its preview clip is no longer a blind test. The dataset's other videos (10 GB, not yet downloaded) can serve as one.
+
+## D37. Uploads also read TRACAB, Second Spectrum and Hawk-Eye
+
+(D36 is kept for the drone line-ghost filter, which is written but not yet committed.)
+
+- **Decision:** the provider upload accepts three more formats: TRACAB, Second Spectrum and Hawk-Eye. These are the optical tracking systems used in top leagues: fixed stadium cameras, 25–50 positions per second for all 22 players and the ball.
+  - Each format is read by kloppy, as for Metrica, SkillCorner and Sportec, and goes through the same `from_kloppy` → quality report → clip path. Nothing after the reader changed.
+  - Hawk-Eye writes one file per minute, so its two boxes (ball files, player centroid files) take several files. kloppy finds them by name (`samples.ball`, `samples.centroids`), so the original names must be kept.
+  - The other providers still take exactly one file per box; extra files are refused with a reason.
+- **Alternatives:**
+  - writing our own parsers: more code to maintain, for formats kloppy already reads;
+  - leaving them out: the formats real clubs receive would not be accepted.
+- **Evidence:**
+  - kloppy's sample files for all three load into our tracking input, in metres from the centre spot (tests in `tests/test_upload.py`).
+  - Hawk-Eye's sample minute (start of the second half, 50 per second) passes every check, and goes through the API to a clip and a grounded explanation (test in `tests/test_api.py`). It was also uploaded through the browser and opened as a replay.
+- **Limits (honest):**
+  - We have never had a full match from these providers: their data is licensed to clubs and leagues. The TRACAB and Second Spectrum samples are only a few frames, so they are too short for a clip.
+  - A full-match file is read whole on every upload (up to 500 MB per file). This works for a prototype; a product would load a match once and cut clips from it.
+  - We use positions only. Ball height, player speeds and the limb points some systems give are not used.
+

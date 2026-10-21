@@ -10,7 +10,7 @@ import pytest
 from tactics.ai.summary import build_summary
 from tactics.data.clips import load_clip
 from tactics.data.report import QualityReport
-from tactics.data.upload import check_input, from_kloppy, from_template, read_table, to_clip
+from tactics.data.upload import check_input, from_kloppy, from_template, load_provider, read_table, to_clip
 from tactics.data.validate import find_problems
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,3 +111,31 @@ def test_kloppy_datasets_are_cut_to_a_window():
     data = from_kloppy(dataset, period=1, start_s=2.0, end_s=6.0, source="test")
     assert len(data.ball) == 101 and data.team_names == {"home": "Reds", "away": "Blues"}
     assert set(data.players["position"]) == {"Goalkeeper"}
+
+
+# kloppy ships small sample files for each provider it reads; we use them as stand-ins for the paid feeds.
+KLOPPY_FILES = Path(__import__("kloppy").__file__).parent / "tests" / "files"
+INDUSTRY_SAMPLES = {
+    "tracab": {"meta_data": "tracab_meta.xml", "raw_data": "tracab_raw.dat"},
+    "secondspectrum": {"meta_data": "second_spectrum_fake_metadata.xml", "raw_data": "second_spectrum_fake_data.jsonl"},
+    "hawkeye": {"ball_feeds": ["hawkeye_2_46.football.samples.ball"],
+                "player_centroid_feeds": ["hawkeye_2_46.football.samples.centroids"]},
+}
+
+
+@pytest.mark.parametrize("provider", sorted(INDUSTRY_SAMPLES))
+def test_industry_provider_files_become_tracking_input(provider):
+    if not KLOPPY_FILES.exists():
+        pytest.skip("this kloppy install has no sample files")
+    files = {key: [KLOPPY_FILES / n for n in name] if isinstance(name, list) else KLOPPY_FILES / name
+             for key, name in INDUSTRY_SAMPLES[provider].items()}
+    dataset = load_provider(provider, files)
+    period = 2 if provider == "hawkeye" else 1
+    data = from_kloppy(dataset, period=period, start_s=0.0, end_s=120.0, source="test")
+    assert set(data.players["team"]) == {"home", "away"} and len(data.ball) > 0
+    assert data.players["x"].abs().max() < 60 and data.players["y"].abs().max() < 40  # metres, centre spot = 0
+
+
+def test_unknown_providers_are_refused():
+    with pytest.raises(ValueError, match="provider must be one of"):
+        load_provider("statsbomb", {})

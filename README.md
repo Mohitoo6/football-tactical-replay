@@ -31,7 +31,7 @@ Example output for the clip above (abridged):
 
 ```mermaid
 flowchart LR
-    U1[Your tracking data<br/>CSV / Excel template,<br/>Metrica · SkillCorner · DFL] --> Q{Quality report}
+    U1[Your tracking data<br/>CSV / Excel template,<br/>Metrica · SkillCorner · DFL ·<br/>TRACAB · Second Spectrum · Hawk-Eye] --> Q{Quality report}
     U2[Top-view drone video] -->|stabilise · calibrate from lines ·<br/>detect · track · teams · ball| Q
     Q -->|refused: the reasons| R[Message to the user]
     Q -->|accepted| C[Clip<br/>frame · team · player · x · y · ball]
@@ -137,11 +137,12 @@ Two ways in, one analysis. Both go through a quality report that refuses data it
      | `jersey`, `position` | optional; `GK` marks a keeper, otherwise the deepest player in front of goal is taken |
 
      Positions can be in metres from the centre spot, metres from a corner, or 0–1 along each side. A full example is [`templates/example_musiala_winner.csv`](templates/example_musiala_winner.csv).
-   - **Provider formats** through [kloppy](https://kloppy.pysport.org): Metrica, SkillCorner or Sportec/DFL files, cut to a window of up to 120 s.
+   - **Provider formats** through [kloppy](https://kloppy.pysport.org): Metrica, SkillCorner, Sportec/DFL, TRACAB, Second Spectrum or Hawk-Eye files, cut to a window of up to 120 s.
    - **Tested on:**
      - the example file, which reproduces the bundled clip to 0.01 m;
      - Metrica open data (game 1);
-     - SkillCorner open data (Brisbane v Perth, 10 fps).
+     - SkillCorner open data (Brisbane v Perth, 10 fps);
+     - TRACAB, Second Spectrum and Hawk-Eye: only kloppy's small sample files (these feeds are licensed to clubs, so we have no full match; see D37).
 2. **A top-view drone video:** see [above](#from-drone-video-to-coaching-phase-7). It runs locally (minutes of processing), not on a free server.
 
 **Accepted data needs:**
@@ -163,7 +164,7 @@ uv run uvicorn tactics.api:app --reload     # interactive docs at http://localho
 | `GET /api/clips/{id}?step=2` | frames, players, ball, team shapes (hull, width, depth, area, back line), facts, explanation; ~76 KB gzipped |
 | `POST /api/clips/{id}/explanation` | the coach's explanation (cached; one LLM call on a miss) |
 | `POST /api/uploads/tracking` | template CSV/Excel → clip, or the reasons it was refused |
-| `POST /api/uploads/provider` | Metrica / SkillCorner / Sportec files + time window → clip |
+| `POST /api/uploads/provider` | Metrica / SkillCorner / Sportec / TRACAB / Second Spectrum / Hawk-Eye files + time window → clip |
 | `POST /api/uploads/drone`, `GET /api/jobs/{id}` | drone video as a background job with progress (local, needs `--group video`) |
 | `GET /api/template`, `GET /api/template/example` | the template and the example file |
 

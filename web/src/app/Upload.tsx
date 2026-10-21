@@ -10,21 +10,30 @@ import { previewCsv, type CsvPreview, type Units } from '../lib/csvPreview';
 import type { ClipPayload } from '../lib/clip';
 import './upload.css';
 
-type Source = 'template' | 'metrica' | 'skillcorner' | 'sportec' | 'drone';
+type Provider = 'metrica' | 'skillcorner' | 'sportec' | 'tracab' | 'secondspectrum' | 'hawkeye';
+type Source = 'template' | Provider | 'drone';
 
 const SOURCES: { key: Source; title: string; text: string; tag: string; icon: string }[] = [
   { key: 'template', title: 'Tracking file', text: 'CSV or Excel in our template: time, team, player, x, y.', tag: 'Recommended', icon: '▦' },
   { key: 'metrica', title: 'Metrica Sports', text: 'Two CSV files: the home team and the away team.', tag: 'Provider', icon: 'M' },
   { key: 'skillcorner', title: 'SkillCorner', text: 'Match JSON with the tracking JSONL.', tag: 'Provider', icon: 'S' },
   { key: 'sportec', title: 'Sportec / DFL', text: 'Match information XML with the positions XML.', tag: 'Provider', icon: 'D' },
+  { key: 'tracab', title: 'TRACAB', text: 'Metadata XML or JSON with the tracking .dat or JSON.', tag: 'Provider', icon: 'T' },
+  { key: 'secondspectrum', title: 'Second Spectrum', text: 'Metadata XML or JSON with the tracking JSONL.', tag: 'Provider', icon: '2' },
+  { key: 'hawkeye', title: 'Hawk-Eye', text: 'The ball and player files of the minutes you want.', tag: 'Provider', icon: 'H' },
   { key: 'drone', title: 'Drone video', text: 'A still, top-down video of the whole pitch, up to 2 minutes.', tag: 'Video', icon: '◉' },
 ];
 
-const PROVIDER_FILES: Record<'metrica' | 'skillcorner' | 'sportec', [string, string]> = {
+const PROVIDER_FILES: Record<Provider, [string, string]> = {
   metrica: ['Home team CSV', 'Away team CSV'],
   skillcorner: ['Match JSON (metadata)', 'Tracking JSONL'],
   sportec: ['Match information XML', 'Positions XML'],
+  tracab: ['Metadata (XML or JSON)', 'Tracking data (.dat or JSON)'],
+  secondspectrum: ['Metadata (XML or JSON)', 'Tracking JSONL'],
+  hawkeye: ['Ball files (…samples.ball)', 'Player files (…samples.centroids)'],
 };
+// Hawk-Eye writes one file per minute: a window can need two or three of each.
+const MULTI_FILE: Source[] = ['hawkeye'];
 
 const CHECKS_AHEAD = [
   ['Frame rate', '5–60 moments per second'],
@@ -35,24 +44,31 @@ const CHECKS_AHEAD = [
   ['Goalkeepers', 'given for both teams (warning only)'],
 ];
 
-function FileDrop({ label, accept, file, onFile }: { label: string; accept: string; file: File | null; onFile: (f: File) => void }) {
+function FileDrop({ label, accept, files, onFiles, multiple = false }:
+  { label: string; accept: string; files: File[]; onFiles: (f: File[]) => void; multiple?: boolean }) {
   const [over, setOver] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const take = (list: FileList | null | undefined) => {
+    const picked = Array.from(list ?? []);
+    if (picked.length) onFiles(multiple ? picked : picked.slice(0, 1));
+  };
+  const file = files[0];
+  const bytes = files.reduce((sum, f) => sum + f.size, 0);
   return (
     <div className={`drop ${over ? 'is-over' : ''} ${file ? 'has-file' : ''}`}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
-      onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}>
-      <input ref={input} type="file" accept={accept} className="sr-only" aria-label={label} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+      onDrop={(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+      <input ref={input} type="file" accept={accept} multiple={multiple} className="sr-only" aria-label={label} onChange={(e) => take(e.target.files)} />
       {file ? (
         <div className="drop-file">
           <span className="drop-icon">✓</span>
-          <span><strong>{file.name}</strong><small>{(file.size / 1024 / 1024).toFixed(file.size > 1e6 ? 1 : 2)} MB</small></span>
+          <span><strong>{files.length > 1 ? `${files.length} files` : file.name}</strong><small>{(bytes / 1024 / 1024).toFixed(bytes > 1e6 ? 1 : 2)} MB</small></span>
           <button type="button" className="link-btn" onClick={() => input.current?.click()}>Change</button>
         </div>
       ) : (
         <button type="button" className="drop-empty" onClick={() => input.current?.click()}>
           <span className="drop-icon">↑</span>
-          <span><strong>{label}</strong><small>Drop it here, or click to choose</small></span>
+          <span><strong>{label}</strong><small>{multiple ? 'Drop them here, or click to choose (several allowed)' : 'Drop it here, or click to choose'}</small></span>
         </button>
       )}
     </div>
@@ -99,15 +115,16 @@ function Result({ result }: { result: UploadResult }) {
 
 export default function Upload() {
   const [source, setSource] = useState<Source | null>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [fileB, setFileB] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [filesB, setFilesB] = useState<File[]>([]);
+  const file = files[0] ?? null;
   const [units, setUnits] = useState<Units>('metres');
   const [title, setTitle] = useState('');
   const [home, setHome] = useState('Home');
   const [away, setAway] = useState('Away');
   const [focus, setFocus] = useState<'home' | 'away'>('home');
   const [period, setPeriod] = useState(1);
-  const [window_, setWindow] = useState<[number, number]>([0, 30]);
+  const [window_, setWindow] = useState<[string, string]>(['0', '30']);  // text, so a box can be emptied while typing
   const [preview, setPreview] = useState<CsvPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,13 +148,13 @@ export default function Upload() {
     return () => window.clearTimeout(id);
   }, [job]);
 
-  const reset = (s: Source | null) => { setSource(s); setFile(null); setFileB(null); setPreview(null); setResult(null); setJob(null); setError(null); };
+  const reset = (s: Source | null) => { setSource(s); setFiles([]); setFilesB([]); setPreview(null); setResult(null); setJob(null); setError(null); };
 
   const tryExample = async () => {
     const res = await fetch('/api/template/example');
     if (!res.ok) { setError('The example file is served by the analysis server; is it running?'); return; }
     const blob = await res.blob();
-    setFile(new File([blob], 'example_musiala_winner.csv', { type: 'text/csv' }));
+    setFiles([new File([blob], 'example_musiala_winner.csv', { type: 'text/csv' })]);
     setTitle("Musiala's winner (example file)"); setHome('1. FC Köln'); setAway('FC Bayern München'); setFocus('away'); setUnits('metres');
   };
 
@@ -156,9 +173,10 @@ export default function Upload() {
         jobId.current = job_id;
         setJob({ state: 'running', progress: 0, message: 'uploaded, starting', clip_id: null, report: null });
       } else {
-        if (!fileB) return;
-        form.append('provider', source); form.append('file_a', file); form.append('file_b', fileB);
-        form.append('period', String(period)); form.append('start_s', String(window_[0])); form.append('end_s', String(window_[1]));
+        if (!filesB.length) return;
+        form.append('provider', source);
+        files.forEach((f) => form.append('file_a', f)); filesB.forEach((f) => form.append('file_b', f));
+        form.append('period', String(period)); form.append('start_s', String(parseFloat(window_[0]) || 0)); form.append('end_s', String(parseFloat(window_[1]) || 0));
         form.append('title', title || `${SOURCES.find((s) => s.key === source)!.title} clip`); form.append('focus_team', focus);
         setResult(await api.uploadProvider(form));
       }
@@ -167,7 +185,7 @@ export default function Upload() {
     } finally { setBusy(false); }
   };
 
-  const ready = !!file && (source === 'template' || source === 'drone' || !!fileB);
+  const ready = !!file && (source === 'template' || source === 'drone' || filesB.length > 0);
   const meta = SOURCES.find((s) => s.key === source);
 
   return (
@@ -202,8 +220,10 @@ export default function Upload() {
               <div className="flow-grid">
                 <div className="form glass">
                   <FileDrop label={source === 'drone' ? 'Your drone video (MP4/MOV)' : source === 'template' ? 'Your CSV or Excel file' : PROVIDER_FILES[source][0]}
-                    accept={source === 'drone' ? 'video/*' : source === 'template' ? '.csv,.xlsx,.xls' : '*'} file={file} onFile={setFile} />
-                  {source !== 'template' && source !== 'drone' && <FileDrop label={PROVIDER_FILES[source][1]} accept="*" file={fileB} onFile={setFileB} />}
+                    accept={source === 'drone' ? 'video/*' : source === 'template' ? '.csv,.xlsx,.xls' : '*'} files={files} onFiles={setFiles}
+                    multiple={MULTI_FILE.includes(source)} />
+                  {source !== 'template' && source !== 'drone' &&
+                    <FileDrop label={PROVIDER_FILES[source][1]} accept="*" files={filesB} onFiles={setFilesB} multiple={MULTI_FILE.includes(source)} />}
                   {source === 'template' && !file && <button type="button" className="link-btn" onClick={tryExample}>Try it with our example file (Musiala's winner)</button>}
                   <label className="field"><span>Title</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Our second goal vs City" /></label>
                   {source !== 'drone' && (
@@ -231,8 +251,8 @@ export default function Upload() {
                       {source !== 'template' && (
                         <div className="field-row">
                           <label className="field"><span>Half</span><select value={period} onChange={(e) => setPeriod(parseInt(e.target.value, 10))}><option value={1}>First</option><option value={2}>Second</option></select></label>
-                          <label className="field"><span>From (s into the half)</span><input type="number" min={0} value={window_[0]} onChange={(e) => setWindow([parseFloat(e.target.value) || 0, window_[1]])} /></label>
-                          <label className="field"><span>To (max 120 s later)</span><input type="number" min={0} value={window_[1]} onChange={(e) => setWindow([window_[0], parseFloat(e.target.value) || 0])} /></label>
+                          <label className="field"><span>From (s into the half)</span><input type="number" min={0} value={window_[0]} onChange={(e) => setWindow([e.target.value, window_[1]])} /></label>
+                          <label className="field"><span>To (max 120 s later)</span><input type="number" min={0} value={window_[1]} onChange={(e) => setWindow([window_[0], e.target.value])} /></label>
                         </div>
                       )}
                     </>
