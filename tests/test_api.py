@@ -95,6 +95,29 @@ def test_single_file_providers_refuse_extra_files(client):
     assert response.status_code == 422 and "one file" in response.json()["detail"]
 
 
+def test_deployed_library_shows_only_the_visitors_own_uploads(client, monkeypatch):
+    clip_id = upload_example(client).json()["clip_id"]
+    monkeypatch.setattr(api, "PUBLIC", True)
+    listed = lambda mine="": [c["clip_id"] for c in client.get("/api/clips", params={"mine": mine}).json()]
+    assert clip_id not in listed() and clip_id in listed(f"someone-else,{clip_id}")
+    assert "musiala-winner" in listed()
+    assert client.get(f"/api/clips/{clip_id}").status_code == 200  # the link still works
+
+
+def test_built_web_app_is_served_with_page_fallback(tmp_path):
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "index.html").write_text("<html>app</html>")
+    (tmp_path / "assets" / "app.js").write_text("js")
+    (tmp_path / "favicon.svg").write_text("<svg/>")
+    server = api.FastAPI()
+    api.serve_web_app(server, tmp_path)
+    web = TestClient(server)
+    assert web.get("/assets/app.js").text == "js" and web.get("/favicon.svg").text == "<svg/>"
+    assert web.get("/app/clip/musiala-winner").text == "<html>app</html>"  # a page of the app
+    assert web.get("/../pyproject.toml").text == "<html>app</html>"  # never a file outside the build
+    assert web.get("/api/nothing").status_code == 404
+
+
 def test_drone_video_upload_runs_as_a_job(client, tmp_path):
     pytest.importorskip("cv2")
     from test_pipeline import write_video  # a small synthetic top-view clip with known players

@@ -4,16 +4,19 @@
 
 Endpoints:
     GET  /api/health                      status and whether drone video can be processed here
-    GET  /api/clips                       every clip (bundled and uploaded)
+    GET  /api/clips?mine=a,b              every clip (deployed: the bundled ones and the visitor's own uploads)
     GET  /api/clips/{id}?step=2           frames, players, ball, team shapes, facts and explanation
     GET  /api/clips/{id}/video            the rendered replay, if there is one
     GET  /api/clips/{id}/source           the original video the clip was made from (drone clips), if kept
     POST /api/clips/{id}/explanation      the coach's explanation (cached; one LLM call on a miss)
     GET  /api/template, /api/template/example   the upload template and a full example file
     POST /api/uploads/tracking            our CSV/Excel template -> clip (or the reasons it was refused)
-    POST /api/uploads/provider            Metrica / SkillCorner / Sportec files + time window -> clip
+    POST /api/uploads/provider            provider files (Metrica, SkillCorner, Sportec, TRACAB, Second Spectrum,
+                                          Hawk-Eye) + time window -> clip
     POST /api/uploads/drone               a drone video -> background job
     GET  /api/jobs/{id}                   that job's progress and result
+
+Deployed (D38), the same app also serves the built web app (WEB_DIST) and keeps uploads private (VYUH_PUBLIC=1).
 """
 
 import importlib.util
@@ -37,6 +40,9 @@ TEMPLATES = ROOT / "templates"
 MAX_TABLE_MB = 50
 MAX_VIDEO_MB = 1500
 COMPLETE_FN = None  # tests replace this with a fake LLM
+# Deployed for the public: a visitor's library shows the bundled clips and only their own uploads.
+PUBLIC = os.environ.get("VYUH_PUBLIC") == "1"
+WEB_DIST = Path(os.environ["WEB_DIST"]) if os.environ.get("WEB_DIST") else None  # the built web app, if served here
 
 app = FastAPI(title="Vyuh API (football tactical replay)", version="1.0")
 app.add_middleware(GZipMiddleware, minimum_size=1000)  # clip payloads shrink ~6x
@@ -56,8 +62,13 @@ def health() -> dict:
 
 
 @app.get("/api/clips")
-def clips() -> list[dict]:
-    return service.list_clips()
+def clips(mine: str = "") -> list[dict]:
+    """`mine`: the visitor's own upload ids (the web app remembers them), shown when deployed for the public."""
+    listed = service.list_clips()
+    if not PUBLIC:
+        return listed
+    own = set(mine.split(","))
+    return [c for c in listed if c["origin"] == "bundled" or c["clip_id"] in own]
 
 
 @app.get("/api/clips/{clip_id}")
@@ -213,3 +224,23 @@ def _copy_limited(upload: UploadFile, path: Path, max_mb: int) -> None:
             if written > max_mb * (1 << 20):
                 raise HTTPException(413, f"file larger than {max_mb} MB")
             out.write(chunk)
+
+
+def serve_web_app(server: FastAPI, dist: Path) -> None:
+    """Serve the built web app from `server`: its files, and index.html for every other page (the app routes it)."""
+    from fastapi.staticfiles import StaticFiles
+
+    server.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
+    @server.get("/{path:path}", include_in_schema=False)
+    def web_app(path: str) -> FileResponse:
+        if path.startswith("api/"):
+            raise HTTPException(404, f"no endpoint /{path}")
+        file = (dist / path).resolve()
+        if path and file.is_file() and dist.resolve() in file.parents:
+            return FileResponse(file)
+        return FileResponse(dist / "index.html")
+
+
+if WEB_DIST and WEB_DIST.is_dir():  # deployed: one server for the API and the web app (in development Vite serves it)
+    serve_web_app(app, WEB_DIST)

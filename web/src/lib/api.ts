@@ -1,4 +1,5 @@
-// The backend API (FastAPI, see src/tactics/api.py). In development Vite proxies /api to port 8000.
+// The backend API (FastAPI, see src/tactics/api.py). In development Vite proxies /api to port 8000;
+// deployed, the same server serves this app and the API.
 import type { Checks, ClipPayload, Explanation, Grounding } from './clip';
 
 export interface ClipSummary {
@@ -17,7 +18,10 @@ export class ApiError extends Error {
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
-  try { res = await fetch(path, init); } catch { throw new ApiError(0, 'The analysis server is not reachable. Start it with: uv run uvicorn tactics.api:app'); }
+  try { res = await fetch(path, init); } catch {
+    throw new ApiError(0, import.meta.env.DEV ? 'The analysis server is not reachable. Start it with: uv run uvicorn tactics.api:app'
+      : 'The analysis server is not reachable. It may be waking up: try again in a minute.');
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail ?? detail; } catch { /* not JSON */ }
@@ -26,15 +30,26 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// The deployed library is shared, so it lists only the bundled clips and the uploads made in this browser.
+const MY_UPLOADS = 'vyuh.myUploads';
+export function myUploads(): string[] {
+  try { return JSON.parse(localStorage.getItem(MY_UPLOADS) ?? '[]'); } catch { return []; }
+}
+function remember(id: string | null) {
+  if (!id || myUploads().includes(id)) return;
+  try { localStorage.setItem(MY_UPLOADS, JSON.stringify([...myUploads(), id].slice(-50))); } catch { /* private mode */ }
+}
+const remembered = <T extends { clip_id: string | null }>(r: T) => { remember(r.clip_id); return r; };
+
 export const api = {
   health: () => call<{ status: string; drone_video: boolean }>('/api/health'),
-  clips: () => call<ClipSummary[]>('/api/clips'),
+  clips: () => call<ClipSummary[]>(`/api/clips?mine=${encodeURIComponent(myUploads().join(','))}`),
   clip: (id: string, step = 1) => call<ClipPayload>(`/api/clips/${encodeURIComponent(id)}?step=${step}`),
   explain: (id: string) => call<Explanation & { grounding: Grounding; checks: Checks; from_cache?: boolean }>(`/api/clips/${encodeURIComponent(id)}/explanation`, { method: 'POST' }),
-  uploadTracking: (form: FormData) => call<UploadResult>('/api/uploads/tracking', { method: 'POST', body: form }),
-  uploadProvider: (form: FormData) => call<UploadResult>('/api/uploads/provider', { method: 'POST', body: form }),
+  uploadTracking: (form: FormData) => call<UploadResult>('/api/uploads/tracking', { method: 'POST', body: form }).then(remembered),
+  uploadProvider: (form: FormData) => call<UploadResult>('/api/uploads/provider', { method: 'POST', body: form }).then(remembered),
   uploadDrone: (form: FormData) => call<{ job_id: string }>('/api/uploads/drone', { method: 'POST', body: form }),
-  job: (id: string) => call<Job>(`/api/jobs/${encodeURIComponent(id)}`),
+  job: (id: string) => call<Job>(`/api/jobs/${encodeURIComponent(id)}`).then(remembered),
 };
 
 /** "88:15" -> seconds. */

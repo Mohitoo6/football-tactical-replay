@@ -1,0 +1,13 @@
+.venv
+.git
+.env
+data
+outputs
+**/node_modules
+**/__pycache__
+web/dist
+web/intro-src
+web/assets-local
+web/public/assets-local
+web/capture-frames
+clips/local-*
