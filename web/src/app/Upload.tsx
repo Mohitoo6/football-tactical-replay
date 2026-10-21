@@ -44,10 +44,11 @@ const CHECKS_AHEAD = [
   ['Goalkeepers', 'given for both teams (warning only)'],
 ];
 
-function StaticNote() {
+function StaticNote({ drone = false }: { drone?: boolean }) {
   return (
     <p className="static-note">{STATIC_NOTE}{' '}
       <a href="https://github.com/Mohitoo6/football-tactical-replay#run-it" target="_blank" rel="noreferrer">Three commands, in the README</a>.
+      {drone && <> Two drone clips are already processed: <Link to="/app/clip/drone-0600-0630">open one</Link> to see the result beside the original video.</>}
     </p>
   );
 }
@@ -208,9 +209,9 @@ export default function Upload() {
             {STATIC && <StaticNote />}
             {SOURCES.map((s, i) => (
               <button key={s.key} type="button" className="choice" style={{ animationDelay: `${i * 0.06}s` }} onClick={() => reset(s.key)}
-                disabled={s.key === 'drone' && droneOk === false}>
+                disabled={s.key === 'drone' && droneOk === false && !STATIC}>
                 <span className="choice-icon">{s.icon}</span>
-                <span className="choice-text"><strong>{s.title}</strong><small>{s.key === 'drone' && droneOk === false ? (STATIC ? 'Processed on your machine (minutes of computing).' : 'Needs the video tools on the server (uv sync --group video).') : s.text}</small></span>
+                <span className="choice-text"><strong>{s.title}</strong><small>{s.key === 'drone' && droneOk === false && !STATIC ? 'Needs the video tools on the server (uv sync --group video).' : s.text}</small></span>
                 <span className={`choice-tag ${s.tag === 'Recommended' ? 'is-rec' : ''}`}>{s.tag}</span>
                 <span className="choice-arrow" aria-hidden="true"><ArrowUpRight /></span>
               </button>
@@ -267,7 +268,7 @@ export default function Upload() {
                     </>
                   )}
                   {error && <p className="form-error" role="alert">{error}</p>}
-                  {STATIC && <StaticNote />}
+                  {STATIC && <StaticNote drone={source === 'drone'} />}
                   <button type="button" className="btn btn-primary submit" disabled={!ready || busy || STATIC} onClick={submit}>
                     {busy ? 'Checking…' : source === 'drone' ? 'Upload and process' : 'Check and build the replay'}<span className="btn-arrow"><ArrowUpRight /></span>
                   </button>
