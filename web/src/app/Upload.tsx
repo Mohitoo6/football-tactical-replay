@@ -21,7 +21,7 @@ const SOURCES: { key: Source; title: string; text: string; tag: string; icon: st
   { key: 'tracab', title: 'TRACAB', text: 'Metadata XML or JSON with the tracking .dat or JSON.', tag: 'Provider', icon: 'T' },
   { key: 'secondspectrum', title: 'Second Spectrum', text: 'Metadata XML or JSON with the tracking JSONL.', tag: 'Provider', icon: '2' },
   { key: 'hawkeye', title: 'Hawk-Eye', text: 'The ball and player files of the minutes you want.', tag: 'Provider', icon: 'H' },
-  { key: 'drone', title: 'Drone video', text: 'A still, top-down video of the whole pitch, up to 2 minutes.', tag: 'Video', icon: '◉' },
+  { key: 'drone', title: 'Drone video', text: 'A still, top-down video of the whole pitch, up to 2 minutes.', tag: 'Experimental', icon: '◉' },
 ];
 
 const PROVIDER_FILES: Record<Provider, [string, string]> = {

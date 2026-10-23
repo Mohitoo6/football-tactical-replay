@@ -165,7 +165,7 @@ function Inputs({ clip }: { clip: ClipPayload | null }) {
           </div>
           <p className="input-tag">Main way in</p>
           <h3>Coordinate data</h3>
-          <p>A CSV or Excel file in our template, or files from Metrica, SkillCorner or Sportec. We check it and turn it into a replay.</p>
+          <p>The positions that tracking systems record 25 times a second: files from TRACAB, Second Spectrum, Hawk-Eye, Sportec, Metrica or SkillCorner, or a CSV in our template. We check them and turn them into a replay.</p>
         </article>
         <article className="input-card reveal" style={{ transitionDelay: '0.12s' }}>
           <div className="input-visual drone-visual" aria-hidden="true">
@@ -173,9 +173,9 @@ function Inputs({ clip }: { clip: ClipPayload | null }) {
             <div className="drone-scan" />
             <div className="drone-pitch">{at(60).map((p, i) => <span key={p.id} className="drone-ring" style={{ ...pos(p), animationDelay: `${0.8 + i * 0.06}s`, borderColor: p.team === focus ? 'var(--team-a)' : 'var(--team-b)' }} />)}</div>
           </div>
-          <p className="input-tag">Also works</p>
+          <p className="input-tag">Experimental</p>
           <h3>Drone video</h3>
-          <p>A still, top-down video of the whole pitch. We calibrate from the painted lines, find and follow every player, and refuse footage we cannot read well.</p>
+          <p>For clubs without a tracking system: a still, top-down video of the whole pitch. We calibrate from the painted lines, find and follow every player, and refuse footage we cannot read well. Measured on one ground so far.</p>
         </article>
       </div>
     </section>
@@ -200,10 +200,10 @@ function CountUp({ to, decimals = 0, suffix = '' }: { to: number; decimals?: num
 
 function Accuracy() {
   const stats = [
-    { value: 98.6, decimals: 1, suffix: '%', label: 'of players found in drone video' },
-    { value: 0.35, decimals: 2, suffix: ' m', label: 'median position error' },
-    { value: 97.4, decimals: 1, suffix: '%', label: 'of identities kept through the clip' },
-    { value: 118, decimals: 0, suffix: '', label: 'automated tests' },
+    { value: 176, decimals: 0, suffix: '', label: "numbers in the coach's text checked: none invented" },
+    { value: 24, decimals: 0, suffix: '/24', label: 'changes on the right team, in the right direction' },
+    { value: 5, decimals: 0, suffix: '/5', label: 'trap tests passed: a fact changed, the coach followed it' },
+    { value: 137, decimals: 0, suffix: '', label: 'automated tests' },
   ];
   return (
     <section id="accuracy" className="accuracy">
@@ -219,7 +219,7 @@ function Accuracy() {
           ))}
         </div>
         <p className="footnote reveal">
-          Drone numbers are medians over 13 SoccerTrack segments against GNSS ground truth. On 6 segments we never tuned on: 96.9% found and 0.44 m.
+          The AI coach's explanations of the six clips, checked against the measured facts. Experimental drone video: on 6 segments we never tuned on, 96.9% of players found, 0.44 m median error against GPS ground truth.
         </p>
       </div>
     </section>

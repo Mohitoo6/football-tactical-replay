@@ -4,33 +4,91 @@
 
 [![tests](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml/badge.svg)](https://github.com/Mohitoo6/football-tactical-replay/actions/workflows/tests.yml)
 
-Vyuh replays real football moments from player-tracking data, draws each team's shape as it moves, and has an LLM explain the tactics **using only facts the code has measured**. Every number in the explanation is checked automatically.
+**Vyuh turns raw player-tracking data into a tactical story you can read in a minute.** Pick a moment, and you get a replay of all 22 players, each team's shape as it moves, the key numbers, and an AI coach's explanation in plain language. **Every number the AI writes is checked against the measured facts.**
 
-**▶ Live demo: [huggingface.co/spaces/Mohitrks/vyuh](https://huggingface.co/spaces/Mohitrks/vyuh)**: the six clips with the replay, numbers and AI coach. Uploading your own data runs locally ([Run it](#run-it)).
+**▶ Live demo: [huggingface.co/spaces/Mohitrks/vyuh](https://huggingface.co/spaces/Mohitrks/vyuh)**: six real clips with the replay, numbers and AI coach. Uploading your own data runs locally ([Run it](#run-it)).
 
 ![The replay screen: Musiala's winner with live team shapes and the AI coach's grounded explanation](docs/app-replay.jpg)
 
 *Musiala's 89th-minute winner (1. FC Köln 1–2 FC Bayern München, 27 May 2023). Shaded areas are each team's outfield shape. The coach's text is checked against the measured facts: 26 numbers, clocks and shapes found, 5/5 changes on the right team.*
 
-## Highlights
+## Why this exists
 
-- **An AI coach that cannot make things up unnoticed.**
-  - The LLM only receives measured facts (~4 KB of JSON per clip), and its answer is checked in four layers: every number exists in the facts; every "from X to Y" claim is on the right team and in the right direction; the key facts are covered; no invented events.
-  - Results: 6/6 clips grounded; 24/24 claims right; 96% key-fact coverage; 5/5 trap tests passed. In the traps, one fact is changed (the goal removed, the camera made partial...) and the coach must follow it ([D34](DECISIONS.md)).
-- **One analysis, many inputs.** All inputs become the same clip after a quality report. The report refuses data it cannot analyse, and says why, instead of guessing.
+**The data already exists.** In professional football, optical tracking systems such as TRACAB, Second Spectrum and Hawk-Eye film every match from cameras around the stadium. They record the position of every player and the ball 25 times a second. That is about **3 million positions per match** (measured on our two Bundesliga matches).
+
+**The hard part is reading it.** A table of x and y numbers does not tell a coach why a goal was conceded. Today an analyst turns this data into clips, drawings and talking points by hand, for every moment that matters.
+
+**Vyuh does that step for one moment at a time:**
+- **Input:** the tracking data a club or league already receives, in its own format (or our simple CSV template). You choose a window of 3 to 120 seconds.
+- **Output:**
+  - a replay;
+  - each team's shape, frame by frame;
+  - the numbers that changed;
+  - a short explanation: *what happened*, *what a coach would see*, *the key numbers*.
+
+**Who it is for:**
+- **Analysts** preparing a video session: the shapes and numbers are ready, and the explanation is a first draft to edit.
+- **Coaches and players** reviewing a goal they scored or conceded, without reading raw data.
+- **Scouts** checking how a team defends or attacks in real moments, not only on paper.
+- **Media and fans** learning why a goal happened.
+
+The core is coordinate data, the way the industry works. Turning raw drone video into the same data is an [experimental feature](#experimental-drone-video-to-tracking-data) we are still building.
+
+## What it measures
+
+All measurements are deterministic, tested code that runs on the positions. The AI does not compute any of them.
+
+| Measurement | What it is | The tactical question it answers |
+|---|---|---|
+| **Width** | distance between a team's widest outfield players | Is the team stretching the pitch, or staying narrow and compact? |
+| **Depth** | distance from the deepest to the most advanced outfield player | How far apart are the defence and the attack? |
+| **Area** | area of the shape around all outfield players | How much space is there between the lines? (smaller = more compact) |
+| **Back-line height** | average distance of the four deepest outfield players from their own goal | A high line that squeezes the pitch, or a deep block that protects the box? |
+| **Players behind the ball** | outfield players between the ball and their own goal | How many defenders are goal-side? 0 means the defence has been bypassed. |
+| **Ball zone** | the third and lane where the ball mostly was | Where is the play happening? |
+| **Shape (formation)** | the closest formation template, e.g. 4-4-2 or 5-3-2 | How is the team set up in this moment, compared with the official lineup? |
+| **Ball carriers** | the player nearest the ball, in order | Who had the ball, and how did it move between players and teams? |
+| **Notable changes** | the biggest shifts, with match clocks | What changed during the move? (e.g. Köln's area fell from 757 to 388 m² as they dropped into their box) |
+
+Each measurement is averaged over 2-second windows of ball-in-play time; stoppages are left out. The formation estimate is reliable for a team defending in a settled block, and weaker for a team in possession (see [Results](#results)).
+
+## The AI coach: grounded, checked and evaluated
+
+The AI engineering is in what the LLM is *not* allowed to do: invent a number, a player or an event. Each step below is there to stop that.
+
+1. **Facts only.** The measurements above are turned into a compact JSON summary (~4 KB per clip). The LLM receives this summary, never the raw data and never a free hand.
+2. **Rules in the prompt.** Use only numbers from the facts; keep each number with its team and metric; say "too little play" when there is too little play; three fixed sections, at most ~220 words.
+3. **Free models, with fallbacks.** Gemini → Gemini → Groq → OpenRouter, all on free tiers. When one is busy (HTTP 429), the next is tried, and every answer is cached per clip.
+4. **An automatic checker.** Every number, clock and formation in the answer must appear in the facts. If not, the model gets one chance to rewrite; then the answer is shown with a badge showing what was checked.
+
+**Evaluation** (run with `scripts/evaluate_explanations.py`, last run 2026-10-23; [D34](DECISIONS.md)):
+
+| Layer | What it checks | Result |
+|---|---|---|
+| Grounding | every number, clock and formation exists in the facts | **6/6 clips**, 176 values checked, 0 invented |
+| Claims | every "from X to Y" change is on the right team, in the right order and direction | **24/24 right** |
+| Coverage | the key facts are said: the goal and scorer, each team's shape, each team's biggest change | **96%** average (one change not mentioned) |
+| Invented events | no passes, shots or tackles that are not in the facts | **0** |
+| Trap tests | one fact is changed (goal removed, too little play, shape unknown, partial camera, mirrored numbers) and the coach must follow it | **5/5 passed** |
+| Naive prompt, for comparison | the same facts with a simple prompt | invented a number and two names; the checker caught them |
+
+**What these numbers do not show:**
+- The evaluation set is small (6 clips and 5 traps), and the checks are our own code, written for this task.
+- The checks catch invented numbers, names and events, and numbers on the wrong team. They cannot judge whether a coaching point is wise, or catch a wrong word that is not a number. One example: in a trap answer the coach said the ball reached "the final third", which no fact supports.
+- So each clip also has a human-review sheet ([evals/llm](evals/llm/README.md)). The first pass was done with Claude; a full read by us is still to do.
+
+## Highlights for engineers
+
+- **One analysis, many inputs.** Every input becomes the same standard clip after a quality report. The report refuses data it cannot analyse, and says why, instead of guessing.
   - our CSV/Excel template;
-  - six provider formats read through [kloppy](https://kloppy.pysport.org): Metrica, SkillCorner, Sportec/DFL, TRACAB, Second Spectrum and Hawk-Eye;
-  - a raw top-view drone video.
-- **Video to tracking data, measured against GPS ground truth.**
-  - From drone footage, with classical computer vision (no training, no GPU).
-  - On 6 unseen segments: median position error 0.44 m, 97% of players found, identity kept 92% of the time.
-  - A pretrained deep detector was tried, and lost on this footage.
+  - six provider formats read through [kloppy](https://kloppy.pysport.org): TRACAB, Second Spectrum, Hawk-Eye, Sportec/DFL (the Bundesliga's), Metrica and SkillCorner;
+  - experimental: a raw top-view drone video.
 - **A full product, not a notebook.**
   - FastAPI backend: clips, uploads, background jobs.
   - React web app.
   - 137 Python tests and 6 web tests, with CI.
   - A live static demo on Hugging Face Spaces, and a Docker image that runs the full app with uploads.
-  - Every decision, with alternatives and evidence, is in [`DECISIONS.md`](DECISIONS.md).
+- **Decisions on record.** Every choice, with the alternatives and the evidence, is in [`DECISIONS.md`](DECISIONS.md).
 
 ## The web app
 
@@ -91,9 +149,13 @@ flowchart LR
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md), [`evals/llm/scoreboard.md`](evals/llm/scoreboard.md), [`evals/llm/traps.md`](evals/llm/traps.md).
 
-## From drone video to coaching
+## Experimental: drone video to tracking data
 
-The same pipeline also runs on **raw top-view drone video**, with no tracking provider. The system finds the players and the ball itself:
+**Why:** most clubs below the top leagues have no tracking system, but many can fly a drone over a match. If a video can become the same coordinate data, the whole analysis above works for them too.
+
+**Status:** it works on the footage it was built and measured on (numbers below). A first test on another ground found new problems (below), and that work is ongoing.
+
+The system finds the players and the ball itself:
 
 1. Stabilise the hovering drone's drift.
 2. Build an empty-pitch image (per-pixel median of the frames).
@@ -142,6 +204,14 @@ If a check fails, it refuses the clip instead of producing wrong positions.
 - The pipeline still found 98% of players within 0.55 m on every copy.
 - A copy with a goal line cut off, and a 720p copy, were refused.
 
+**Next steps:**
+- **A second ground.** The first test on another ground (NASK, Poland) found six failure modes.
+  - One is fixed: the calibration check mistook the halfway line for the end of the pitch (D35).
+  - Fixes for two more (painted lines and goal nets taken for players) are written and being verified.
+  - Still open: light changing during the clip, sun shadows, people on the touchline, and players standing still.
+- **The ball.** The ball is found correctly in about 55–63% of frames. A full-resolution ball detector is being tested (D25).
+- **Online processing.** Today drone video is processed on the user's machine. Free hosting with enough computing power for video is the open question.
+
 ## Experiment: TV broadcast footage (branch `broadcast-experiment`)
 
 We also tried the usual panning TV camera:
@@ -185,7 +255,7 @@ Two ways in, one analysis. Both go through a quality report that refuses data it
      - Metrica open data;
      - SkillCorner open data (10 fps);
      - kloppy's sample files for TRACAB, Second Spectrum and Hawk-Eye. A Hawk-Eye minute goes all the way to a clip and a grounded explanation (D37).
-2. **A top-view drone video:** see [above](#from-drone-video-to-coaching). It runs locally (minutes of processing).
+2. **A top-view drone video (experimental):** see [above](#experimental-drone-video-to-tracking-data). It runs locally (minutes of processing).
 
 **Accepted data needs:**
 - 3–120 s at 5–60 frames per second;
@@ -295,7 +365,7 @@ tests/       115 tests + 22 video tests
 - **Formation estimate:** reliable for a settled defensive block, not for a team in possession, which reshapes as it attacks.
 - **Coaching judgement:** the checks catch wrong numbers, teams and directions, but whether a coaching point is wise still needs human review (`evals/llm/`).
 - **Industry feeds:** TRACAB, Second Spectrum and Hawk-Eye are tested on sample files only, because full matches are licensed to clubs.
-- **Drone video:**
+- **Drone video (experimental):**
   - It needs a hovering top-down camera with the whole pitch in view, and it was tuned on one ground.
   - A first test on another ground (NASK, Poland) found new failure modes: lighting changes, shadows, people on the touchline. That work is in progress.
 - **Free hosting:** the online demo is a static site (free Docker hosting now needs a paid plan). It shows the six clips with their cached explanations; uploads and new explanations run locally or in Docker.
