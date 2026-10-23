@@ -203,7 +203,7 @@ function Accuracy() {
     { value: 176, decimals: 0, suffix: '', label: "numbers in the coach's text checked: none invented" },
     { value: 24, decimals: 0, suffix: '/24', label: 'changes on the right team, in the right direction' },
     { value: 5, decimals: 0, suffix: '/5', label: 'trap tests passed: a fact changed, the coach followed it' },
-    { value: 137, decimals: 0, suffix: '', label: 'automated tests' },
+    { value: 141, decimals: 0, suffix: '', label: 'automated tests' },
   ];
   return (
     <section id="accuracy" className="accuracy">

@@ -835,3 +835,35 @@ Entries marked *(pending spike)* still need evidence from a test run.
   - Clip files are served uncompressed (0.8–1.1 MB per replay).
   - Explanations shown online are the cached ones from the evaluation (D34).
 
+## D39. Testing the checks, and provider uploads under wrong and real inputs
+
+*2026-10-23 · `scripts/plant_mistakes.py`, `evals/llm/checker_mutations.md`, `src/tactics/data/upload.py`, `src/tactics/service.py`*
+
+Mohit asked two fair questions: could our own evaluation be flattering us, and does the backend hold up on real provider files?
+
+**1. Testing the checks (planted mistakes).**
+- **Method:** each of the six correct explanations was copied with one mistake planted, at every place it could go: 351 copies in all. A mistake counts as caught when the copy gets a problem the original did not have. No LLM call; the same answer every run.
+- **Results:**
+  - Caught every time: a number not in the facts (96/96), a wrong clock (65/65), a wrong formation (10/10), a change reversed (24/24), a change given to the other team (24/24), an invented event (30/30), an invented name (6/6, a soft flag).
+  - Weak spot: a real value of the clip in the wrong place, 28/96. Grounding checks that a number exists in the facts; only a "from X to Y" claim ties it to a team and metric.
+- **Why not RAGAS:**
+  - RAGAS scores retrieval-augmented answers with an LLM judge. We have no retrieval step, and our claims can be checked exactly in code, free and repeatably.
+  - An LLM judge (RAGAS faithfulness or our own prompt) would add a second opinion on wording. That is a possible addition, with free-tier quotas as its cost.
+
+**2. Provider uploads: 23 cases.**
+- **Inputs:**
+  - real Metrica Game 2 files;
+  - the real 400 MB DFL positions file;
+  - kloppy's TRACAB, Second Spectrum and Hawk-Eye samples;
+  - wrong inputs: swapped boxes, the same file twice, an events file, a window after the half, a missing half, minutes that do not match.
+- **Before the fixes:** nothing crashed, but four real problems showed up.
+  - **Metrica took 4–5 minutes per upload:** kloppy read all ~140,000 rows of each file. Fix: the files are first cut to the window, keeping each period's first and last rows so times stay the same. Now under 1 s, with identical timestamps (tested).
+  - **The same file in both boxes made a clip of one team playing itself.** Fix: a "two different teams" check refuses it.
+  - **A window with no data was refused with confusing numbers** ("nan%"). Fix: "no positions between 3500 and 3530 s; half 1 has data from 0:00 to 45:17".
+  - **Read errors were raw exceptions** (e.g. `KeyError: 'startFrameIdx'`). Fix: the message says what each box takes, then gives the detail.
+- **Also fixed:**
+  - Metrica home and away files given the wrong way round are detected from their headers and used the right way, with a note.
+  - Second Spectrum's metadata comes as an XML and a JSON (team and player names); the first box now takes both. Without the JSON the teams were only "home" and "away".
+- **Measured, not fixed:** the 400 MB DFL file makes a correct clip in ~30 s, using ~5.5 GB of memory. That fits a laptop, not a small free server.
+- **Limits:** TRACAB, Second Spectrum and Hawk-Eye are still tested on short sample files only; real deliveries can differ by version.
+

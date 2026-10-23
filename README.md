@@ -71,6 +71,13 @@ The AI engineering is in what the LLM is *not* allowed to do: invent a number, a
 | Invented events | no passes, shots or tackles that are not in the facts | **0** |
 | Trap tests | one fact is changed (goal removed, too little play, shape unknown, partial camera, mirrored numbers) and the coach must follow it | **5/5 passed** |
 | Naive prompt, for comparison | the same facts with a simple prompt | invented a number and two names; the checker caught them |
+| **Testing the checks** | 351 copies of the real explanations with one planted mistake each, at every place it can go | **283/351 caught** (below) |
+
+**Do the checks themselves work?** A checker that passes everything would also give 6/6. So we planted mistakes in copies of the real explanations and ran the checks again (`scripts/plant_mistakes.py`, [results](evals/llm/checker_mutations.md)):
+- **Caught every time:** a number not in the facts (96/96), a wrong clock (65/65) or formation (10/10), a change reversed (24/24) or given to the other team (24/24), an invented pass, cross, tackle, shot or header (30/30), and an invented player name (6/6, flagged for review).
+- **The weak spot:** a *real* number from the clip put in the wrong place is caught only 28 times out of 96. The check knows the number exists, not always where it belongs; it catches it only inside a "from X to Y" claim.
+
+**Why not RAGAS or an LLM judge?** RAGAS measures retrieval-augmented answers with an LLM as the judge (for example its *faithfulness* score). Here there is no retrieval: the facts are given, and every claim can be checked exactly. Code checks are free, give the same answer every run, and cannot be talked round. An LLM judge would add a second opinion on wording, the part code cannot check; it is a possible next step, not a replacement.
 
 **What these numbers do not show:**
 - The evaluation set is small (6 clips and 5 traps), and the checks are our own code, written for this task.
@@ -86,7 +93,7 @@ The AI engineering is in what the LLM is *not* allowed to do: invent a number, a
 - **A full product, not a notebook.**
   - FastAPI backend: clips, uploads, background jobs.
   - React web app.
-  - 137 Python tests and 6 web tests, with CI.
+  - 141 Python tests and 6 web tests, with CI.
   - A live static demo on Hugging Face Spaces, and a Docker image that runs the full app with uploads.
 - **Decisions on record.** Every choice, with the alternatives and the evidence, is in [`DECISIONS.md`](DECISIONS.md).
 
@@ -145,7 +152,7 @@ flowchart LR
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | AI coach | 6 clips, automatic checks + trap tests (D34) | 6/6 grounded; 24/24 claims right; 96 % key-fact coverage; 5/5 traps passed |
 | Naive vs strict prompt | Same facts, two prompts | The naive prompt invented a number and two names (caught by the checker); the strict one did not |
-| Tests | `uv run pytest`, `npm test` | 115 passing (+22 video tests with `--group video`), 6 web tests; LLM layer tested with fake clients (no network) |
+| Tests | `uv run pytest`, `npm test` | 119 passing (+22 video tests with `--group video`), 6 web tests; LLM layer tested with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md), [`evals/llm/scoreboard.md`](evals/llm/scoreboard.md), [`evals/llm/traps.md`](evals/llm/traps.md).
 
@@ -307,7 +314,7 @@ npm run dev
 **Tests:**
 
 ```bash
-uv run pytest                                  # 115 tests (video tests skip without --group video)
+uv run pytest                                  # 119 tests (video tests skip without --group video)
 cd web && npm test                             # 6 tests
 ```
 
@@ -353,7 +360,7 @@ app/         Streamlit test viewer
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate/evaluate explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation, video and LLM evaluations
-tests/       115 tests + 22 video tests
+tests/       119 tests + 22 video tests
 ```
 
 ## Scope and limitations
@@ -364,7 +371,8 @@ tests/       115 tests + 22 video tests
 - **Positions only.** The coach does not read pass, shot or tackle event feeds. "Ball carrier" means the nearest player to the ball.
 - **Formation estimate:** reliable for a settled defensive block, not for a team in possession, which reshapes as it attacks.
 - **Coaching judgement:** the checks catch wrong numbers, teams and directions, but whether a coaching point is wise still needs human review (`evals/llm/`).
-- **Industry feeds:** TRACAB, Second Spectrum and Hawk-Eye are tested on sample files only, because full matches are licensed to clubs.
+- **Industry feeds:** TRACAB, Second Spectrum and Hawk-Eye are tested on sample files only, because full matches are licensed to clubs. Wrong or mismatched files are refused with a reason (23 cases tested, D39).
+- **Memory:** reading a full-match Bundesliga positions file (400 MB of XML) takes ~30 s and ~5.5 GB of memory. That is fine on a laptop, too much for a small free server.
 - **Drone video (experimental):**
   - It needs a hovering top-down camera with the whole pitch in view, and it was tuned on one ground.
   - A first test on another ground (NASK, Poland) found new failure modes: lighting changes, shadows, people on the touchline. That work is in progress.

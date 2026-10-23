@@ -139,3 +139,79 @@ def test_industry_provider_files_become_tracking_input(provider):
 def test_unknown_providers_are_refused():
     with pytest.raises(ValueError, match="provider must be one of"):
         load_provider("statsbomb", {})
+
+
+# --- robustness of provider uploads (D39) -----------------------------------------------------------------
+
+def write_metrica(path: Path, side: str, first_jersey: int, rng, halves=((1, 60.0), (2, 60.0)), fps=25) -> Path:
+    """A small file in Metrica's tracking CSV format: 3 header rows, then one row per frame; time counts from kick-off."""
+    jerseys = range(first_jersey, first_jersey + 11)
+    rows = [",,," + ",".join(f"{side},," [:-1] for _ in jerseys) + ",,",
+            ",,," + ",".join(f"{j}," for j in jerseys) + ",,",
+            "Period,Frame,Time [s]," + ",".join(f"Player{j}," for j in jerseys) + "Ball,"]
+    frame, clock = 0, 0.0
+    for period, seconds in halves:
+        for _ in range(int(seconds * fps)):
+            frame += 1
+            clock += 1 / fps
+            spots = rng.uniform(0.1, 0.9, size=22).round(5)
+            rows.append(f"{period},{frame},{clock:.2f}," + ",".join(map(str, spots)) + ",0.5,0.5")
+        clock += 600  # half-time
+    path.write_text("\n".join(rows) + "\n")
+    return path
+
+
+@pytest.fixture
+def metrica_files(tmp_path):
+    rng = np.random.default_rng(3)
+    return {"home_data": write_metrica(tmp_path / "home.csv", "Home", 1, rng),
+            "away_data": write_metrica(tmp_path / "away.csv", "Away", 12, rng)}
+
+
+def test_metrica_files_are_cut_to_the_window_with_the_same_times(metrica_files, tmp_path):
+    from kloppy import metrica
+    from tactics.data.upload import trim_metrica_csv
+
+    full = metrica.load_tracking_csv(metrica_files["home_data"], metrica_files["away_data"], coordinates="secondspectrum")
+    cut = load_provider("metrica", metrica_files, window=(2, 20.0, 30.0))
+    times = lambda ds: sorted(round(f.timestamp.total_seconds(), 2) for f in ds.records if f.period.id == 2 and 20 <= f.timestamp.total_seconds() <= 30)
+    assert times(cut) == times(full) and len(times(cut)) == 251
+    # 3 header rows, the first and last row of both halves, and 20-30 s with a 1 s margin each side (301 rows)
+    trimmed = trim_metrica_csv(metrica_files["home_data"], tmp_path / "t.csv", 2, 20.0, 30.0).read_text().splitlines()
+    assert len(trimmed) == 3 + 4 + 301 and trimmed[:3] == metrica_files["home_data"].read_text().splitlines()[:3]
+
+
+def test_provider_uploads_refuse_wrong_input_with_reasons(metrica_files, tmp_path, monkeypatch):
+    from tactics import service
+    monkeypatch.setattr(service, "USER", tmp_path / "clips")
+    upload = lambda files, period=1, a=10.0, b=40.0: service.create_from_provider("metrica", files, "t", period, a, b)
+
+    clip_id, report = upload(metrica_files)
+    assert clip_id, report
+    clip_id, report = upload({"home_data": metrica_files["away_data"], "away_data": metrica_files["home_data"]})
+    assert clip_id and any(c["name"] == "home and away files" for c in report["checks"])  # swapped back, with a note
+    for files, period, a, b, check in [
+        (metrica_files, 1, 300.0, 330.0, "window inside the half"),  # after the half ended
+        (metrica_files, 3, 0.0, 30.0, "window inside the half"),  # no third half
+        ({"home_data": metrica_files["home_data"], "away_data": metrica_files["home_data"]}, 1, 10.0, 40.0, "two different teams"),
+    ]:
+        clip_id, report = upload(files, period, a, b)
+        failed = [c for c in report["checks"] if not c["passed"]]
+        assert clip_id is None and failed[0]["name"] == check, report
+
+
+def test_unreadable_provider_files_say_what_each_box_takes():
+    from tactics import service
+    if not KLOPPY_FILES.exists():
+        pytest.skip("this kloppy install has no sample files")
+    clip_id, report = service.create_from_provider(
+        "tracab", {"meta_data": KLOPPY_FILES / "tracab_raw.dat", "raw_data": KLOPPY_FILES / "tracab_meta.xml"}, "t", 1, 0, 30)
+    assert clip_id is None and "The first box takes the metadata" in report["checks"][0]["value"]
+
+
+def test_second_spectrum_reads_the_json_metadata_too():
+    if not KLOPPY_FILES.exists():
+        pytest.skip("this kloppy install has no sample files")
+    meta = [KLOPPY_FILES / "second_spectrum_fake_metadata.xml", KLOPPY_FILES / "second_spectrum_fake_metadata.json"]
+    dataset = load_provider("secondspectrum", {"meta_data": meta, "raw_data": KLOPPY_FILES / "second_spectrum_fake_data.jsonl"})
+    assert [t.name for t in dataset.metadata.teams] == ["FK1", "FK2"]

@@ -21,9 +21,10 @@ import numpy as np
 
 from tactics.ai.evaluate import evaluate
 from tactics.ai.grounding import check_grounding
-from tactics.data.clips import Clip, load_clip, save_clip
+from tactics.data.clips import Clip, load_clip, match_clock, save_clip
 from tactics.data.report import QualityReport
-from tactics.data.upload import (check_input, from_kloppy, from_template, load_provider, read_table,
+from tactics.data.upload import (check_input, from_kloppy, from_template, load_provider, metrica_side, period_range,
+                                  read_table, unreadable_message,
                                  to_clip)
 from tactics.data.validate import find_problems
 from tactics.geometry.shape import hull_vertices, outfield, team_shape
@@ -157,10 +158,21 @@ def create_from_provider(provider: str, files: dict[str, Path], title: str, peri
                          end_s: float, focus_team: str = "home") -> tuple[str | None, dict]:
     """A provider's files (via kloppy), cut to [start_s, end_s] of `period` -> saved user clip."""
     report = QualityReport()
+    if provider == "metrica" and metrica_side(files["home_data"]) == "away" and metrica_side(files["away_data"]) == "home":
+        files = {"home_data": files["away_data"], "away_data": files["home_data"]}
+        report.add("home and away files", True, "given the other way round; used the right way", "home file first",
+                   blocking=False)
     try:
-        dataset = load_provider(provider, files)
+        dataset = load_provider(provider, files, window=(period, start_s, end_s))
     except Exception as error:
-        report.add("file readable", False, f"{type(error).__name__}: {str(error)[:200]}", f"{provider} files")
+        report.add("file readable", False, unreadable_message(provider, error), f"{provider} files")
+        return None, report_json(report)
+    available = period_range(dataset, period)
+    if available is None or start_s > available[1] or end_s < available[0]:
+        found = (f"half {period} has data from {match_clock(period, available[0])} to {match_clock(period, available[1])}"
+                 f" ({available[0]:.0f}–{available[1]:.0f} s into the half)") if available else f"there is no half {period} in these files"
+        report.add("window inside the half", False, f"no positions between {start_s:g} and {end_s:g} s; {found}",
+                   "a window where the files have data")
         return None, report_json(report)
     data = from_kloppy(dataset, period, start_s, end_s, source=f"{provider} data uploaded by the user")
     return _finish(data, report, title, focus_team, start_s, period)

@@ -12,6 +12,7 @@ the data instead of guessing) and turned into a standard clip by `to_clip`. From
 works exactly as for the bundled clips: geometry, overlays, facts and the coach.
 """
 
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -129,13 +130,97 @@ def from_kloppy(dataset, period: int, start_s: float, end_s: float, source: str)
     return TrackingInput(players, ball, float(dataset.metadata.frame_rate), names, source)
 
 
-def load_provider(provider: str, files: dict[str, Path | str | list[Path]]):
+METRICA_HEADER_ROWS = 3
+# What each provider's two boxes should hold, for messages when a file cannot be read.
+PROVIDER_BOXES = {
+    "metrica": ("the home team's tracking CSV", "the away team's tracking CSV"),
+    "skillcorner": ("the match JSON (metadata)", "the tracking JSONL"),
+    "sportec": ("the match information XML", "the positions XML"),
+    "tracab": ("the metadata (XML or JSON)", "the tracking data (.dat or JSON)"),
+    "secondspectrum": ("the metadata XML (and the metadata JSON, if you have it)", "the tracking JSONL"),
+    "hawkeye": ("the ball files (…samples.ball)", "the player files (…samples.centroids)"),
+}
+
+
+def unreadable_message(provider: str, error: Exception) -> str:
+    """A read error in plain words: what the boxes should hold, then the technical detail."""
+    first, second = PROVIDER_BOXES.get(provider, ("the first file", "the second file"))
+    return (f"These files could not be read as {provider} tracking data. The first box takes {first}, the second "
+            f"{second}. (Detail: {type(error).__name__}: {str(error)[:160]})")
+
+
+def metrica_side(path: Path | str) -> str | None:
+    """'home' or 'away' from the first header row of a Metrica tracking CSV, if it says."""
+    with open(path, encoding="utf-8-sig") as f:
+        first = f.readline().lower()
+    sides = {side for side in ("home", "away") if side in first}
+    return sides.pop() if len(sides) == 1 else None
+
+
+def period_range(dataset, period: int) -> tuple[float, float] | None:
+    """First and last second of `period` in a kloppy dataset (None if the period has no frames)."""
+    times = [f.timestamp.total_seconds() for f in dataset.records if f.period.id == period]
+    return (min(times), max(times)) if times else None
+
+
+def trim_metrica_csv(source: Path | str, target: Path, period: int, start_s: float, end_s: float,
+                     margin_s: float = 1.0) -> Path:
+    """Copy of a Metrica tracking CSV with only the rows kloppy needs for one window (D39).
+
+    A Metrica file holds a whole match (~140,000 rows), and kloppy takes minutes to read it all. We keep the three
+    header rows, the first and last row of every period (kloppy counts time from the first, so timestamps stay the
+    same, and the half's length stays known) and the rows of the window. Time [s] counts from the match start, so
+    the window is measured from its period's first row.
+    """
+    period_start: dict[str, float] = {}
+    last, last_written = None, True  # the previous tracking row, and whether it was kept
+    with open(source, encoding="utf-8-sig") as rows, open(target, "w", encoding="utf-8") as out:
+        for i, line in enumerate(rows):
+            if i < METRICA_HEADER_ROWS:
+                out.write(line)
+                continue
+            cells = line.split(",", 3)
+            if len(cells) < 3:
+                continue
+            try:
+                time_s = float(cells[2])
+            except ValueError:  # not a tracking row: let kloppy report the file
+                out.write(line)
+                continue
+            new_period = cells[0] not in period_start
+            if new_period and last is not None and not last_written:
+                out.write(last)  # the last row of the period before
+            keep = new_period or (cells[0] == str(period) and
+                                  start_s - margin_s <= time_s - period_start[cells[0]] <= end_s + margin_s)
+            if new_period:
+                period_start[cells[0]] = time_s
+            if keep:
+                out.write(line)
+            last, last_written = line, keep
+        if last is not None and not last_written:
+            out.write(last)
+    return target
+
+
+def _secondspectrum_meta(meta: Path | str | list[Path], raw: Path | str) -> tuple:
+    """Second Spectrum sends the metadata as XML and as JSON (team and player names): (XML, tracking, JSON or None)."""
+    paths = meta if isinstance(meta, list) else [meta]
+    xml = [p for p in paths if str(p).lower().endswith(".xml")]
+    other = [p for p in paths if p not in xml]
+    if xml:
+        return xml[0], raw, (other[0] if other else None)
+    return paths[0], raw, None  # a single JSON: kloppy says what is missing
+
+
+def load_provider(provider: str, files: dict[str, Path | str | list[Path]],
+                  window: tuple[int, float, float] | None = None):
     """Read a provider's files with kloppy, in metres with the origin at the centre spot.
 
     metrica: home_data, away_data (CSV) · skillcorner: meta_data, raw_data (JSON, JSONL)
     sportec (DFL): meta_data, raw_data (XML) · tracab: meta_data (XML/JSON), raw_data (.dat/JSON)
     secondspectrum: meta_data (XML/JSON), raw_data (JSONL)
     hawkeye: ball_feeds, player_centroid_feeds (lists: Hawk-Eye writes one file per minute)
+    window: (period, start_s, end_s); Metrica files are first cut to it, so a whole match reads in a second.
     """
     from kloppy import hawkeye, metrica, secondspectrum, skillcorner, sportec, tracab
 
@@ -143,12 +228,29 @@ def load_provider(provider: str, files: dict[str, Path | str | list[Path]]):
                "skillcorner": lambda f: skillcorner.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
                "sportec": lambda f: sportec.load_tracking(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
                "tracab": lambda f: tracab.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
-               "secondspectrum": lambda f: secondspectrum.load(f["meta_data"], f["raw_data"], coordinates="secondspectrum"),
+               "secondspectrum": lambda f: secondspectrum.load(*_secondspectrum_meta(f["meta_data"], f["raw_data"]),
+                                                                coordinates="secondspectrum"),
                "hawkeye": lambda f: hawkeye.load(f["ball_feeds"], f["player_centroid_feeds"],
                                                  coordinates="secondspectrum")}  # names must keep "samples.ball" / "samples.centroids"
     if provider not in readers:
         raise ValueError(f"provider must be one of {sorted(readers)}, got {provider!r}")
+    if provider == "metrica" and window:
+        with tempfile.TemporaryDirectory(prefix="metrica-") as folder:
+            trimmed = {key: trim_metrica_csv(path, Path(folder) / f"{key}.csv", *window) for key, path in files.items()}
+            return readers[provider](trimmed)
     return readers[provider](files)
+
+
+def _same_teams_share(players: pd.DataFrame) -> float:
+    """Share of moments where both teams have exactly the same positions: the same file given twice."""
+    if players.empty:
+        return 0.0
+    rounded = players.assign(x=players["x"].round(2), y=players["y"].round(2))
+    spots = rounded.groupby(["frame", "team"])[["x", "y"]].apply(lambda g: tuple(sorted(map(tuple, g.to_numpy()))))
+    spots = spots.unstack()
+    if "home" not in spots or "away" not in spots:
+        return 0.0
+    return float((spots["home"] == spots["away"]).mean())
 
 
 def check_input(data: TrackingInput, report: QualityReport) -> None:
@@ -165,6 +267,9 @@ def check_input(data: TrackingInput, report: QualityReport) -> None:
     outside = ((data.players["x"].abs() > 52.5 + OUTSIDE_M) | (data.players["y"].abs() > 34 + OUTSIDE_M)).mean()
     report.add("positions on the pitch", outside <= MAX_OUTSIDE_SHARE, f"{outside:.1%} more than {OUTSIDE_M:g} m outside",
                f"<= {MAX_OUTSIDE_SHARE:.0%} (otherwise the units are probably wrong)")
+    same = _same_teams_share(data.players)
+    report.add("two different teams", same < 0.5, f"{same:.0%} of moments with identical home and away positions",
+               "the home and away files are different (not the same file twice)")
     ball_share = float(data.ball["alive"].mean()) if len(data.ball) else 0.0
     report.add("ball present", ball_share >= MIN_BALL_SHARE, f"{ball_share:.0%} of moments", f">= {MIN_BALL_SHARE:.0%}",
                blocking=False)

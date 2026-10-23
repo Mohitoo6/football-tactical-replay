@@ -133,11 +133,12 @@ def upload_tracking(file: UploadFile = File(...), title: str = Form("Uploaded cl
     return {"clip_id": clip_id, "report": report}
 
 
-# The two file boxes of each provider. Hawk-Eye writes one file per minute, so its boxes take several files.
+# The two file boxes of each provider. Hawk-Eye writes one file per minute, so its boxes take several files;
+# Second Spectrum's metadata comes as an XML and a JSON (team and player names), so its first box takes both.
 PROVIDER_FILES = {"metrica": ("home_data", "away_data"), "skillcorner": ("meta_data", "raw_data"),
                   "sportec": ("meta_data", "raw_data"), "tracab": ("meta_data", "raw_data"),
                   "secondspectrum": ("meta_data", "raw_data"), "hawkeye": ("ball_feeds", "player_centroid_feeds")}
-MULTI_FILE_PROVIDERS = {"hawkeye"}
+MULTI_FILE = {"hawkeye": (True, True), "secondspectrum": (True, False)}  # (first box, second box)
 
 
 @app.post("/api/uploads/provider")
@@ -148,13 +149,15 @@ def upload_provider(provider: str = Form(...), file_a: list[UploadFile] = File(.
     the others = metadata / tracking data."""
     if provider not in PROVIDER_FILES:
         raise HTTPException(422, f"provider must be one of {sorted(PROVIDER_FILES)}")
-    if provider not in MULTI_FILE_PROVIDERS and (len(file_a) != 1 or len(file_b) != 1):
-        raise HTTPException(422, f"{provider} takes one file in each box")
+    many_a, many_b = MULTI_FILE.get(provider, (False, False))
+    if (not many_a and len(file_a) != 1) or (not many_b and len(file_b) != 1):
+        raise HTTPException(422, f"{provider} takes one file in each box"
+                            + (" (the first box can take several)" if many_a else ""))
     if not 0 < end_s - start_s <= 120:
         raise HTTPException(422, "choose a window of up to 120 s (end_s > start_s)")
     with _saved(file_a, MAX_TABLE_MB * 10) as a, _saved(file_b, MAX_TABLE_MB * 10) as b:
-        if provider not in MULTI_FILE_PROVIDERS:
-            a, b = a[0], b[0]
+        a = a if many_a else a[0]
+        b = b if many_b else b[0]
         clip_id, report = service.create_from_provider(provider, dict(zip(PROVIDER_FILES[provider], (a, b))), title,
                                                        period, start_s, end_s, focus_team)
     return {"clip_id": clip_id, "report": report}

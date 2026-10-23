@@ -19,7 +19,7 @@ const SOURCES: { key: Source; title: string; text: string; tag: string; icon: st
   { key: 'skillcorner', title: 'SkillCorner', text: 'Match JSON with the tracking JSONL.', tag: 'Provider', icon: 'S' },
   { key: 'sportec', title: 'Sportec / DFL', text: 'Match information XML with the positions XML.', tag: 'Provider', icon: 'D' },
   { key: 'tracab', title: 'TRACAB', text: 'Metadata XML or JSON with the tracking .dat or JSON.', tag: 'Provider', icon: 'T' },
-  { key: 'secondspectrum', title: 'Second Spectrum', text: 'Metadata XML or JSON with the tracking JSONL.', tag: 'Provider', icon: '2' },
+  { key: 'secondspectrum', title: 'Second Spectrum', text: 'Metadata XML and JSON with the tracking JSONL.', tag: 'Provider', icon: '2' },
   { key: 'hawkeye', title: 'Hawk-Eye', text: 'The ball and player files of the minutes you want.', tag: 'Provider', icon: 'H' },
   { key: 'drone', title: 'Drone video', text: 'A still, top-down video of the whole pitch, up to 2 minutes.', tag: 'Experimental', icon: '◉' },
 ];
@@ -29,11 +29,12 @@ const PROVIDER_FILES: Record<Provider, [string, string]> = {
   skillcorner: ['Match JSON (metadata)', 'Tracking JSONL'],
   sportec: ['Match information XML', 'Positions XML'],
   tracab: ['Metadata (XML or JSON)', 'Tracking data (.dat or JSON)'],
-  secondspectrum: ['Metadata (XML or JSON)', 'Tracking JSONL'],
+  secondspectrum: ['Metadata XML (+ the metadata JSON)', 'Tracking JSONL'],
   hawkeye: ['Ball files (…samples.ball)', 'Player files (…samples.centroids)'],
 };
 // Hawk-Eye writes one file per minute: a window can need two or three of each.
-const MULTI_FILE: Source[] = ['hawkeye'];
+// Second Spectrum's metadata comes as an XML and a JSON (team and player names): its first box takes both.
+const MULTI_FILE: Partial<Record<Source, [boolean, boolean]>> = { hawkeye: [true, true], secondspectrum: [true, false] };
 
 const CHECKS_AHEAD = [
   ['Frame rate', '5–60 moments per second'],
@@ -231,9 +232,9 @@ export default function Upload() {
                 <div className="form glass">
                   <FileDrop label={source === 'drone' ? 'Your drone video (MP4/MOV)' : source === 'template' ? 'Your CSV or Excel file' : PROVIDER_FILES[source][0]}
                     accept={source === 'drone' ? 'video/*' : source === 'template' ? '.csv,.xlsx,.xls' : '*'} files={files} onFiles={setFiles}
-                    multiple={MULTI_FILE.includes(source)} />
+                    multiple={MULTI_FILE[source]?.[0] ?? false} />
                   {source !== 'template' && source !== 'drone' &&
-                    <FileDrop label={PROVIDER_FILES[source][1]} accept="*" files={filesB} onFiles={setFilesB} multiple={MULTI_FILE.includes(source)} />}
+                    <FileDrop label={PROVIDER_FILES[source][1]} accept="*" files={filesB} onFiles={setFilesB} multiple={MULTI_FILE[source]?.[1] ?? false} />}
                   {source === 'template' && !file && <button type="button" className="link-btn" onClick={tryExample}>Try it with our example file (Musiala's winner)</button>}
                   <label className="field"><span>Title</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Our second goal vs City" /></label>
                   {source !== 'drone' && (

@@ -1,0 +1,2722 @@
+[
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "20 -> 37",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "20 -> 22",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "14 -> 31",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "14 -> 13",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "17 -> 37",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "17 -> 14",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "54 -> 71",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "54 -> 55",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "58 -> 75",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "58 -> 55",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "13 -> 31",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "13 -> 14",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "13 -> 31",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "13 -> 14",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "7 -> 24",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "7 -> 6",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "3 -> 21",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "3 -> 2",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "54 -> 71",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "54 -> 55",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "8 -> 25",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "8 -> 7",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "1081 -> 1098",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1081 -> 1073",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "839 -> 856",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "839 -> 863",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "27 -> 46",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "27 -> 28",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "number not in the facts",
+  "mistake": "44 -> 61",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "44 -> 43",
+  "caught_by": []
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 17m to 54",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 58m to 13",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 7 at 7:35 down to 3",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 1081 m² at 7:35 to 839",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 27m at 7:35 to 44",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change given to the other team",
+  "mistake": "FC Bayern München -> Köln",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "change given to the other team",
+  "mistake": "FC Bayern München -> Köln",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:35 -> 10:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:55 -> 10:55",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:35 -> 10:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:39 -> 10:39",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:39 -> 10:39",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:40 -> 10:40",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:45 -> 10:45",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:49 -> 10:49",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:35 -> 10:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:47 -> 10:47",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:47 -> 10:47",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:35 -> 10:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:47 -> 10:47",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:35 -> 10:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong match clock",
+  "mistake": "7:47 -> 10:47",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong formation",
+  "mistake": "4-1-4-1 -> 4-3-3",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "wrong formation",
+  "mistake": "4-4-2 -> 4-3-3",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "coman-opener",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "19 -> 42",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "19 -> 17",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "11 -> 29",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "11 -> 10",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "50 -> 67",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "50 -> 49",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "63 -> 80",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "63 -> 61",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "26 -> 44",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "26 -> 27",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "40 -> 57",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "40 -> 39",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "50 -> 67",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "50 -> 49",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "63 -> 80",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "63 -> 61",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "26 -> 44",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "26 -> 27",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "11 -> 29",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "11 -> 10",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "50 -> 67",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "50 -> 49",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "63 -> 80",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "63 -> 61",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "26 -> 44",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "26 -> 27",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "1002 -> 1019",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "1002 -> 1084",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "number not in the facts",
+  "mistake": "836 -> 853",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "a real value in the wrong place",
+  "mistake": "836 -> 833",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 11 metres at 10:00 to 50",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 63 metres to 26",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 40 metres at 10:00 to 50",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 63 metres to 26",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change given to the other team",
+  "mistake": "Team B -> Team A",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change given to the other team",
+  "mistake": "Team B -> Team A",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:00 -> 13:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:28 -> 13:28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:00 -> 13:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:28 -> 13:28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:14 -> 13:14",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:16 -> 13:16",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:00 -> 13:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:28 -> 13:28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:00 -> 13:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:28 -> 13:28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:00 -> 13:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong match clock",
+  "mistake": "10:28 -> 13:28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong formation",
+  "mistake": "3-5-2 -> 4-3-3",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "wrong formation",
+  "mistake": "4-4-2 -> 4-3-3",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-0600-0630",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "9 -> 26",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "9 -> 8",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "20 -> 45",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "20 -> 18",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "57 -> 75",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "57 -> 56",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "74 -> 91",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "74 -> 73",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "34 -> 54",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "34 -> 33",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "36 -> 54",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "36 -> 35",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "50 -> 67",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "50 -> 51",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "57 -> 75",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "57 -> 56",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "7 -> 26",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "7 -> 8",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "9 -> 26",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "9 -> 8",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "20 -> 45",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "20 -> 18",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "57 -> 75",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "57 -> 56",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "997 -> 1014",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "997 -> 969",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "number not in the facts",
+  "mistake": "1285 -> 1302",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "a real value in the wrong place",
+  "mistake": "1285 -> 1287",
+  "caught_by": []
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 20 m at 18:30 to 57",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 74 m to 34",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 36 m to 50",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 20 m to 57",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 997 m² to 1285",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change given to the other team",
+  "mistake": "Team B -> Team A",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "change given to the other team",
+  "mistake": "Team A -> Team B",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:35 -> 21:35",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:43 -> 21:43",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:55 -> 21:55",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:30 -> 21:30",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:58 -> 21:58",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:42 -> 21:42",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:58 -> 21:58",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:42 -> 21:42",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong match clock",
+  "mistake": "18:58 -> 21:58",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "wrong formation",
+  "mistake": "3-4-3 -> 4-4-2",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "drone-1110-1140",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "1848 -> 1865",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "1848 -> 1236",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "04 -> 21",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "04 -> 3",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "10 -> 31",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "10 -> 9",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "38 -> 55",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "38 -> 37",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "61 -> 78",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "61 -> 54",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "44 -> 62",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "44 -> 43",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "9 -> 31",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "9 -> 8",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "61 -> 78",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "61 -> 54",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "10 -> 31",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "10 -> 9",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "9 -> 31",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "9 -> 8",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "3 -> 21",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "3 -> 4",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "44 -> 62",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "44 -> 43",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "9 -> 31",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "9 -> 8",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "38 -> 55",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "38 -> 37",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "number not in the facts",
+  "mistake": "61 -> 78",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "a real value in the wrong place",
+  "mistake": "61 -> 54",
+  "caught_by": []
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 38 metres at 17:48 to 61",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 44 metres to 9",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 3 at 17:48 to 0",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 44 m (17:48) to 9",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 38 m (17:48) to 61",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change given to the other team",
+  "mistake": "Bochum -> Leverkusen",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change given to the other team",
+  "mistake": "Leverkusen -> Bochum",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change given to the other team",
+  "mistake": "Leverkusen -> Bochum",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change given to the other team",
+  "mistake": "Leverkusen -> Bochum",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "change given to the other team",
+  "mistake": "Bochum -> Leverkusen",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:51 -> 20:51",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:52 -> 20:52",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:53 -> 20:53",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:58 -> 20:58",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "18:03 -> 21:03",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:48 -> 20:48",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "18:00 -> 21:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:56 -> 20:56",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "18:00 -> 21:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:56 -> 20:56",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:48 -> 20:48",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:56 -> 20:56",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:48 -> 20:48",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "18:00 -> 21:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "17:48 -> 20:48",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong match clock",
+  "mistake": "18:00 -> 21:00",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "wrong formation",
+  "mistake": "4-4-2 -> 4-1-4-1",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "forster-opener",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "11 -> 28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "11 -> 5",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "20 -> 37",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "20 -> 11",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "5 -> 22",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "5 -> 4",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "5 -> 22",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "5 -> 4",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "0 -> 17",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "0 -> 1",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "20 -> 37",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "20 -> 11",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "number not in the facts",
+  "mistake": "11 -> 28",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "a real value in the wrong place",
+  "mistake": "11 -> 5",
+  "caught_by": []
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong match clock",
+  "mistake": "79:50 -> 82:50",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong match clock",
+  "mistake": "80:10 -> 83:10",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong match clock",
+  "mistake": "80:04 -> 83:04",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong match clock",
+  "mistake": "80:04 -> 83:04",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong match clock",
+  "mistake": "80:04 -> 83:04",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong formation",
+  "mistake": "4-2-3-1 -> 4-4-2",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "wrong formation",
+  "mistake": "4-2-3-1 -> 4-4-2",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "ljubicic-equaliser",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "1 -> 18",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "1 -> 1.5",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "42 -> 59",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "42 -> 41",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "72 -> 90",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "72 -> 68",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "25 -> 43",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "25 -> 24",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "10 -> 29",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "10 -> 9",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "72 -> 90",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "72 -> 68",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "757 -> 774",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "757 -> 737",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "388 -> 405",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "388 -> 386",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "8 -> 29",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "8 -> 7",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "10 -> 29",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "10 -> 9",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "42 -> 59",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "42 -> 41",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "72 -> 90",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "72 -> 68",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "757 -> 774",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "757 -> 737",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "388 -> 405",
+  "caught_by": [
+   "grounding",
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "388 -> 386",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "number not in the facts",
+  "mistake": "17 -> 37",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "a real value in the wrong place",
+  "mistake": "17 -> 15",
+  "caught_by": []
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 42 metres at 87:57 to 72",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 25 metres to 10",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 757 m² to 388",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 42 m to 72",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change reversed (from/to swapped)",
+  "mistake": "from 757 m² to 388",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change given to the other team",
+  "mistake": "Bayern -> Köln",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change given to the other team",
+  "mistake": "Bayern -> Köln",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "change given to the other team",
+  "mistake": "Köln -> München",
+  "caught_by": [
+   "claims"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "87:57 -> 90:57",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "88:20 -> 91:20",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "88:15 -> 91:15",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "87:57 -> 90:57",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "88:13 -> 91:13",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "87:57 -> 90:57",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "88:13 -> 91:13",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong match clock",
+  "mistake": "88:15 -> 91:15",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong formation",
+  "mistake": "4-1-4-1 -> 4-4-2",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "wrong formation",
+  "mistake": "3-5-2 -> 4-4-2",
+  "caught_by": [
+   "grounding"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) then played a pass into the box.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) whipped in a cross from the left.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) made a sliding tackle to win the ball.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) took a shot from the edge of the area.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented event in What happened",
+  "mistake": "(carrier) won a header in the middle.",
+  "caught_by": [
+   "invented"
+  ]
+ },
+ {
+  "clip": "musiala-winner",
+  "kind": "invented player name",
+  "mistake": "Lewandowski",
+  "caught_by": [
+   "names (soft)"
+  ]
+ }
+]
