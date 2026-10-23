@@ -10,7 +10,7 @@ license: mit
 short_description: Football tactics from tracking data, explained by AI
 ---
 
-# Vyuh (व्यूह) · football tactical replay
+# Vyuh · football tactical replay
 
 Replays real football moments from player-tracking data, draws each team's shape as it moves, and has an LLM explain the tactics using only facts the code has measured. Every number in the explanation is checked automatically.
 

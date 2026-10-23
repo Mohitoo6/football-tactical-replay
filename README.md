@@ -1,4 +1,4 @@
-# ⚽ Vyuh (व्यूह) · football tactical replay
+# ⚽ Vyuh · football tactical replay
 
 *Vyuh* is Sanskrit for a battle formation (the Mahabharata's Chakravyuh is the famous one); a football formation is the same idea.
 
@@ -28,7 +28,7 @@ Vyuh replays real football moments from player-tracking data, draws each team's 
 - **A full product, not a notebook.**
   - FastAPI backend: clips, uploads, background jobs.
   - React web app.
-  - 136 Python tests and 15 web tests, with CI.
+  - 137 Python tests and 6 web tests, with CI.
   - A live static demo on Hugging Face Spaces, and a Docker image that runs the full app with uploads.
   - Every decision, with alternatives and evidence, is in [`DECISIONS.md`](DECISIONS.md).
 
@@ -87,7 +87,7 @@ flowchart LR
 | Formation estimate | 5-min windows vs official DFL lineups | Settled defensive block: back line 100 %, official shape in top-2 79 %. Team in possession: poor (0–16 %) |
 | AI coach | 6 clips, automatic checks + trap tests (D34) | 6/6 grounded; 24/24 claims right; 96 % key-fact coverage; 5/5 traps passed |
 | Naive vs strict prompt | Same facts, two prompts | The naive prompt invented a number and two names (caught by the checker); the strict one did not |
-| Tests | `uv run pytest`, `npm test` | 113 passing (+23 video tests with `--group video`), 15 web tests; LLM layer tested with fake clients (no network) |
+| Tests | `uv run pytest`, `npm test` | 115 passing (+22 video tests with `--group video`), 6 web tests; LLM layer tested with fake clients (no network) |
 
 Details: [`evals/formation_eval_J03WMX.md`](evals/formation_eval_J03WMX.md), [`evals/formation_eval_J03WN1.md`](evals/formation_eval_J03WN1.md), [`evals/llm/README.md`](evals/llm/README.md), [`evals/llm/scoreboard.md`](evals/llm/scoreboard.md), [`evals/llm/traps.md`](evals/llm/traps.md).
 
@@ -237,8 +237,8 @@ npm run dev
 **Tests:**
 
 ```bash
-uv run pytest                                  # 113 tests (video tests skip without --group video)
-cd web && npm test                             # 15 tests
+uv run pytest                                  # 115 tests (video tests skip without --group video)
+cd web && npm test                             # 6 tests
 ```
 
 **With Docker** (the full app with uploads, as one container: http://localhost:7860):
@@ -283,7 +283,7 @@ app/         Streamlit test viewer
 scripts/     offline pipeline: check_match, build_clips, render_clip, generate/evaluate explanations, evaluate_formations
 clips/       committed clips: players/ball parquet, meta, summary, explanation, video
 evals/       formation, video and LLM evaluations
-tests/       113 tests + 23 video tests
+tests/       115 tests + 22 video tests
 ```
 
 ## Scope and limitations
@@ -309,7 +309,7 @@ tests/       113 tests + 23 video tests
   - SkillCorner open data ([github.com/SkillCorner/opendata](https://github.com/SkillCorner/opendata));
   - the NASK top-view dataset ([Zenodo 14867795](https://zenodo.org/records/14867795), CC BY 4.0);
   - kloppy's sample provider files.
-- **Images on the web app:** sources and licences in [`web/public/img/CREDITS.md`](web/public/img/CREDITS.md) and [`web/public/intro/CREDITS.md`](web/public/intro/CREDITS.md).
+- **Images on the web app:** sources and licences in [`web/public/img/CREDITS.md`](web/public/img/CREDITS.md).
 - **Built with:**
   - Python: kloppy, mplsoccer, numpy, scipy, pandas, OpenCV, FastAPI, Streamlit;
   - web: React, Vite, GSAP;

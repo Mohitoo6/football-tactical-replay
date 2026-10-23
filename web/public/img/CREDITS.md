@@ -13,4 +13,3 @@ crowd photo is cropped.
 | `goal-net.webp` | [A soccer ball flying towards a white goal net](https://unsplash.com/photos/8Pgk0Q_EjGE) | Bohdan Hyrovych |
 | `stadium-night.webp` | [A soccer stadium at night](https://unsplash.com/photos/Q1nOuKleRoc) | Mark mc neill |
 
-The intro photos in `../intro/` were made by Mohit with ChatGPT (image 2 has its ball removed with LaMa).

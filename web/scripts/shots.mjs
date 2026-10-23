@@ -15,7 +15,6 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 page.on('pageerror', (e) => console.log('[page error]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text()); });
-await page.evaluateOnNewDocument(() => { try { sessionStorage.setItem('intro-seen', '1'); } catch {} });
 await page.goto(url, { waitUntil: 'networkidle0' });
 await new Promise((r) => setTimeout(r, 1800));
 for (const y of ys) {
