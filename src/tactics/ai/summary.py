@@ -1,7 +1,7 @@
 """Turn a clip into a compact summary of facts for the LLM.
 
 Everything in the summary is computed from tracking data by our own tested
-code; the LLM only narrates it (CLAUDE.md, core design principle). We use
+code; the LLM only narrates it (README, core design principle). We use
 ball-in-play frames only: during stoppages the ball position is frozen
 (DECISIONS.md, D11) and shape metrics are meaningless (e.g. goal celebrations).
 """

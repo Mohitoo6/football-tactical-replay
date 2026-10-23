@@ -411,4 +411,4 @@ Co-built by two brothers:
   - video-to-tracking from drone footage (Phase 7) and the TV-footage experiment (Phase 8);
   - the backend API (Phase 9) and the web app.
 
-Developed with Claude Code as a pair programmer; every decision and its evidence is recorded in `DECISIONS.md`.
+Every decision and its evidence is recorded in `DECISIONS.md`.
